@@ -1,0 +1,69 @@
+# ========================================
+# Mon Dashboard - .gitignore
+# ========================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Database & Data
+*.db
+*.sqlite
+*.sqlite3
+data/
+logs/
+*.log
+
+# Static uploads/images
+static/uploads/
+static/images/
+static/temp/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.ico
+*.bmp
+*.webp
+*.svg
+
+# Node
+node_modules/
+npm-debug.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+*.pem
+*.key
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Cache
+.cache/
+*.cache
+
+# Gemini IDE
+.gemini/
