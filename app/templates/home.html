@@ -1,0 +1,336 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<style>
+    /* Force Dark Background */
+    .chat-wrapper,
+    .chat-main,
+    .chat-messages,
+    .empty-state {
+        background-color: #212121 !important;
+        color: #ececec !important;
+    }
+
+    .chat-input-wrapper {
+        background-color: #2f2f2f !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 8px 12px;
+        /* Add padding around content */
+        border-radius: 24px;
+        /* Ensure rounded corners */
+    }
+
+    .chat-textarea {
+        background-color: transparent !important;
+        color: white !important;
+        padding: 0 !important;
+        /* Remove default padding to align with wrapper */
+        margin: 0 !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        line-height: 1.5;
+    }
+
+    .chat-textarea:focus {
+        box-shadow: none !important;
+        background-color: transparent !important;
+    }
+</style>
+<div class="chat-wrapper d-flex">
+    <!-- Sidebar -->
+    <div class="chat-sidebar d-flex flex-column" id="chatSidebar">
+        <div class="p-3">
+            <div class="search-box mb-3">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Search chats..." id="chatSearch">
+            </div>
+
+            <button class="btn btn-new-chat w-100 d-flex align-items-center gap-2 mb-3" onclick="startNewChat()">
+                <i class="bi bi-plus-lg"></i>
+                <span>New chat</span>
+            </button>
+        </div>
+
+        <div class="px-3 pb-2">
+            <small class="text-muted fw-semibold">History</small>
+        </div>
+
+        <div class="chat-history flex-grow-1 overflow-auto custom-scrollbar" id="chatHistoryList">
+            <!-- History items will be loaded here -->
+            <div class="text-center text-muted small mt-3">Loading history...</div>
+        </div>
+
+        <div class="p-3 border-top border-secondary">
+            <div class="dropdown w-100">
+                <button class="btn btn-user w-100 d-flex align-items-center gap-2" type="button"
+                    data-bs-toggle="dropdown">
+                    <div class="user-avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="text-start flex-grow-1 overflow-hidden">
+                        <div class="fw-bold text-truncate">User</div>
+                    </div>
+                    <i class="bi bi-three-dots"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark w-100">
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#aiSettingsModal"><i
+                                class="bi bi-gear me-2"></i>Settings</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item" href="#" onclick="clearDashboardCache()"><i
+                                class="bi bi-arrow-clockwise me-2"></i>Clear Cache</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="chat-main flex-grow-1 d-flex flex-column position-relative">
+        <!-- Mobile Toggle -->
+        <button class="btn btn-dark d-md-none position-absolute top-0 start-0 m-3 z-3" onclick="toggleSidebar()">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <!-- Header with Model Selector Dropdown -->
+        <div class="chat-header p-2 d-flex justify-content-center align-items-center">
+            <div class="dropdown">
+                <button class="btn model-selector d-flex align-items-center gap-2" type="button" id="modelDropdown"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="fw-bold" id="current-model-name">Gemini</span>
+                    <i class="bi bi-chevron-down small text-muted"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="modelDropdown">
+                    <!-- ChatGPT Submenu -->
+                    <li class="dropend">
+                        <a class="dropdown-item dropdown-toggle" href="#" id="openaiSubmenu" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-stars me-2"></i>ChatGPT
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="openaiSubmenu">
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                    onclick="selectModel('openai', 'gpt-4o'); return false;">
+                                    <i class="bi bi-star-fill me-2"></i>GPT-4o
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                    onclick="selectModel('openai', 'gpt-3.5-turbo'); return false;">
+                                    <i class="bi bi-chat-dots me-2"></i>GPT-3.5 Turbo
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Gemini Submenu - Only 2.5 models -->
+                    <li class="dropend">
+                        <a class="dropdown-item dropdown-toggle" href="#" id="geminiSubmenu" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-gem me-2"></i>Gemini
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="geminiSubmenu">
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                    onclick="selectModel('gemini', 'gemini-2.5-flash'); return false;">
+                                    <i class="bi bi-lightning-fill me-2"></i>Gemini 2.5 Flash
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                    onclick="selectModel('gemini', 'gemini-2.5-pro'); return false;">
+                                    <i class="bi bi-star-fill me-2"></i>Gemini 2.5 Pro
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="chat-messages flex-grow-1 overflow-auto custom-scrollbar p-0" id="chat-messages">
+            <div class="h-100 d-flex flex-column justify-content-center align-items-center text-center p-4 empty-state">
+                <div class="mb-4">
+                    <div class="logo-circle">
+                        <i class="bi bi-robot fs-1"></i>
+                    </div>
+                </div>
+                <h3 class="mb-4 fw-bold">Hello Sếp</h3>
+            </div>
+        </div>
+
+        <!-- Chat Input Area -->
+        <div class="chat-input-container centered d-flex justify-content-center">
+            <div class="chat-input-wrapper position-relative">
+                <div id="image-preview-container" class="d-none p-2 border-bottom border-secondary">
+                    <div class="position-relative d-inline-block">
+                        <img id="image-preview" src="" alt="Preview" style="max-height: 100px; border-radius: 8px;">
+                        <button type="button"
+                            class="btn-close btn-close-white position-absolute top-0 end-0 m-1 bg-dark rounded-circle p-1"
+                            aria-label="Close" onclick="clearImagePreview()"></button>
+                    </div>
+                </div>
+                <form id="chat-form">
+                    <textarea class="form-control chat-textarea" id="user-input" rows="1"
+                        placeholder="Type a message or paste an image..."
+                        style="min-height: 24px; resize: none;"></textarea>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Settings Modal -->
+<div class="modal fade" id="aiSettingsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Settings</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="d-flex" style="min-height: 400px;">
+                    <!-- Sidebar Tabs -->
+                    <div class="nav flex-column nav-pills p-3 border-end border-secondary"
+                        style="width: 200px; background: rgba(0,0,0,0.2);">
+                        <button class="nav-link active text-start mb-2 text-light" data-bs-toggle="pill"
+                            data-bs-target="#settings-api">
+                            <i class="bi bi-hdd-network me-2"></i>Connection
+                        </button>
+                        <button class="nav-link text-start mb-2 text-light" data-bs-toggle="pill"
+                            data-bs-target="#settings-brain">
+                            <i class="bi bi-cpu me-2"></i>Brain
+                        </button>
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content flex-grow-1 p-3">
+                        <!-- API Settings -->
+                        <div class="tab-pane fade show active" id="settings-api">
+                            <h6 class="mb-3 text-uppercase text-muted small fw-bold">Provider Configuration</h6>
+                            <form id="ai-settings-form-api">
+                                <div class="mb-3">
+                                    <label class="form-label">Provider</label>
+                                    <select class="form-select bg-dark text-light border-secondary" name="provider"
+                                        id="ai-provider">
+                                        <option value="openai">OpenAI (ChatGPT)</option>
+                                        <option value="gemini">Google Gemini</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">API Key(s)</label>
+                                    <textarea class="form-control bg-dark text-light border-secondary" name="api_key"
+                                        id="ai-api-key" rows="3"
+                                        placeholder="Enter one key per line (for failover)..."></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Model</label>
+                                    <input type="text" class="form-control bg-dark text-light border-secondary"
+                                        name="model" id="ai-model" placeholder="e.g. gemini-2.5-flash">
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Brain (System Prompts) -->
+                        <div class="tab-pane fade" id="settings-brain">
+                            <h6 class="mb-3 text-uppercase text-muted small fw-bold">System Instructions</h6>
+
+                            <!-- Sub Tabs for Prompts -->
+                            <ul class="nav nav-tabs border-secondary mb-3" id="promptTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active text-light" id="prompt-general-tab"
+                                        data-bs-toggle="tab" data-bs-target="#prompt-general" type="button"
+                                        role="tab">General</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-light" id="prompt-mxh-tab" data-bs-toggle="tab"
+                                        data-bs-target="#prompt-mxh" type="button" role="tab">MXH</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-light" id="prompt-notes-tab" data-bs-toggle="tab"
+                                        data-bs-target="#prompt-notes" type="button" role="tab">Notes</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-light" id="prompt-telegram-tab" data-bs-toggle="tab"
+                                        data-bs-target="#prompt-telegram" type="button" role="tab">Telegram</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-light" id="prompt-image-tab" data-bs-toggle="tab"
+                                        data-bs-target="#prompt-image" type="button" role="tab">Image</button>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content" id="promptTabContent">
+                                <div class="tab-pane fade show active" id="prompt-general" role="tabpanel">
+                                    <textarea class="form-control bg-dark text-light border-secondary"
+                                        id="system-prompt-general" rows="10"
+                                        placeholder="General instructions..."></textarea>
+                                </div>
+                                <div class="tab-pane fade" id="prompt-mxh" role="tabpanel">
+                                    <textarea class="form-control bg-dark text-light border-secondary"
+                                        id="system-prompt-mxh" rows="10"
+                                        placeholder="Instructions for Social Media tasks..."></textarea>
+                                </div>
+                                <div class="tab-pane fade" id="prompt-notes" role="tabpanel">
+                                    <textarea class="form-control bg-dark text-light border-secondary"
+                                        id="system-prompt-notes" rows="10"
+                                        placeholder="Instructions for Notes management..."></textarea>
+                                </div>
+                                <div class="tab-pane fade" id="prompt-telegram" role="tabpanel">
+                                    <textarea class="form-control bg-dark text-light border-secondary"
+                                        id="system-prompt-telegram" rows="10"
+                                        placeholder="Instructions for Telegram tasks..."></textarea>
+                                </div>
+                                <div class="tab-pane fade" id="prompt-image" role="tabpanel">
+                                    <textarea class="form-control bg-dark text-light border-secondary"
+                                        id="system-prompt-image" rows="10"
+                                        placeholder="Instructions for Image analysis..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveAISettings()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mini Chat Bubble -->
+<div id="mini-chat-bubble" class="mini-chat-bubble" onclick="toggleMiniChat()">
+    <i class="bi bi-chat-dots-fill"></i>
+</div>
+
+<!-- Mini Chat Window -->
+<div id="mini-chat-window" class="mini-chat-window">
+    <div class="mini-chat-header">
+        <span>Chat Assistant</span>
+        <button class="btn btn-sm btn-link text-white p-0" onclick="toggleMiniChat()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+    <div class="mini-chat-body" id="mini-chat-messages">
+        <!-- Messages will be cloned here -->
+    </div>
+    <div class="mini-chat-footer">
+        <div class="input-group">
+            <input type="text" id="mini-chat-input" class="form-control" placeholder="Nhập tin nhắn..."
+                onkeypress="handleMiniChatEnter(event)">
+            <button class="btn btn-primary" onclick="sendMiniChatMessage()">
+                <i class="bi bi-send-fill"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS Bundle with Popper -->
+
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}
