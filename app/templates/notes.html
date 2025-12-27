@@ -360,45 +360,7 @@
         outline: 1px dashed #666;
     }
 
-    /* Inline Markdown Preview Block */
-    .inline-markdown-block {
-        display: inline-block;
-        background: #1a1a2e;
-        border: 1px solid #333;
-        border-radius: 6px;
-        padding: 8px 12px;
-        margin: 2px 0;
-        font-family: 'Consolas', 'Monaco', monospace;
-        font-size: 0.9em;
-        color: #eee;
-        white-space: pre-wrap;
-        word-break: break-word;
-        position: relative;
-    }
 
-    .inline-markdown-block .md-copy-btn {
-        position: absolute;
-        top: 4px;
-        right: 4px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        padding: 2px 8px;
-        font-size: 0.75em;
-        cursor: pointer;
-        opacity: 0.8;
-        transition: opacity 0.2s;
-    }
-
-    .inline-markdown-block .md-copy-btn:hover {
-        opacity: 1;
-    }
-
-    .inline-markdown-block .md-content {
-        display: block;
-        padding-right: 50px;
-    }
 
     /* Thumbnail kiểu Telegram bên trong editor của Gán Profile */
     #notes-profile-content-editor .tg-thumb {
@@ -468,7 +430,7 @@
 </div>
 
 <div id="notes-context-menu" class="custom-context-menu">
-    <div class="menu-item" id="context-markdown"><i class="bi bi-markdown me-2"></i> Markdown</div>
+
     <div class="menu-item" id="context-bold"><i class="bi bi-type-bold me-2"></i> In đậm</div>
     <div class="menu-item" id="context-color"><i class="bi bi-palette-fill me-2"></i> Đổi màu chữ
         <div class="color-palette">
@@ -837,96 +799,7 @@
             return "vài giây trước";
         }
 
-        // HTML to Markdown converter for copy feature
-        function htmlToMarkdown(html) {
-            if (!html || typeof html !== 'string') return '';
 
-            // Create a temporary div to parse HTML
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = html;
-
-            // Process node recursively
-            function processNode(node) {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    return node.textContent;
-                }
-
-                if (node.nodeType !== Node.ELEMENT_NODE) {
-                    return '';
-                }
-
-                const tagName = node.tagName.toLowerCase();
-                let content = '';
-
-                // Process children first
-                for (const child of node.childNodes) {
-                    content += processNode(child);
-                }
-
-                // Apply markdown formatting based on tag
-                switch (tagName) {
-                    case 'b':
-                    case 'strong':
-                        return `**${content}**`;
-                    case 'i':
-                    case 'em':
-                        return `*${content}*`;
-                    case 'u':
-                        return `__${content}__`;
-                    case 'a':
-                        const href = node.getAttribute('href') || '';
-                        return `[${content}](${href})`;
-                    case 'br':
-                        return '\n';
-                    case 'p':
-                        return content + '\n\n';
-                    case 'h1':
-                        return `# ${content}\n`;
-                    case 'h2':
-                        return `## ${content}\n`;
-                    case 'h3':
-                        return `### ${content}\n`;
-                    case 'li':
-                        return `- ${content}\n`;
-                    case 'ul':
-                    case 'ol':
-                        return content + '\n';
-                    case 'code':
-                        return `\`${content}\``;
-                    case 'pre':
-                        return `\`\`\`\n${content}\n\`\`\`\n`;
-                    case 'span':
-                        // Check for profile span
-                        if (node.classList.contains('has-profile')) {
-                            const profileId = node.getAttribute('data-profile-id') || '';
-                            return `[${content}](profile:${profileId})`;
-                        }
-                        // Check for colored text (font tag or style)
-                        const color = node.style.color;
-                        if (color) {
-                            return `<span style="color:${color}">${content}</span>`;
-                        }
-                        return content;
-                    case 'font':
-                        const fontColor = node.getAttribute('color');
-                        if (fontColor) {
-                            return `<span style="color:${fontColor}">${content}</span>`;
-                        }
-                        return content;
-                    case 'div':
-                        return content + '\n';
-                    default:
-                        return content;
-                }
-            }
-
-            let result = processNode(tempDiv);
-
-            // Clean up excessive newlines
-            result = result.replace(/\n{3,}/g, '\n\n').trim();
-
-            return result;
-        }
 
         async function fetchAndRenderNotes(searchTerm = '') {
             try {
@@ -1487,79 +1360,7 @@
             }
         });
 
-        // Inline Markdown handler - replace selected text with markdown block
-        document.querySelector('#context-markdown').addEventListener('click', () => {
-            restoreSelection();
 
-            // Get selected HTML content
-            const selection = window.getSelection();
-            if (!selection.rangeCount || selection.toString().length === 0) {
-                hideAllContextMenus();
-                return;
-            }
-
-            const range = selection.getRangeAt(0);
-            const clonedSelection = range.cloneContents();
-
-            // Create temp div to get HTML
-            const tempDiv = document.createElement('div');
-            tempDiv.appendChild(clonedSelection);
-            const selectedHtml = tempDiv.innerHTML;
-
-            // Convert to markdown
-            const markdownText = htmlToMarkdown(selectedHtml);
-
-            // Create inline markdown block element
-            const mdBlock = document.createElement('span');
-            mdBlock.className = 'inline-markdown-block';
-            mdBlock.contentEditable = 'false'; // Make it non-editable
-            mdBlock.innerHTML = `
-                <button class="md-copy-btn" title="Sao chép Markdown">Copy</button>
-                <span class="md-content">${escapeHtml(markdownText)}</span>
-            `;
-
-            // Store original HTML for potential restore
-            mdBlock.setAttribute('data-original-html', selectedHtml);
-            mdBlock.setAttribute('data-markdown', markdownText);
-
-            // Add click handler for copy button
-            const copyBtn = mdBlock.querySelector('.md-copy-btn');
-            copyBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                try {
-                    await navigator.clipboard.writeText(markdownText);
-                    showToast('Đã sao chép markdown!', 'success');
-                    copyBtn.textContent = '✓';
-                    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
-                } catch (err) {
-                    console.error('Failed to copy markdown:', err);
-                    showToast('Lỗi khi sao chép', 'error');
-                }
-            });
-
-            // Delete the selected content and insert markdown block
-            range.deleteContents();
-            range.insertNode(mdBlock);
-
-            // Move cursor after the block
-            range.setStartAfter(mdBlock);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-
-            hideAllContextMenus();
-
-            // Auto-save after modification
-            setTimeout(() => saveNoteChanges(activeNoteId, true, true), 100);
-        });
-
-        // Helper function to escape HTML for display
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
         document.querySelector('#context-bold').addEventListener('click', () => {
             restoreSelection();
             document.execCommand('bold');
@@ -1571,7 +1372,48 @@
             if (e.target.matches('span[data-color]')) {
                 restoreSelection();
                 const color = e.target.dataset.color;
+
+                // Get current selection before execCommand
+                const selection = window.getSelection();
+                if (selection.rangeCount === 0) return;
+                const range = selection.getRangeAt(0);
+                const editor = range.commonAncestorContainer.parentElement?.closest('[contenteditable="true"]');
+
+                // Apply color formatting
                 document.execCommand('foreColor', false, color);
+
+                // ✅ FIX: Move cursor outside colored element (same pattern as profile span fix)
+                if (editor) {
+                    // execCommand creates <font color="..."> or <span style="color: ...">
+                    // Find all potential colored elements
+                    const coloredElements = Array.from(editor.querySelectorAll('font[color], span[style*="color"]'));
+
+                    // The last one matching our color is likely the one we just created
+                    const targetColor = color.toLowerCase();
+                    const coloredEl = coloredElements.reverse().find(el => {
+                        const elColor = el.getAttribute('color') || el.style.color;
+                        return elColor && elColor.toLowerCase().includes(targetColor.replace('#', ''));
+                    });
+
+                    if (coloredEl) {
+                        // Prevent browser from expanding this element when typing
+                        coloredEl.setAttribute('contenteditable', 'false');
+
+                        // Insert zero-width space after colored element
+                        const spacer = document.createTextNode('\u200B');
+                        coloredEl.parentNode.insertBefore(spacer, coloredEl.nextSibling);
+
+                        // Move cursor to spacer position
+                        const newRange = document.createRange();
+                        newRange.setStart(spacer, 1);
+                        newRange.collapse(true);
+
+                        const newSel = window.getSelection();
+                        newSel.removeAllRanges();
+                        newSel.addRange(newRange);
+                    }
+                }
+
                 hideAllContextMenus();
                 setTimeout(() => saveNoteChanges(activeNoteId), 100);
             }
@@ -1815,6 +1657,38 @@
                 }
             });
 
+        // CRITICAL FIX: Reposition cursor AFTER modal is fully hidden
+        document.getElementById('notes-addProfileModal')
+            ?.addEventListener('hidden.bs.modal', () => {
+                console.log('[DEBUG] Modal fully hidden, checking for span to reposition');
+                if (window._lastProfileSpan) {
+                    const span = window._lastProfileSpan;
+                    console.log('[DEBUG] Found span, repositioning cursor after:', span.innerText);
+
+                    // Focus the content editor
+                    contentEditor.focus();
+
+                    // Move cursor outside the span
+                    const newRange = document.createRange();
+                    newRange.setStartAfter(span);
+                    newRange.setEndAfter(span);
+                    newRange.collapse(true);
+
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+
+                    console.log('[DEBUG] Cursor repositioned. Selection:', {
+                        rangeCount: selection.rangeCount,
+                        anchorNode: selection.anchorNode?.nodeName,
+                        focusNode: selection.focusNode?.nodeName
+                    });
+
+                    // Clear the reference
+                    window._lastProfileSpan = null;
+                }
+            });
+
         function clearThumbnailArea() {
             const container = document.getElementById('profile-images-container');
             const thumbnailsArea = document.getElementById('profile-images-thumbnails');
@@ -1908,8 +1782,12 @@
                 currentProfileSpan.dataset.profileContent = finalContent;   // text only
                 currentProfileSpan.dataset.profileImages = imagesJson;       // ảnh
                 if (profileId) currentProfileSpan.textContent = profileId;
+
+                // ✅ Enable instant preview after edit
+                requestAnimationFrame(() => initSingleProfilePopover(currentProfileSpan));
             } else if (savedSelection) {
                 // Creating new profile
+                console.log('[DEBUG] Creating new profile span');
                 const span = document.createElement('span');
                 span.className = 'has-profile';
                 span.dataset.profileId = profileId;
@@ -1917,8 +1795,29 @@
                 span.dataset.profileContent = finalContent; // text only
                 span.dataset.profileImages = imagesJson;   // ảnh
                 span.style.color = '#00e0ff';
+
+                // ✅ CRITICAL FIX: Prevent browser from expanding span when typing
+                span.setAttribute('contenteditable', 'false');
+
                 span.appendChild(savedSelection.extractContents());
                 savedSelection.insertNode(span);
+                console.log('[DEBUG] Span inserted, innerText:', span.innerText);
+
+                // ✅ Insert spacer to place cursor outside span
+                const spacer = document.createTextNode('\u200B'); // Zero-width space
+                span.parentNode.insertBefore(spacer, span.nextSibling);
+                console.log('[DEBUG] Spacer text node inserted after span');
+
+                // ✅ CRITICAL FIX: Store the CORRECT editor (detail-editable-full, not notes-content-editor)
+                const editor = span.closest('[contenteditable="true"]');
+                console.log('[DEBUG] Storing editor:', editor?.id || editor?.className);
+
+                window._lastProfileSpan = span;
+                window._lastProfileSpacer = spacer;
+                window._lastProfileEditor = editor;
+
+                // ✅ Enable instant preview after creation
+                requestAnimationFrame(() => initSingleProfilePopover(span));
             } else {
                 // Không có selection và không đang edit -> lỗi logic
                 showAlert('Lỗi: Không tìm thấy selection hoặc profile đang chỉnh sửa.');
@@ -1926,6 +1825,7 @@
             }
 
             profileModal.hide();
+            console.log('[DEBUG] Modal hidden, saving changes');
             savedSelection = null;
             currentProfileSpan = null;
             saveNoteChanges(activeNoteId, true);
@@ -2180,6 +2080,87 @@
                     spans.forEach(span => {
                         span.style.color = color;
                     });
+                });
+            }
+        }
+
+        // Helper: Initialize popover for a single profile span (for instant preview after creation)
+        function initSingleProfilePopover(span) {
+            const profileId = span.dataset.profileId || '';
+            const profilePassword = span.dataset.profilePassword || '';
+            const profileContent = span.dataset.profileContent || '';
+
+            // 1) Lấy ảnh ưu tiên từ dataset.profileImages
+            let src = null;
+            const imagesJson = span.dataset.profileImages;
+            if (imagesJson) {
+                try {
+                    const arr = JSON.parse(imagesJson);
+                    if (Array.isArray(arr) && arr.length) src = arr[0];
+                } catch { }
+            }
+
+            // 2) Fallback legacy: moi ảnh từ HTML content (tg-thumb / img)
+            if (!src && profileContent) {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = profileContent;
+                const firstThumb = tmp.querySelector('.tg-thumb');
+                const firstImg = firstThumb ? null : tmp.querySelector('img');
+                src = firstThumb
+                    ? (firstThumb.getAttribute('data-full') || firstThumb.querySelector('img')?.src)
+                    : (firstImg ? firstImg.getAttribute('src') : null);
+            }
+
+            let mediaHTML = '';
+            if (src) {
+                mediaHTML = `
+                <div class="preview-container" style="width:400px;height:400px;overflow:hidden;display:flex;align-items:center;justify-content:center;box-sizing:border-box">
+                    <img src="${src}" alt="preview" width="400" height="400" style="display:block;width:100%;height:100%;object-fit:contain"/>
+                </div>`;
+            }
+
+            const popoverContent = `
+                <div class="profile-popover-content">
+                    ${profileId ? `<div><strong>ID:</strong> ${profileId}</div>` : ''}
+                    ${profilePassword ? `<div><strong>Password:</strong> ${profilePassword}</div>` : ''}
+                    ${profileContent ? `<div style="margin-top:8px;max-width:400px;word-wrap:break-word;">${profileContent}</div>` : ''}
+                    ${mediaHTML}
+                </div>
+            `;
+
+            // Dispose instance cũ nếu có
+            const old = bootstrap.Popover.getInstance(span);
+            if (old) old.dispose();
+
+            // Tạo instance mới
+            new bootstrap.Popover(span, {
+                content: popoverContent,
+                html: true,
+                trigger: 'hover',
+                placement: 'bottom',
+                container: 'body',
+                customClass: 'profile-popover-500',
+                template: '<div class="popover profile-popover-500" role="tooltip"><div class="popover-arrow"></div><div class="popover-body p-2"></div></div>',
+                boundary: 'viewport',
+                fallbackPlacements: ['bottom', 'top', 'left', 'right'],
+                offset: [0, 8],
+                delay: { show: 60, hide: 120 }
+            });
+
+            // Bind update popper đúng cách, CHỈ bind 1 lần/span
+            if (!span.dataset.profilePopoverBound) {
+                span.dataset.profilePopoverBound = '1';
+                span.addEventListener('shown.bs.popover', () => {
+                    const popId = span.getAttribute('aria-describedby');
+                    const root = popId ? document.getElementById(popId) : null;
+                    const img = root?.querySelector('.preview-container > img');
+
+                    if (root) { root.style.width = '448px'; root.style.maxWidth = '448px'; }
+
+                    const inst = bootstrap.Popover.getInstance(span);
+                    const upd = () => { inst?._popper?.update?.(); };
+
+                    if (img) { img.complete ? upd() : img.addEventListener('load', upd, { once: true }); }
                 });
             }
         }
