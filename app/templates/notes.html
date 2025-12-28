@@ -390,6 +390,188 @@
         max-height: 200px;
         object-fit: contain;
     }
+
+    /* === Notes: Code block wrapper === */
+    .code-block-wrapper {
+        background: #0b0f14 !important;
+        border: 3px solid #00ff00 !important;
+        /* ĐỔI SANG XANH LÁ ĐẬM để test */
+        /* viền rõ hơn */
+        border-radius: 12px !important;
+        margin: 10px 0 !important;
+        overflow: hidden !important;
+        /* để header bo theo góc */
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+        /* nổi khung nhẹ */
+        color: #e6edf3 !important;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+        display: block !important;
+    }
+
+
+    .code-block-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        /* đẩy Copy sang phải */
+        padding: 8px 10px !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+        /* thanh header giống Gemini */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+    }
+
+    .code-block-title {
+        font-size: 12px !important;
+        opacity: 0.9 !important;
+        color: #e6edf3 !important;
+    }
+
+    .copy-btn {
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #e6edf3 !important;
+        border-radius: 10px !important;
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        cursor: pointer !important;
+    }
+
+    .copy-btn:hover {
+        background: rgba(255, 255, 255, 0.14) !important;
+    }
+
+    .code-block-wrapper pre {
+        margin: 0 !important;
+        padding: 10px !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+        overflow-x: auto !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .code-block-wrapper code {
+        display: block !important;
+        color: inherit !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+        font-family: inherit !important;
+    }
+
+    /* === FORCE Code Block styles to win against global "#editor div { ... !important }" rules === */
+    #notes-content-editor div.code-block-wrapper,
+    #notes-profile-content-editor div.code-block-wrapper,
+    #detail-editable-full div.code-block-wrapper {
+        background: #0b0f14 !important;
+        border: 1px solid #2d333b !important;
+        /* viền thật */
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10) !important;
+        /* viền phụ */
+        border-radius: 12px !important;
+        margin: 10px 0 !important;
+        overflow: hidden !important;
+        color: #e6edf3 !important;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+        display: block !important;
+    }
+
+    #notes-content-editor div.code-block-header,
+    #notes-profile-content-editor div.code-block-header,
+    #detail-editable-full div.code-block-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        /* Copy về cuối dòng */
+        width: 100% !important;
+        padding: 8px 10px !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+    }
+
+    #notes-content-editor .code-block-title,
+    #notes-profile-content-editor .code-block-title,
+    #detail-editable-full .code-block-title {
+        font-size: 12px !important;
+        opacity: 0.9 !important;
+        color: #e6edf3 !important;
+    }
+
+    #notes-content-editor button.copy-btn,
+    #notes-profile-content-editor button.copy-btn,
+    #detail-editable-full button.copy-btn {
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #e6edf3 !important;
+        border-radius: 10px !important;
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        cursor: pointer !important;
+    }
+
+    #notes-content-editor button.copy-btn:hover,
+    #notes-profile-content-editor button.copy-btn:hover,
+    #detail-editable-full button.copy-btn:hover {
+        background: rgba(255, 255, 255, 0.14) !important;
+    }
+
+    #notes-content-editor div.code-block-wrapper pre,
+    #notes-profile-content-editor div.code-block-wrapper pre,
+    #detail-editable-full div.code-block-wrapper pre {
+        margin: 0 !important;
+        padding: 10px !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+        overflow-x: auto !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    #notes-content-editor div.code-block-wrapper code,
+    #notes-profile-content-editor div.code-block-wrapper code,
+    #detail-editable-full div.code-block-wrapper code {
+        display: block !important;
+        color: inherit !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+        font-family: inherit !important;
+    }
+
+    #detail-editable-full .code-block-actions,
+    #notes-content-editor .code-block-actions,
+    #notes-profile-content-editor .code-block-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    #detail-editable-full button.delete-btn.delete-btn,
+    #notes-content-editor button.delete-btn.delete-btn,
+    #notes-profile-content-editor button.delete-btn.delete-btn {
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        background: rgba(255, 0, 0, 0.10) !important;
+        color: #e6edf3 !important;
+        border-radius: 10px !important;
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        cursor: pointer !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    #detail-editable-full button.delete-btn.delete-btn:hover,
+    #notes-content-editor button.delete-btn.delete-btn:hover,
+    #notes-profile-content-editor button.delete-btn.delete-btn:hover {
+        background: rgba(255, 0, 0, 0.18) !important;
+    }
+
+    #detail-editable-full button.delete-btn.delete-btn:focus,
+    #notes-content-editor button.delete-btn.delete-btn:focus,
+    #notes-profile-content-editor button.delete-btn.delete-btn:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
 </style>
 {% endblock %}
 
@@ -451,6 +633,7 @@
     <hr>
     <div class="menu-item" id="context-link"><i class="bi bi-link-45deg me-2"></i> Gán Link</div>
     <div class="menu-item" id="context-profile"><i class="bi bi-person-badge me-2"></i> Gán Profile</div>
+    <div class="menu-item" id="context-code-block"><i class="bi bi-code-slash me-2"></i> Code block</div>
 </div>
 
 <div id="profile-span-context-menu" class="custom-context-menu">
@@ -558,6 +741,26 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                 <button type="button" class="btn btn-primary" id="notes-save-link-btn">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Delete Code Block Modal -->
+<div class="modal fade" id="codeblock-confirmDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Xác nhận xóa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="mb-0">Bạn có chắc chắn muốn xóa code block này?</p>
+                <small class="text-muted">Hành động này không thể hoàn tác.</small>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy Bỏ</button>
+                <button type="button" class="btn btn-danger" id="codeblock-confirm-delete-btn">Xác Nhận</button>
             </div>
         </div>
     </div>
@@ -1236,6 +1439,80 @@
             }
         }
 
+        function createCodeBlockFromSelection() {
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0) return;
+
+            const range = selection.getRangeAt(0);
+
+            const anchorNode = range.commonAncestorContainer.nodeType === 1
+                ? range.commonAncestorContainer
+                : range.commonAncestorContainer.parentElement;
+
+            const editableRoot = anchorNode ? anchorNode.closest('[contenteditable="true"]') : null;
+            if (!editableRoot) return;
+
+            const selectedText = selection.toString();
+            if (!selectedText || selectedText.trim().length === 0) return;
+
+            // Wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'code-block-wrapper';
+            wrapper.setAttribute('contenteditable', 'false');
+
+            // Header (giống kiểu Gemini: trái là nhãn, phải là Copy)
+            const header = document.createElement('div');
+            header.className = 'code-block-header';
+
+            const title = document.createElement('span');
+            title.className = 'code-block-title';
+            title.textContent = 'Code';
+            title.setAttribute('contenteditable', 'true');
+            title.setAttribute('spellcheck', 'false');
+            title.setAttribute('data-placeholder', 'Type…');
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'copy-btn';
+            btn.textContent = 'Copy';
+
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'delete-btn';
+            delBtn.innerHTML = '<i class="bi bi-x-circle"></i>';
+            delBtn.setAttribute('aria-label', 'Delete code block');
+
+            const actions = document.createElement('div');
+            actions.className = 'code-block-actions';
+            actions.appendChild(delBtn); // 🗑 trước
+            actions.appendChild(btn);    // Copy sau
+
+            header.appendChild(title);
+            header.appendChild(actions);
+
+            // Body
+            const pre = document.createElement('pre');
+            const code = document.createElement('code');
+            code.textContent = selectedText;
+            code.setAttribute('contenteditable', 'true');
+
+            pre.appendChild(code);
+
+            wrapper.appendChild(header);
+            wrapper.appendChild(pre);
+
+            // Replace selection
+            range.deleteContents();
+            range.insertNode(wrapper);
+
+            // Caret after block
+            selection.removeAllRanges();
+            const after = document.createRange();
+            after.setStartAfter(wrapper);
+            after.collapse(true);
+            selection.addRange(after);
+        }
+
 
         function handleEditorContextMenu(e) {
             e.preventDefault();
@@ -1368,6 +1645,13 @@
             setTimeout(() => saveNoteChanges(activeNoteId), 100);
         });
 
+        document.querySelector('#context-code-block').addEventListener('click', () => {
+            restoreSelection();
+            createCodeBlockFromSelection();
+            hideAllContextMenus();
+            setTimeout(() => saveNoteChanges(activeNoteId), 100);
+        });
+
         document.querySelector('#context-color .color-palette').addEventListener('click', (e) => {
             if (e.target.matches('span[data-color]')) {
                 restoreSelection();
@@ -1495,6 +1779,90 @@
 
         // Event listener cho context menu copy
         document.getElementById('context-copy-image')?.addEventListener('click', copyImageToClipboard);
+
+        // Code block copy button handler (event delegation)
+        document.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.copy-btn');
+            if (!btn) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const wrapper = btn.closest('.code-block-wrapper');
+            const codeEl = wrapper ? wrapper.querySelector('pre code') : null;
+            const textToCopy = codeEl ? codeEl.innerText : '';
+
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                if (typeof showToast === 'function') showToast('Đã copy code vào clipboard.', 'success');
+            } catch (err) {
+                console.error('Clipboard copy failed:', err);
+                if (typeof showToast === 'function') showToast('Copy thất bại (bị chặn clipboard).', 'error');
+            }
+        });
+
+        // Prevent title click from affecting editor parent
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.code-block-title')) {
+                e.stopPropagation();
+            }
+        });
+
+        // ===== Code Block Delete Modal =====
+        const codeBlockDeleteModal = new bootstrap.Modal(document.getElementById('codeblock-confirmDeleteModal'));
+        const codeBlockConfirmDeleteBtn = document.getElementById('codeblock-confirm-delete-btn');
+
+        let pendingDeleteCodeBlockEl = null;
+        let pendingDeleteEditorEl = null;
+
+        document.addEventListener('click', (e) => {
+            const delBtn = e.target.closest('.delete-btn');
+            if (!delBtn) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            pendingDeleteCodeBlockEl = delBtn.closest('.code-block-wrapper');
+            pendingDeleteEditorEl = pendingDeleteCodeBlockEl
+                ? pendingDeleteCodeBlockEl.closest('[contenteditable="true"]')
+                : null;
+
+            if (pendingDeleteCodeBlockEl) codeBlockDeleteModal.show();
+        });
+
+        codeBlockConfirmDeleteBtn.addEventListener('click', () => {
+            if (!pendingDeleteCodeBlockEl) return;
+
+            // Lưu điểm đặt caret trước khi xoá
+            const parent = pendingDeleteCodeBlockEl.parentNode;
+            const next = pendingDeleteCodeBlockEl.nextSibling;
+
+            pendingDeleteCodeBlockEl.remove();
+            codeBlockDeleteModal.hide();
+
+            // Đặt caret lại cho editor
+            if (pendingDeleteEditorEl) {
+                pendingDeleteEditorEl.focus();
+
+                const sel = window.getSelection();
+                if (sel) {
+                    sel.removeAllRanges();
+                    const r = document.createRange();
+                    if (next && parent.contains(next)) r.setStartBefore(next);
+                    else r.setStart(parent, parent.childNodes.length);
+                    r.collapse(true);
+                    sel.addRange(r);
+                }
+
+                // Trigger autosave (editor đang có input listener debounce)
+                pendingDeleteEditorEl.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            pendingDeleteCodeBlockEl = null;
+            pendingDeleteEditorEl = null;
+
+            if (typeof showToast === 'function') showToast('Đã xóa code block.', 'success');
+        });
 
         // Image compression and paste functionality
         async function compressImageFile(file, { maxW = 900, maxH = 900, quality = 0.76 } = {}) {
@@ -2415,4 +2783,115 @@
         initializeNotesView();
     });
 </script>
+
+<style id="code-block-override">
+    /* Force win even if there is #detail-editable-full div { ... !important } later */
+
+    #detail-editable-full div.code-block-wrapper.code-block-wrapper,
+    #notes-content-editor div.code-block-wrapper.code-block-wrapper,
+    #notes-profile-content-editor div.code-block-wrapper.code-block-wrapper {
+        background: #0b0f14 !important;
+        border: 2px solid #2d333b !important;
+        /* viền khung */
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        margin: 10px 0 !important;
+        display: block !important;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10) !important;
+        width: 50% !important;
+        max-width: 50% !important;
+    }
+
+    #detail-editable-full div.code-block-header.code-block-header,
+    #notes-content-editor div.code-block-header.code-block-header,
+    #notes-profile-content-editor div.code-block-header.code-block-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        /* Copy về cuối dòng */
+        width: 100% !important;
+        padding: 8px 10px !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+    }
+
+    #detail-editable-full .code-block-title,
+    #notes-content-editor .code-block-title,
+    #notes-profile-content-editor .code-block-title {
+        font-size: 12px !important;
+        opacity: 0.9 !important;
+        color: #e6edf3 !important;
+        display: inline-block !important;
+        min-width: 24px !important;
+        padding: 2px 6px !important;
+        border-radius: 8px !important;
+    }
+
+    #detail-editable-full .code-block-title:focus,
+    #notes-content-editor .code-block-title:focus,
+    #notes-profile-content-editor .code-block-title:focus {
+        outline: none !important;
+        box-shadow: none !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+    }
+
+    #detail-editable-full .code-block-title:empty:before,
+    #notes-content-editor .code-block-title:empty:before,
+    #notes-profile-content-editor .code-block-title:empty:before {
+        content: attr(data-placeholder);
+        opacity: 0.45;
+    }
+
+    #detail-editable-full button.copy-btn.copy-btn,
+    #notes-content-editor button.copy-btn.copy-btn,
+    #notes-profile-content-editor button.copy-btn.copy-btn {
+        margin-left: auto !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #e6edf3 !important;
+        border-radius: 10px !important;
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        cursor: pointer !important;
+    }
+
+    #detail-editable-full button.copy-btn.copy-btn:hover,
+    #notes-content-editor button.copy-btn.copy-btn:hover,
+    #notes-profile-content-editor button.copy-btn.copy-btn:hover {
+        background: rgba(255, 255, 255, 0.14) !important;
+    }
+
+    #detail-editable-full div.code-block-wrapper.code-block-wrapper pre,
+    #notes-content-editor div.code-block-wrapper.code-block-wrapper pre,
+    #notes-profile-content-editor div.code-block-wrapper.code-block-wrapper pre {
+        margin: 0 !important;
+        padding: 10px !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+        overflow-x: auto !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    #detail-editable-full div.code-block-wrapper.code-block-wrapper code,
+    #notes-content-editor div.code-block-wrapper.code-block-wrapper code,
+    #notes-profile-content-editor div.code-block-wrapper.code-block-wrapper code {
+        display: block !important;
+        color: inherit !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+        font-family: inherit !important;
+        outline: none !important;
+    }
+
+    #detail-editable-full div.code-block-wrapper.code-block-wrapper code:focus,
+    #notes-content-editor div.code-block-wrapper.code-block-wrapper code:focus,
+    #notes-profile-content-editor div.code-block-wrapper.code-block-wrapper code:focus {
+        outline: none !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+</style>
 {% endblock %}
+```
