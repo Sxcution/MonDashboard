@@ -1,0 +1,86 @@
+/* MXH - New Features (dropdown + stats + filter dimming)
+   NOTE: Keep it minimal, Bootstrap-first. */
+
+.mxh-card-wrapper.mxh-filtered-out .mxh-card-inner {
+  filter: grayscale(1) brightness(0.55);
+  opacity: 0.35;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+.mxh-filter-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.mxh-filter-overlay-inner {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.55);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.65);
+  user-select: none;
+}
+
+.mxh-filter-x {
+  font-size: 3.2rem;
+  line-height: 1;
+  font-weight: 800;
+  opacity: 0.85;
+}
+
+.mxh-filter-none {
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-top: -2px;
+}
+
+/* Stats panel: subtle cyber look */
+.mxh-stats-card {
+  background: rgba(44, 51, 64, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
+/* Merged stats panel (compact, width follows search container) */
+.mxh-stats-merged {
+  width: 100%;
+}
+
+.mxh-stats-line .text-muted {
+  opacity: 0.9;
+}
+
+.mxh-stats-items {
+  display: inline;
+}
+
+/* Keep platform dropdown compact near filter */
+#mxh-groups-nav .dropdown-toggle {
+  white-space: nowrap;
+}
+/* Stats Clickable */
+.stats-clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.stats-clickable:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff !important;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.active-stat-filter {
+    background-color: rgba(13, 110, 253, 0.3) !important; /* Bootstrap Primary 30% */
+    color: #fff !important;
+    font-weight: bold;
+    border: 1px solid rgba(13, 110, 253, 0.5);
+    box-shadow: 0 0 8px rgba(13, 110, 253, 0.4);
+}

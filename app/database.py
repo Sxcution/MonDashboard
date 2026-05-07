@@ -140,7 +140,28 @@ def init_database():
             twofa_code TEXT,
             notes TEXT,
             created_at TEXT NOT NULL,
+            container_type TEXT,
+            nearby_people_until TEXT,
             FOREIGN KEY (card_id) REFERENCES mxh_cards(id) ON DELETE CASCADE
+        )"""
+    )
+
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS mxh_scan_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER NOT NULL,
+            scan_date TEXT NOT NULL,
+            FOREIGN KEY (account_id) REFERENCES mxh_accounts(id) ON DELETE CASCADE
+        )"""
+    )
+
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS mxh_phone_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER NOT NULL,
+            phone TEXT NOT NULL,
+            changed_at TEXT NOT NULL,
+            FOREIGN KEY (account_id) REFERENCES mxh_accounts(id) ON DELETE CASCADE
         )"""
     )
     
@@ -255,6 +276,39 @@ def ensure_database():
     """Ensure database is initialized and migrated"""
     init_database()
     migrate_auto_seeding_schema()
+    # Add container_type column if missing (for existing databases)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('PRAGMA table_info(mxh_accounts)')
+        cols = [row['name'] for row in cursor.fetchall()]
+        if 'container_type' not in cols:
+            conn.execute('ALTER TABLE mxh_accounts ADD COLUMN container_type TEXT')
+        if 'nearby_people_until' not in cols:
+            conn.execute('ALTER TABLE mxh_accounts ADD COLUMN nearby_people_until TEXT')
+        if 'notes' not in cols:
+            conn.execute('ALTER TABLE mxh_accounts ADD COLUMN notes TEXT')
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+    # Create phone history table if missing
+    try:
+        conn = get_db_connection()
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS mxh_phone_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_id INTEGER NOT NULL,
+                phone TEXT NOT NULL,
+                changed_at TEXT NOT NULL,
+                FOREIGN KEY (account_id) REFERENCES mxh_accounts(id) ON DELETE CASCADE
+            )"""
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
 
 
 if __name__ == '__main__':

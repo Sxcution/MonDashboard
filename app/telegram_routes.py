@@ -196,8 +196,8 @@ def get_group_sessions(group_id):
                     'filename': filename,
                     'full_name': meta.get('full_name', 'Chưa kiểm tra'),
                     'username': meta.get('username', ''),
-                    'is_live': meta.get('is_live'),
-                    'status_text': meta.get('status_text', 'Sẵn sàng'),
+                    'is_live': None,
+                    'status_text': 'Sẵn sàng',
                 })
         
         return jsonify(sessions)

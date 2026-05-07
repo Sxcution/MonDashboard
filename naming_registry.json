@@ -26,6 +26,14 @@
         "textarea_prompt_image": "system-prompt-image",
         "btn_save_settings": "saveAISettings()"
     },
+    "UI_SETTINGS": {
+        "switch_auto_start": "autoStartSwitch",
+        "switch_auto_open": "autoOpenDashboardSwitch",
+        "btn_enable_notification": "btnEnableNotification",
+        "input_mxh_refresh": "mxh-refresh-interval-ms",
+        "btn_apply_mxh_refresh": "apply-mxh-refresh-btn",
+        "switch_shutdown": "shutdownToggle"
+    },
     "API_ROUTES": {
         "route_chat_new": "/api/chat/new",
         "route_chat_send": "/api/chat/send",
@@ -39,9 +47,14 @@
         "table_chat_history": "chat_history",
         "table_ai_settings": "ai_settings",
         "table_notes": "notes",
-        "table_mxh_accounts": "mxh_accounts",
         "table_mxh_cards": "mxh_cards",
-        "table_session_metadata": "session_metadata"
+        "table_mxh_accounts": "mxh_accounts",
+        "table_mxh_scan_history": "mxh_scan_history",
+        "table_session_metadata": "session_metadata",
+        "field_container_type": "container_type",
+        "field_wechat_status": "wechat_status",
+        "field_email": "email",
+        "field_nearby_people_until": "nearby_people_until"
     },
     "CONFIG_KEYS": {
         "key_provider": "provider",
@@ -80,7 +93,36 @@
         "modal_change_card_number": "change-card-number-modal",
         "modal_notice": "noticeModal",
         "modal_delete_card": "delete-card-modal",
-        "modal_reset_card": "reset-card-modal"
+        "modal_reset_card": "reset-card-modal",
+        "input_wechat_nickname": "wechat-nickname",
+        "row_stats": "mxh-stats-row",
+        "stats_accounts": "mxh-stats-accounts",
+        "stats_cards": "mxh-stats-cards",
+        "filter_overlay": "mxh-filter-overlay",
+        "filter_dimmed_class": "mxh-filtered-out",
+        "stats_clickable_class": "stats-clickable",
+        "stats_active_class": "active-stat-filter",
+        "context_menu_background": "mxh-background-context-menu",
+        "check_view_default": "view-default-check",
+        "check_view_card2": "view-card2-check",
+        "check_view_card3": "view-card3-check",
+        "modal_scan_history": "scan-history-modal",
+        "list_scan_history": "scan-history-list",
+        "btn_reset_scan_history": "btn-reset-scan-history",
+        "input_wechat_email": "wechat-email",
+        "action_status_unverify": "status-unverify",
+        "action_status_verify_success": "status-verify-success",
+        "action_add_sub_shelter": "add-sub-shelter",
+        "action_add_sub_security_folder": "add-sub-security-folder",
+        "action_add_sub_multi_user": "add-sub-multi-user",
+        "action_add_sub_clone_app": "add-sub-clone-app",
+        "css_border_yellow": "mxh-border-yellow",
+        "action_nearby_active": "nearby-active",
+        "action_nearby_cam": "nearby-cam",
+        "filter_nearby_people": "nearby_people",
+        "badge_nearby_eligible": "nearby-eligible-badge",
+        "fn_is_eligible_nearby_people": "isEligibleNearbyPeople",
+        "fn_is_nearby_people_active": "isNearbyPeopleActive"
     },
     "UI_NOTES": {
         "tab_pane": "notes-tool-pane",
@@ -114,7 +156,11 @@
         "context_menu_card": "note-card-context-menu",
         "context_menu_editor": "notes-context-menu",
         "context_menu_profile": "profile-span-context-menu",
-        "context_menu_image": "image-modal-context-menu"
+        "context_menu_image": "image-modal-context-menu",
+        "dropdown_split_view": "splitViewDropdown",
+        "container_split_view": "split-view-container",
+        "pane_split_left": "split-pane-left",
+        "pane_split_right": "split-pane-right"
     },
     "UI_TELEGRAM": {
         "tab_pane": "telegram-tool-pane",

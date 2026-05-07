@@ -572,99 +572,6 @@
         outline: none !important;
         box-shadow: none !important;
     }
-
-    /* === Split View Styles === */
-    #notes-detail-content-wrapper {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 200px);
-        /* Ensure wrapper has explicit height */
-        overflow: hidden;
-    }
-
-    #notes-detail-content {
-        flex: 1;
-        overflow: hidden;
-        height: 100%;
-    }
-
-    .split-view-container {
-        display: grid;
-        grid-template-columns: 1fr 4px 1fr;
-        gap: 0;
-        height: 100% !important;
-        min-height: 400px;
-    }
-
-    .split-pane {
-        overflow-y: auto;
-        height: 100%;
-        border: 1px solid var(--border-color, #2d333b);
-        border-radius: 8px;
-        padding: 10px;
-        background: var(--card-bg, #161b22);
-    }
-
-    .split-pane.readonly-pane {
-        opacity: 0.95;
-        cursor: default;
-    }
-
-    .split-divider {
-        width: 4px;
-        background: linear-gradient(180deg, transparent, #00e0ff, transparent);
-        border-radius: 2px;
-        cursor: col-resize;
-        flex-shrink: 0;
-    }
-
-    /* Responsive: stack vertically on narrow screens */
-    @media (max-width: 768px) {
-        .split-view-container {
-            grid-template-columns: 1fr;
-            grid-template-rows: 1fr 1fr;
-        }
-
-        .split-divider {
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, #00e0ff, transparent);
-            cursor: row-resize;
-        }
-    }
-
-    /* Split dropdown button styling */
-    .btn-split-view {
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #e6edf3;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-        border-radius: 6px;
-    }
-
-    .btn-split-view:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
-    }
-
-    .btn-split-view.active {
-        background: rgba(0, 224, 255, 0.2);
-        border-color: #00e0ff;
-        color: #00e0ff;
-    }
-
-    /* Remove focus outline from split pane editors */
-    #detail-editable-right:focus,
-    #detail-editable-right:focus-visible,
-    #split-pane-right:focus,
-    #split-pane-right:focus-visible,
-    .split-pane [contenteditable]:focus,
-    .split-pane [contenteditable]:focus-visible {
-        outline: none !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
 </style>
 {% endblock %}
 
@@ -1221,187 +1128,6 @@
             if (detailHeader) detailHeader.innerHTML = '';
             if (detailContent) detailContent.classList.add('d-none');
             if (detailPlaceholder) detailPlaceholder.classList.remove('d-none');
-
-            // Reset split view state when closing
-            currentSplitMode = 1;
-        };
-
-        // === SPLIT VIEW LOGIC ===
-        let currentSplitMode = 1; // 1 = single, 2 = split
-
-        // Persist split state per note in localStorage
-        function getSplitState(noteId) {
-            try {
-                const states = JSON.parse(localStorage.getItem('noteSplitStates') || '{}');
-                return states[noteId] || { mode: 1, rightContent: '' };
-            } catch { return { mode: 1, rightContent: '' }; }
-        }
-
-        function saveSplitState(noteId, mode, rightContent = '') {
-            try {
-                const states = JSON.parse(localStorage.getItem('noteSplitStates') || '{}');
-                if (mode === 1) {
-                    delete states[noteId]; // Remove when back to single
-                } else {
-                    states[noteId] = { mode, rightContent };
-                }
-                localStorage.setItem('noteSplitStates', JSON.stringify(states));
-            } catch (e) { console.error('Failed to save split state', e); }
-        }
-
-        window.toggleSplitMode = (mode) => {
-            const detailContent = document.getElementById('notes-detail-content');
-            const editorEl = document.getElementById('detail-editable-full');
-            const splitBtn = document.getElementById('splitViewDropdown');
-
-            if (!detailContent || !editorEl) return;
-
-            currentSplitMode = mode;
-
-            if (mode === 2) {
-                // === ENABLE SPLIT VIEW ===
-                console.log('[Split View] Enabling split mode...');
-
-                // Check if already in split mode
-                if (detailContent.querySelector('.split-view-container')) {
-                    console.log('[Split View] Already in split mode, skipping');
-                    return;
-                }
-
-                // Get current content
-                const currentHtml = editorEl.innerHTML;
-                console.log('[Split View] Current content length:', currentHtml.length);
-
-                // Create split container - simple layout, no fancy backgrounds
-                const splitContainer = document.createElement('div');
-                splitContainer.className = 'split-view-container';
-                splitContainer.style.cssText = 'display: grid !important; grid-template-columns: 1fr 1px 1fr !important; gap: 0 !important; height: 100% !important; min-height: 500px !important;';
-
-                // Pane 1: Original editable with ALL content
-                const pane1 = document.createElement('div');
-                pane1.className = 'split-pane';
-                pane1.id = 'split-pane-left';
-                pane1.style.cssText = 'overflow-y: auto !important; height: 100% !important; padding: 10px !important;';
-                pane1.innerHTML = `<div id="detail-editable-full" contenteditable="true" spellcheck="false" data-placeholder="Dòng đầu là tiêu đề...">${currentHtml}</div>`;
-
-                // Divider - simple white line
-                const divider = document.createElement('div');
-                divider.className = 'split-divider';
-                divider.style.cssText = 'width: 1px !important; background: #fff !important; flex-shrink: 0 !important;';
-
-                // Pane 2: EMPTY editable pane (not cloned)
-                // Check localStorage for saved right content
-                const savedState = getSplitState(activeNoteId);
-                const rightContent = savedState.rightContent || '';
-
-                const pane2 = document.createElement('div');
-                pane2.className = 'split-pane';
-                pane2.id = 'split-pane-right';
-                pane2.style.cssText = 'overflow-y: auto !important; height: 100% !important; padding: 10px !important;';
-                pane2.innerHTML = `<div id="detail-editable-right" contenteditable="true" spellcheck="false" data-placeholder="Nhập nội dung bên phải..." style="outline: none !important; border: none !important;">${rightContent}</div>`;
-
-                splitContainer.appendChild(pane1);
-                splitContainer.appendChild(divider);
-                splitContainer.appendChild(pane2);
-
-                // Replace content - CLEAR and append
-                detailContent.innerHTML = '';
-                detailContent.style.cssText = 'height: 100% !important; display: block !important;';
-                detailContent.appendChild(splitContainer);
-
-                console.log('[Split View] Split container added:', splitContainer);
-                console.log('[Split View] detailContent children:', detailContent.children.length);
-
-                // Re-attach event listeners to new editable
-                const newEditor = document.getElementById('detail-editable-full');
-                if (newEditor) {
-                    newEditor.setAttribute('data-initial-content', newEditor.innerHTML);
-                    newEditor.addEventListener('blur', () => {
-                        if (activeNoteId) saveNoteChanges(activeNoteId);
-                    });
-                    newEditor.addEventListener('input', () => {
-                        clearTimeout(autoSaveTimer);
-                        autoSaveTimer = setTimeout(() => {
-                            if (activeNoteId) saveNoteChanges(activeNoteId, true, true);
-                        }, 100);
-                    });
-                    newEditor.addEventListener('contextmenu', handleEditorContextMenu);
-
-                    // Re-initialize profile interactions
-                    initializeProfileInteractions();
-                    applySavedColors();
-                }
-
-                // Attach event listeners to RIGHT pane editor too
-                const rightEditor = document.getElementById('detail-editable-right');
-                if (rightEditor) {
-                    rightEditor.addEventListener('blur', () => {
-                        // Save right pane content to localStorage
-                        saveSplitState(activeNoteId, 2, rightEditor.innerHTML);
-                        if (activeNoteId) saveSplitNoteChanges();
-                    });
-                    rightEditor.addEventListener('input', () => {
-                        clearTimeout(autoSaveTimer);
-                        autoSaveTimer = setTimeout(() => {
-                            // Save right pane content to localStorage
-                            saveSplitState(activeNoteId, 2, rightEditor.innerHTML);
-                            if (activeNoteId) saveSplitNoteChanges(true);
-                        }, 100);
-                    });
-                    rightEditor.addEventListener('contextmenu', handleEditorContextMenu);
-                }
-
-                // Only save initial empty state if this is a NEW split (not restoring from localStorage)
-                // savedState.rightContent is already loaded above, so don't overwrite it
-                if (!savedState.rightContent) {
-                    saveSplitState(activeNoteId, 2, '');
-                }
-
-                // Update button style
-                if (splitBtn) splitBtn.classList.add('active');
-
-                // showToast('Đã bật chế độ chia đôi màn hình', 'info');
-
-            } else {
-                // === DISABLE SPLIT VIEW (Mode 1) ===
-                const splitContainer = detailContent.querySelector('.split-view-container');
-                if (!splitContainer) return;
-
-                // Get content from LEFT pane only (right pane stays in localStorage)
-                const leftEditor = document.getElementById('detail-editable-full');
-                const leftHtml = leftEditor ? leftEditor.innerHTML : '';
-
-                // Restore single view with LEFT pane content only (no merge)
-                detailContent.innerHTML = `<div id="detail-editable-full" contenteditable="true" spellcheck="false" data-placeholder="Dòng đầu là tiêu đề...">${leftHtml}</div>`;
-
-                // Re-attach event listeners
-                const newEditor = document.getElementById('detail-editable-full');
-                if (newEditor) {
-                    newEditor.setAttribute('data-initial-content', newEditor.innerHTML);
-                    newEditor.addEventListener('blur', () => {
-                        if (activeNoteId) saveNoteChanges(activeNoteId);
-                    });
-                    newEditor.addEventListener('input', () => {
-                        clearTimeout(autoSaveTimer);
-                        autoSaveTimer = setTimeout(() => {
-                            if (activeNoteId) saveNoteChanges(activeNoteId, true, true);
-                        }, 100);
-                    });
-                    newEditor.addEventListener('contextmenu', handleEditorContextMenu);
-
-                    // Re-initialize profile interactions
-                    initializeProfileInteractions();
-                    applySavedColors();
-                }
-
-                // Update button style
-                if (splitBtn) splitBtn.classList.remove('active');
-
-                // Clear split state from localStorage
-                saveSplitState(activeNoteId, 1);
-
-                // showToast('Đã tắt chế độ chia đôi', 'info');
-            }
         };
 
         function showNoteDetail(note) {
@@ -1410,9 +1136,6 @@
             document.querySelectorAll('#notes-container .card').forEach(card => card.classList.remove('note-card-active'));
             const clickedCard = document.querySelector(`.card[data-note-id="${note.id}"]`);
             if (clickedCard) clickedCard.classList.add('note-card-active');
-
-            // Check if this note was previously in split mode
-            const savedSplitState = getSplitState(note.id);
 
             openDetailPanel();
 
@@ -1425,16 +1148,7 @@
                 <small class="text-muted" title="${new Date(note.modified_at).toLocaleString('vi-VN')}">
                     <i class="bi bi-clock-history"></i> ${formatTimeAgo(note.modified_at)}
                 </small>
-                <div class="d-flex align-items-center gap-1">
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-split-view dropdown-toggle" type="button" id="splitViewDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Chia màn hình">
-                            <i class="bi bi-layout-split"></i> Split
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="splitViewDropdown">
-                            <li><a class="dropdown-item" href="#" onclick="window.toggleSplitMode(1); return false;"><i class="bi bi-square me-2"></i>1 (Mặc định)</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="window.toggleSplitMode(2); return false;"><i class="bi bi-layout-split me-2"></i>2 (Chia đôi)</a></li>
-                        </ul>
-                    </div>
+                <div>
                     <button class="btn btn-sm btn-primary" onclick="window.prepareAddNoteModal()" title="Thêm ghi chú mới"><i class="bi bi-plus-lg"></i></button>
                     <button class="btn btn-sm btn-outline-danger" onclick="window.deleteNoteWrapper('${note.id}', event)" title="Xóa ghi chú"><i class="bi bi-trash-fill"></i></button>
                     <button class="btn-close btn-close-white" onclick="window.closeDetailPanel()" title="Đóng chi tiết" style="font-size: 0.8rem;"></button>
@@ -1556,7 +1270,7 @@
                         console.log('[editor input] 💾 Auto-saving note after typing pause');
                         saveNoteChanges(activeNoteId, true, true); // forceSave=true, silentSave=true
                     }
-                }, 100);
+                }, 1000);
             });
 
             // Initialize profile interactions and apply saved colors
@@ -1581,52 +1295,6 @@
 
             detailPlaceholder.classList.add('d-none');
             detailContent.classList.remove('d-none');
-
-            // Auto-restore split mode if this note was previously in split mode
-            if (savedSplitState.mode === 2) {
-                setTimeout(() => {
-                    window.toggleSplitMode(2);
-                }, 100);
-            }
-        }
-
-        // Save function for split view - saves LEFT pane to DB, RIGHT pane to localStorage ONLY
-        async function saveSplitNoteChanges(silentSave = false) {
-            if (!activeNoteId) return;
-
-            const leftEditor = document.getElementById('detail-editable-full');
-            const rightEditor = document.getElementById('detail-editable-right');
-
-            if (!leftEditor) return;
-
-            // Save LEFT pane to database (normal note content)
-            const leftHtml = leftEditor.innerHTML;
-            const parts = leftHtml.split('<br>');
-            const payload = {
-                title_html: parts.shift() || '',
-                content_html: parts.join('<br>')
-            };
-
-            try {
-                const response = await fetch(`{{ url_for('notes_feature.api_update_note', note_id='') }}${activeNoteId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) throw new Error('Lỗi khi lưu trên server');
-
-                const updatedNote = await response.json();
-                const index = window.notesData.findIndex(n => n.id === activeNoteId);
-                if (index !== -1) window.notesData[index] = updatedNote;
-            } catch (error) {
-                showToast('Lỗi khi lưu!', 'error');
-            }
-
-            // Save RIGHT pane to localStorage ONLY (not to DB)
-            if (rightEditor) {
-                saveSplitState(activeNoteId, 2, rightEditor.innerHTML);
-            }
         }
 
         async function saveNoteChanges(noteId, forceSave = false, silentSave = false) {
@@ -1674,10 +1342,9 @@
                 // Update initial content to new saved state
                 editorEl.setAttribute('data-initial-content', currentContent);
 
-                // Silent save - no toast spam
-                // if (!silentSave) {
-                //     showToast('Đã lưu thay đổi!', 'success');
-                // }
+                if (!silentSave) {
+                    showToast('Đã lưu thay đổi!', 'success');
+                }
 
                 // Update only the specific card without full re-render
                 const cardWrapper = document.querySelector(`[data-note-id="${noteId}"]`);
@@ -1993,14 +1660,43 @@
                 // Get current selection before execCommand
                 const selection = window.getSelection();
                 if (selection.rangeCount === 0) return;
+                const range = selection.getRangeAt(0);
+                const editor = range.commonAncestorContainer.parentElement?.closest('[contenteditable="true"]');
 
-                // Apply color formatting using execCommand
-                // This creates <font color="..."> or <span style="color: ...">
-                // DO NOT set contenteditable=false - it breaks Backspace behavior
+                // Apply color formatting
                 document.execCommand('foreColor', false, color);
 
-                // Simply move cursor to end of selection, no special handling needed
-                // The browser will handle Backspace normally on the colored text
+                // ✅ FIX: Move cursor outside colored element (same pattern as profile span fix)
+                if (editor) {
+                    // execCommand creates <font color="..."> or <span style="color: ...">
+                    // Find all potential colored elements
+                    const coloredElements = Array.from(editor.querySelectorAll('font[color], span[style*="color"]'));
+
+                    // The last one matching our color is likely the one we just created
+                    const targetColor = color.toLowerCase();
+                    const coloredEl = coloredElements.reverse().find(el => {
+                        const elColor = el.getAttribute('color') || el.style.color;
+                        return elColor && elColor.toLowerCase().includes(targetColor.replace('#', ''));
+                    });
+
+                    if (coloredEl) {
+                        // Prevent browser from expanding this element when typing
+                        coloredEl.setAttribute('contenteditable', 'false');
+
+                        // Insert zero-width space after colored element
+                        const spacer = document.createTextNode('\u200B');
+                        coloredEl.parentNode.insertBefore(spacer, coloredEl.nextSibling);
+
+                        // Move cursor to spacer position
+                        const newRange = document.createRange();
+                        newRange.setStart(spacer, 1);
+                        newRange.collapse(true);
+
+                        const newSel = window.getSelection();
+                        newSel.removeAllRanges();
+                        newSel.addRange(newRange);
+                    }
+                }
 
                 hideAllContextMenus();
                 setTimeout(() => saveNoteChanges(activeNoteId), 100);

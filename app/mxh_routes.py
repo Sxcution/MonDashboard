@@ -313,7 +313,10 @@ def update_account_direct(account_id):
             "account_name", "wechat_created_day", "wechat_created_month", "wechat_created_year",
             "wechat_status", "die_date", "disabled_date", "wechat_scan_count", "wechat_last_scan_date",
             "rescue_count", "rescue_success_count", "email_reset_date", "notice", "muted_until",
-            "email"  # Thêm trường email để cho phép cập nhật email từ modal WeChat
+            "email",  # Thêm trường email để cho phép cập nhật email từ modal WeChat
+            "wechat_nickname",  # WeChat ID/nickname field
+            "container_type",  # Loại container: shelter, security_folder, multi_user
+            "notes"  # Ghi chú tài khoản
         }
         
         # 🔍 Debug: Kiểm tra dữ liệu nhận được từ frontend
@@ -341,8 +344,21 @@ def update_account_direct(account_id):
         
         # Update account fields if any
         if updates:
+            now_iso = datetime.now().isoformat()
+            
+            # --- Auto-log phone history if phone is changing ---
+            if 'phone' in updates:
+                old_account = conn.execute("SELECT phone FROM mxh_accounts WHERE id = ?", (account_id,)).fetchone()
+                old_phone = (old_account['phone'] or '').strip() if old_account else ''
+                new_phone = (updates['phone'] or '').strip()
+                if old_phone and old_phone != new_phone and old_phone not in ('...', ''):
+                    conn.execute(
+                        "INSERT INTO mxh_phone_history (account_id, phone, changed_at) VALUES (?, ?, ?)",
+                        (account_id, old_phone, now_iso)
+                    )
+
             # Add updated_at
-            updates["updated_at"] = datetime.now().isoformat()
+            updates["updated_at"] = now_iso
             
             # Build SQL
             set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
@@ -395,10 +411,12 @@ def mxh_create_sub_account(card_id):
         cursor = conn.execute(
             """INSERT INTO mxh_accounts 
                (card_id, is_primary, created_at, updated_at, account_name, 
-                wechat_created_day, wechat_created_month, wechat_created_year) 
-               VALUES (?, 0, ?, ?, ?, ?, ?, ?)""",
+                wechat_created_day, wechat_created_month, wechat_created_year,
+                container_type) 
+               VALUES (?, 0, ?, ?, ?, ?, ?, ?, ?)""",
             (card_id, now_iso, now_iso, "Tài khoản phụ", 
-             wechat_created_day, wechat_created_month, wechat_created_year),
+             wechat_created_day, wechat_created_month, wechat_created_year,
+             data.get("container_type")),
         )
         sub_account_id = cursor.lastrowid
         conn.commit()
@@ -523,6 +541,12 @@ def acc_scan(account_id):
                 """,
                 (now_iso, now_iso, account_id),
             )
+            
+            # Log to history
+            conn.execute(
+                "INSERT INTO mxh_scan_history (account_id, scan_date) VALUES (?, ?)",
+                (account_id, now_iso)
+            )
             message = "Scan recorded"
 
         conn.commit()
@@ -538,6 +562,36 @@ def acc_scan(account_id):
         if updated:
             return jsonify(dict(updated))
         return jsonify({"message": message})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@mxh_bp.route("/api/accounts/<int:account_id>/scan-history", methods=["GET"])
+def get_scan_history(account_id):
+    """GET /mxh/api/accounts/<account_id>/scan-history - lấy lịch sử quét"""
+    conn = get_db_connection()
+    try:
+        rows = conn.execute(
+            "SELECT scan_date FROM mxh_scan_history WHERE account_id = ? ORDER BY scan_date DESC",
+            (account_id,)
+        ).fetchall()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@mxh_bp.route("/api/accounts/<int:account_id>/scan-history", methods=["DELETE"])
+def clear_scan_history(account_id):
+    """DELETE /mxh/api/accounts/<account_id>/scan-history - xoá lịch sử quét"""
+    conn = get_db_connection()
+    try:
+        conn.execute("DELETE FROM mxh_scan_history WHERE account_id = ?", (account_id,))
+        conn.commit()
+        return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
@@ -632,6 +686,7 @@ def acc_reset(account_id):
             UPDATE mxh_accounts
             SET username = '.',
                 phone = '.',
+                wechat_nickname = '.',
                 status = 'active',
                 die_date = NULL,
                 disabled_date = NULL,
@@ -697,6 +752,70 @@ def acc_notice(account_id):
         conn.commit()
         return jsonify({"message": "Notice saved", "notice": data})
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@mxh_bp.route("/api/accounts/<int:account_id>/move", methods=["POST"])
+def move_account_to_card(account_id):
+    """POST /mxh/api/accounts/<account_id>/move - Di chuyển tài khoản sang card khác"""
+    conn = get_db_connection()
+    try:
+        data = request.get_json() or {}
+        target_card_id = data.get('target_card_id')
+
+        if not target_card_id:
+            return jsonify({"error": "target_card_id là bắt buộc"}), 400
+
+        # Verify account exists and is NOT primary
+        account = conn.execute(
+            "SELECT id, card_id, is_primary, username FROM mxh_accounts WHERE id = ?",
+            (account_id,)
+        ).fetchone()
+
+        if not account:
+            return jsonify({"error": "Không tìm thấy tài khoản"}), 404
+
+        if account['is_primary']:
+            return jsonify({"error": "Không thể di chuyển tài khoản chính"}), 400
+
+        if account['card_id'] == target_card_id:
+            return jsonify({"error": "Tài khoản đã thuộc card này"}), 400
+
+        # Verify target card exists
+        target_card = conn.execute(
+            "SELECT id, card_name FROM mxh_cards WHERE id = ?",
+            (target_card_id,)
+        ).fetchone()
+
+        if not target_card:
+            return jsonify({"error": "Card đích không tồn tại"}), 404
+
+        # Move the account
+        now_iso = _now_iso()
+        conn.execute(
+            "UPDATE mxh_accounts SET card_id = ?, updated_at = ? WHERE id = ?",
+            (target_card_id, now_iso, account_id)
+        )
+        conn.commit()
+
+        # Return updated account
+        updated = conn.execute("""
+            SELECT a.*, c.card_name, c.group_id, c.platform
+            FROM mxh_accounts a
+            JOIN mxh_cards c ON a.card_id = c.id
+            WHERE a.id = ?
+        """, (account_id,)).fetchone()
+
+        print(f"✅ Moved account {account_id} ({account['username']}) to Card {target_card['card_name']} (id={target_card_id})")
+
+        if updated:
+            return jsonify(dict(updated))
+        return jsonify({"message": "Account moved successfully"})
+    except Exception as e:
+        try: conn.rollback()
+        except Exception: pass
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()

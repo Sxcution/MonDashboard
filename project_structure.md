@@ -13,7 +13,7 @@
 ## Routes (`app/`)
 - `routes.py`: Main/Index routes.
 - `chatbot_routes.py`: API endpoints for Chatbot (`/api/chat`), history, and settings.
-- `mxh_routes.py`: Routes for Social Media management (Facebook, TikTok).
+- `mxh_routes.py`: Routes for Social Media management (Facebook, TikTok, WeChat). Includes account CRUD, reset, status toggling, and stats calculation logic.
 - `notes_routes.py`: Routes for Notes management.
 - `telegram_routes.py`: Routes for Telegram session management.
 - `image_routes.py`: Routes for image processing/OCR.
@@ -22,11 +22,11 @@
 
 ## Workers (`app/`)
 - `telegram_workers.py`: Background workers for Telegram automation.
-- `mxh_api.py`: API wrapper for MXH interactions.
+- `mxh_api.py`: API wrapper for MXH interactions. Provides quick update endpoints for inline editing (username, phone, nickname) and Nearby People management.
 
 ## Templates (`app/templates/`)
 - `home.html`: Main Dashboard UI (Chat interface).
-- `mxh.html`: Social Media management interface.
+- `mxh.html`: Social Media management interface. Features: Dropdown Tabs, **Optimized Stats Panels (Smart Filters)**, **Update In-Place Filtering (High Performance)**, Inline Editing (username, phone, email), 3D Flip Cards, **Global View Mode (Card 2/3)**, **Smart Scan Countdown**, **Scan History Logger**, **UnVerify/Verify Success Status**, **Container Type Sub-Accounts (Shelter/Security Folder/Multi User/Clone App)**, **Nearby People Badge & Filter** (icon xanh dương trên card + submenu + bộ lọc stats, chỉ hiện khi tk >= 1 năm + không Die + đang Active).
 - `notes.html`: Notes management interface.
 - `telegram.html`: Telegram management interface.
 - `settings.html`: Settings interface.

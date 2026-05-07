@@ -233,8 +233,8 @@ async def task_worker(task_id, group_id, session_path, filename, coro_func, *arg
                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP) 
                ON CONFLICT(group_id, filename) 
                DO UPDATE SET 
-                 full_name=excluded.full_name, 
-                 username=excluded.username, 
+                 full_name = CASE WHEN excluded.is_live = 1 THEN excluded.full_name ELSE session_metadata.full_name END,
+                 username = CASE WHEN excluded.is_live = 1 THEN excluded.username ELSE session_metadata.username END,
                  is_live=excluded.is_live, 
                  status_text=excluded.status_text, 
                  last_checked=CURRENT_TIMESTAMP""",
