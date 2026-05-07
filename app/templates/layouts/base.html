@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="vi" data-bs-theme="dark">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,6 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
     <!-- Dashboard Context Menu -->
     <div id="dashboard-context-menu" class="custom-context-menu">
@@ -17,6 +19,9 @@
         </div>
         <div class="menu-item" onclick="location.href='/settings/'">
             <i class="bi bi-gear-wide-connected me-2"></i>Setting Dashboard
+        </div>
+        <div class="menu-item" onclick="requestNotificationPermission()">
+            <i class="bi bi-bell-fill me-2"></i>Bật Thông Báo Desktop
         </div>
     </div>
 
@@ -28,7 +33,7 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-    
+
     <!-- Toast Notification -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
         <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -43,7 +48,8 @@
     </div>
 
     <!-- Global Confirmation Modal -->
-    <div class="modal fade" id="globalDeleteConfirmModal" tabindex="-1" aria-labelledby="globalDeleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal fade" id="globalDeleteConfirmModal" tabindex="-1" aria-labelledby="globalDeleteConfirmModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -64,7 +70,8 @@
     </div>
 
     <!-- Global Alert Modal -->
-    <div class="modal fade" id="globalAlertModal" tabindex="-1" aria-labelledby="globalAlertModalLabel" aria-hidden="true">
+    <div class="modal fade" id="globalAlertModal" tabindex="-1" aria-labelledby="globalAlertModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -82,12 +89,12 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         // Hàm hiển thị thông báo toàn cục
         function showToast(m, t = 'success', title = 'Thông báo') {
             const e = document.getElementById('liveToast'), h = document.getElementById('toastHeader'),
-                  i = document.getElementById('toastTitle'), b = document.getElementById('toastBody');
+                i = document.getElementById('toastTitle'), b = document.getElementById('toastBody');
             if (!e) return;
             b.textContent = m;
             h.className = 'toast-header';
@@ -109,27 +116,27 @@
             return new Promise((resolve) => {
                 document.getElementById('globalDeleteConfirmText').textContent = message;
                 document.getElementById('globalDeleteConfirmModalLabel').innerHTML = `<i class="bi bi-exclamation-triangle me-2 text-warning"></i>${title}`;
-                
+
                 const modal = new bootstrap.Modal(document.getElementById('globalDeleteConfirmModal'));
                 const confirmBtn = document.getElementById('globalDeleteConfirmBtn');
                 const cancelBtn = document.querySelector('#globalDeleteConfirmModal .btn-secondary');
-                
+
                 // Xóa event listeners cũ
                 const newConfirmBtn = confirmBtn.cloneNode(true);
                 const newCancelBtn = cancelBtn.cloneNode(true);
                 confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
                 cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-                
+
                 newConfirmBtn.onclick = () => {
                     modal.hide();
                     resolve(true);
                 };
-                
+
                 newCancelBtn.onclick = () => {
                     modal.hide();
                     resolve(false);
                 };
-                
+
                 modal.show();
             });
         }
@@ -138,8 +145,40 @@
         window.alert = showAlert;
         window.confirm = showConfirm;
 
+        // Global Desktop Notification Helper
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                alert("Trình duyệt này không hỗ trợ thông báo máy tính.");
+                return;
+            }
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    showToast("Đã cấp quyền thông báo thành công!", "success");
+                    new Notification("STool Dashboard", {
+                        body: "Thông báo đã được kích hoạt!",
+                        icon: "/static/favicon.ico"
+                    });
+                } else {
+                    showToast("Quyền thông báo bị từ chối.", "error");
+                }
+            });
+        }
+
+        function showPlatformNotification(title, body, icon = "/static/favicon.ico") {
+            if (!("Notification" in window)) return;
+            if (Notification.permission === "granted") {
+                new Notification(title, { body: body, icon: icon });
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification(title, { body: body, icon: icon });
+                    }
+                });
+            }
+        }
+
         // Dashboard Context Menu Logic
-        (function() {
+        (function () {
             const dashboardMenu = document.getElementById('dashboard-context-menu');
             if (!dashboardMenu) return;
 
@@ -173,4 +212,5 @@
     </script>
     {% block scripts %}{% endblock %}
 </body>
+
 </html>

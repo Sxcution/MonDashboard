@@ -297,7 +297,7 @@ def quick_update_account(account_id):
         # Validate field name to prevent SQL injection
         allowed_fields = [
             'account_name', 'username', 'phone', 'url', 'login_username', 
-            'login_password', 'wechat_status', 'status', 'notice'
+            'login_password', 'wechat_status', 'status', 'notice', 'wechat_nickname'
         ]
         
         if field not in allowed_fields:
@@ -399,8 +399,9 @@ def update_account(account_id):
         # --- Update mxh_accounts table ---
         account_fields = {}
         allowed_account_fields = [
-            "username", "phone", "email", "wechat_created_day", "wechat_created_month",
-            "wechat_created_year", "status", "muted_until", "wechat_status", "die_date", "disabled_date"
+            "username", "phone", "email", "wechat_nickname",
+            "wechat_created_day", "wechat_created_month", "wechat_created_year",
+            "status", "muted_until", "wechat_status", "die_date", "disabled_date"
         ]
         
         for field in allowed_account_fields:
@@ -410,6 +411,19 @@ def update_account(account_id):
         print(f"🔍 Account fields to update: {account_fields}")
         
         if account_fields:
+            # --- Auto-log phone history if phone is changing ---
+            if 'phone' in account_fields:
+                old_account = conn.execute(
+                    "SELECT phone FROM mxh_accounts WHERE id = ?", (account_id,)
+                ).fetchone()
+                old_phone = (old_account['phone'] or '').strip() if old_account else ''
+                new_phone = (account_fields['phone'] or '').strip()
+                if old_phone and old_phone != new_phone and old_phone not in ('...', ''):
+                    conn.execute(
+                        "INSERT INTO mxh_phone_history (account_id, phone, changed_at) VALUES (?, ?, ?)",
+                        (account_id, old_phone, now)
+                    )
+
             account_fields["updated_at"] = now
             set_clause = ", ".join([f"{key} = ?" for key in account_fields.keys()])
             params = list(account_fields.values()) + [account_id]
@@ -525,3 +539,103 @@ def disable_notice():
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
+
+
+@mxh_api_bp.route("/accounts/<int:account_id>/phone-history", methods=["GET"])
+def get_phone_history(account_id):
+    """
+    GET /mxh/api/accounts/<id>/phone-history
+    Lấy lịch sử số điện thoại đã thay đổi của account.
+    """
+    conn = get_db_connection()
+    try:
+        rows = conn.execute(
+            "SELECT phone, changed_at FROM mxh_phone_history WHERE account_id = ? ORDER BY changed_at DESC",
+            (account_id,)
+        ).fetchall()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@mxh_api_bp.route("/accounts/<int:account_id>/phone-history", methods=["DELETE"])
+def delete_phone_history(account_id):
+    """
+    DELETE /mxh/api/accounts/<id>/phone-history
+    Xóa toàn bộ lịch sử SĐT của account.
+    """
+    conn = get_db_connection()
+    try:
+        conn.execute("DELETE FROM mxh_phone_history WHERE account_id = ?", (account_id,))
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@mxh_api_bp.route("/accounts/<int:account_id>/phone-history/add", methods=["POST"])
+def add_phone_history(account_id):
+    """
+    POST /mxh/api/accounts/<id>/phone-history/add
+    Thêm thủ công một số điện thoại vào lịch sử.
+    Body: { "phone": "...", "changed_at": "..." (optional) }
+    """
+    conn = get_db_connection()
+    try:
+        data = request.get_json() or {}
+        phone = (data.get('phone') or '').strip()
+        if not phone:
+            return jsonify({"error": "phone is required"}), 400
+        changed_at = data.get('changed_at') or datetime.now(timezone.utc).astimezone().isoformat()
+        conn.execute(
+            "INSERT INTO mxh_phone_history (account_id, phone, changed_at) VALUES (?, ?, ?)",
+            (account_id, phone, changed_at)
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@mxh_api_bp.route("/nearby_people", methods=["POST"])
+def update_nearby_people():
+    try:
+        data = request.json
+        account_id = data.get('account_id')
+        action = data.get('action')
+        
+        if not account_id or not action:
+            return jsonify({"success": False, "error": "Missing account_id or action"}), 400
+            
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc)
+        
+        if action == 'active':
+            # Add 7 days
+            delta = 7 * 24 * 60 * 60
+        elif action == 'cam':
+            # Add 30 days
+            delta = 30 * 24 * 60 * 60
+        else:
+            return jsonify({"success": False, "error": "Invalid action"}), 400
+            
+        until_time = datetime.fromtimestamp(now.timestamp() + delta).isoformat()
+        
+        conn.execute(
+            'UPDATE mxh_accounts SET nearby_people_until = ? WHERE id = ?',
+            (until_time, account_id)
+        )
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"success": True, "nearby_people_until": until_time})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500

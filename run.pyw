@@ -1,5 +1,7 @@
 import os
+import sys
 import threading
+import subprocess
 import webbrowser
 import time
 from PIL import Image, ImageDraw, ImageFont
@@ -54,6 +56,18 @@ def exit_application(icon, item):
     icon.stop()
     print(f"[{APP_NAME}] Shutting down from system tray...")
 
+def restart_application(icon, item):
+    """Restarts the application without opening the browser."""
+    print(f"[{APP_NAME}] Restarting application...")
+    icon.stop()
+    
+    # Set environment variable to prevent browser from opening on restart
+    env = os.environ.copy()
+    env["NO_BROWSER"] = "1"
+    
+    # Restart the script
+    subprocess.Popen([sys.executable] + sys.argv, env=env)
+
 def create_tray_icon(is_first_run):
     """Creates the system tray icon with a simple generated icon."""
     try:
@@ -75,6 +89,7 @@ def create_tray_icon(is_first_run):
     menu = TrayMenu(
         # Double-click handler is enabled by default=True
         TrayMenuItem(f"Open {APP_NAME} Dashboard", open_dashboard_in_browser, default=True),
+        TrayMenuItem("Restart", restart_application),
         TrayMenuItem("Exit", exit_application)
     )
 
@@ -117,7 +132,7 @@ def main():
     
     # 2. Check settings and open browser if configured
     settings = get_settings()
-    if settings.get("auto_open_dashboard", True):
+    if not os.environ.get("NO_BROWSER") and settings.get("auto_open_dashboard", True):
         open_dashboard_in_browser() 
         
     # 3. Run the System Tray Icon
