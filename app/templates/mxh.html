@@ -18,7 +18,7 @@
                             <span id="mxh-stats-cards" class="mxh-stats-items d-inline-flex gap-2"></span>
                         </div>
                         <div class="d-flex flex-wrap align-items-center gap-2 small mxh-stats-line">
-                            <span class="text-muted fw-bold text-nowrap" style="min-width: 60px;">TK tài khoản:</span>
+                            <span class="text-muted fw-bold text-nowrap" style="min-width: 60px;">Tổng Tài Khoản:</span>
                             <span id="mxh-stats-accounts" class="mxh-stats-items d-inline-flex gap-2"></span>
                         </div>
                     </div>
@@ -27,12 +27,13 @@
 
             <!-- 2. Search bar (CENTER) -->
             <div class="flex-grow-1 mx-3" style="min-width: 250px; max-width: 600px;">
-                <div class="input-group input-group-sm w-100" id="mxh-search-group">
-                    <span class="input-group-text" id="mxh-search-icon"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" id="mxh-search-input"
-                        placeholder="Tìm tên, SĐT, email, số card..." aria-label="Tìm kiếm">
-                    <button class="btn btn-outline-secondary" type="button" id="mxh-search-clear"
-                        style="display: none;"><i class="bi bi-x-lg"></i></button>
+                <div class="mxh-search-container" id="mxh-search-group">
+                    <span id="mxh-search-icon"><i class="bi bi-search"></i></span>
+                    <input type="text" id="mxh-search-input" placeholder="Tìm tên, SĐT, email, số card..."
+                        aria-label="Tìm kiếm" spellcheck="false" autocomplete="off">
+                    <button type="button" id="mxh-search-clear" title="Xóa tìm kiếm">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
                 <!-- Stats for mobile (hidden on desktop) -->
                 <div class="d-block d-lg-none mt-2">
@@ -44,8 +45,8 @@
             <div class="d-flex gap-2 align-items-center flex-wrap ms-auto">
                 <div class="d-flex gap-2 align-items-center flex-wrap" id="mxh-groups-nav"></div>
                 <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="mxh-filter-btn"
-                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-mxh-action btn-outline-secondary dropdown-toggle" type="button"
+                        id="mxh-filter-btn" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-funnel me-1"></i> Lọc
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mxh-filter-btn">
@@ -54,7 +55,8 @@
                             <hr class="dropdown-divider">
                         </li>
                         <li><a class="dropdown-item" href="#" data-filter="wechat_scan_vn">Scan VN (≥ 6 tháng)</a></li>
-                        <li><a class="dropdown-item" href="#" data-filter="wechat_scan_hk">Scan HK (≥ 1 năm + số HK)</a></li>
+                        <li><a class="dropdown-item" href="#" data-filter="wechat_scan_hk">Scan HK (≥ 1 năm + số HK)</a>
+                        </li>
                         <li><a class="dropdown-item" href="#" data-filter="has_notice">Thông báo (Đang có)</a></li>
                         <li>
                             <hr class="dropdown-divider">
@@ -65,10 +67,12 @@
                     </ul>
                 </div>
                 <!-- View Mode Button -->
-                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#mxh-view-mode-modal">
+                <button class="btn btn-mxh-action btn-info" data-bs-toggle="modal"
+                    data-bs-target="#mxh-view-mode-modal">
                     <i class="bi bi-grid-3x3-gap me-1"></i> Chế Độ Xem
                 </button>
-                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#mxh-addAccountModal">
+                <button class="btn btn-mxh-action btn-primary" data-bs-toggle="modal"
+                    data-bs-target="#mxh-addAccountModal">
                     <i class="bi bi-plus-lg me-1"></i> Thêm Tài Khoản
                 </button>
             </div>
@@ -241,7 +245,8 @@
                     <!-- Ghi chú tài khoản -->
                     <div class="row" style="margin-bottom: 1px;">
                         <div style="width: 100%; display: inline-block;">
-                            <label class="form-label mb-1"><i class="bi bi-journal-text me-1" style="color: #69b1ff;"></i>Ghi chú</label>
+                            <label class="form-label mb-1"><i class="bi bi-journal-text me-1"
+                                    style="color: #69b1ff;"></i>Ghi chú</label>
                             <textarea class="form-control form-control-sm" id="wechat-notes"
                                 placeholder="Nhập ghi chú cho tài khoản..." rows="2"
                                 style="width: 100%; resize: vertical; font-size: 0.85rem;"></textarea>
@@ -269,10 +274,8 @@
                             </div>
                             <!-- Thêm số thủ công (hidden by default) -->
                             <div id="phone-history-add-row" class="d-none mb-1 d-flex gap-1">
-                                <input type="text" id="input-new-phone-history"
-                                    class="form-control form-control-sm"
-                                    placeholder="Nhập số điện thoại cũ..." maxlength="16"
-                                    style="font-size:0.82rem;">
+                                <input type="text" id="input-new-phone-history" class="form-control form-control-sm"
+                                    placeholder="Nhập số điện thoại cũ..." maxlength="16" style="font-size:0.82rem;">
                                 <button type="button" class="btn btn-success btn-sm px-2"
                                     id="btn-confirm-add-phone-history" style="font-size:0.8rem;white-space:nowrap">
                                     <i class="bi bi-check-lg"></i>
@@ -339,7 +342,8 @@
                                 placeholder="Nhập URL...">
                         </div>
                         <div class="mb-2">
-                            <label for="generic-notes" class="form-label mb-1"><i class="bi bi-journal-text me-1" style="color: #69b1ff;"></i>Ghi chú</label>
+                            <label for="generic-notes" class="form-label mb-1"><i class="bi bi-journal-text me-1"
+                                    style="color: #69b1ff;"></i>Ghi chú</label>
                             <textarea class="form-control form-control-sm" id="generic-notes"
                                 placeholder="Nhập ghi chú cho tài khoản..." rows="2"
                                 style="resize: vertical; font-size: 0.85rem;"></textarea>
@@ -473,8 +477,10 @@
         <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
             <div class="modal-content">
                 <div class="modal-header" style="height: 44px; padding: 0.5rem 1rem;">
-                    <h5 class="modal-title" style="font-size: 0.95rem;"><i class="bi bi-arrow-left-right me-2" style="color: #1677ff;"></i>Di Chuyển Tài Khoản</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="font-size: 0.75rem;"></button>
+                    <h5 class="modal-title" style="font-size: 0.95rem;"><i class="bi bi-arrow-left-right me-2"
+                            style="color: #1677ff;"></i>Di Chuyển Tài Khoản</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        style="font-size: 0.75rem;"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-2">
@@ -488,12 +494,15 @@
                             style="background: rgba(255,255,255,0.05); font-size: 0.85rem;">
                     </div>
                     <div class="mb-2">
-                        <label class="form-label mb-1" style="font-size: 0.85rem;"><i class="bi bi-arrow-right me-1" style="color: #52c41a;"></i>Card đích (số hiệu)</label>
+                        <label class="form-label mb-1" style="font-size: 0.85rem;"><i class="bi bi-arrow-right me-1"
+                                style="color: #52c41a;"></i>Card đích (số hiệu)</label>
                         <input type="number" class="form-control form-control-sm" id="move-account-target-card"
                             placeholder="Nhập số card đích..." min="1" required style="font-size: 0.85rem;">
-                        <div class="form-text" style="font-size: 0.75rem;">Nhập số card mà bạn muốn chuyển tài khoản đến</div>
+                        <div class="form-text" style="font-size: 0.75rem;">Nhập số card mà bạn muốn chuyển tài khoản đến
+                        </div>
                     </div>
-                    <div id="move-account-error" class="text-danger small" style="display: none; font-size: 0.8rem;"></div>
+                    <div id="move-account-error" class="text-danger small" style="display: none; font-size: 0.8rem;">
+                    </div>
                 </div>
                 <div class="modal-footer" style="padding: 0.5rem 1rem;">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
@@ -512,10 +521,13 @@
 
         /* Hiệu ứng toả sáng chớp chậm nhẹ cho tên TK đủ điều kiện Nearby People Active */
         @keyframes nearby-glow-pulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 text-shadow: 0 0 4px rgba(22, 119, 255, 0.3);
                 opacity: 1;
             }
+
             50% {
                 text-shadow: 0 0 10px rgba(22, 119, 255, 0.7), 0 0 20px rgba(22, 119, 255, 0.3);
                 opacity: 0.85;
@@ -903,143 +915,133 @@
         }
 
         /* ========================================
-   🔍 SEARCH BAR NEON STYLE
+   🔍 SEARCH BAR - Bootstrap 5 Modern Gray Style
    ======================================== */
 
-        /* Search input group - Đảm bảo border nối liền */
+        /* Search input group */
         #mxh-search-group.input-group,
         #mxh-search-group {
-            border-radius: 0 !important;
-            overflow: visible !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
             position: relative !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+            transition: box-shadow 0.2s ease !important;
         }
 
-        /* Override Bootstrap input-group styles */
-        #mxh-search-group.input-group>* {
-            border-radius: 0 !important;
+        #mxh-search-group:focus-within {
+            box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.18), 0 1px 4px rgba(0, 0, 0, 0.25) !important;
         }
 
-        /* Search input - Base style */
-        #mxh-search-input {
-            background-color: #1e1e1e !important;
+        /* ========================================
+   🔍 SEARCH BAR - Modern Integrated Style
+   ======================================== */
+
+        #mxh-search-group {
+            position: relative !important;
+            display: flex !important;
+            align-items: center !important;
+            background-color: #2c303a !important;
+            /* Match --card-bg */
+            border: 1px solid #444a59 !important;
+            /* Match --border-color */
+            border-radius: 8px !important;
+            overflow: hidden !important;
+            min-height: 36px !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+        }
+
+        #mxh-search-group:focus-within {
+            border-color: #0dcaf0 !important;
+            box-shadow: 0 0 0 1px rgba(13, 202, 240, 0.25) !important;
+        }
+
+        /* Search icon */
+        #mxh-search-icon {
+            position: absolute !important;
+            left: 10px !important;
+            color: #9ca3af !important;
+            background: transparent !important;
             border: none !important;
-            border-top: 2px solid #2a2a2a !important;
-            border-bottom: 2px solid #2a2a2a !important;
-            border-right: 2px solid #2a2a2a !important;
-            /* Luôn có border phải mặc định */
-            border-left: none !important;
-            border-radius: 0 !important;
-            color: #eee !important;
-            transition: all 0.3s ease !important;
+            padding: 0 !important;
+            pointer-events: none !important;
+            z-index: 5 !important;
+        }
+
+        #mxh-search-group:focus-within #mxh-search-icon {
+            color: #0dcaf0 !important;
+        }
+
+        /* Search input */
+        #mxh-search-input {
+            width: 100% !important;
+            background-color: transparent !important;
+            border: none !important;
+            color: #e5e7eb !important;
+            padding: 7px 35px 7px 35px !important;
+            /* L: icon, R: clear button */
+            font-size: 0.875rem !important;
             box-shadow: none !important;
             outline: none !important;
         }
 
-        /* Khi clear button hiển thị (class has-clear-button), input không có border phải */
-        #mxh-search-group.has-clear-button #mxh-search-input {
-            border-right: none !important;
+        #mxh-search-input::placeholder {
+            color: #6b7280 !important;
         }
 
-        /* Search icon container - Base style */
-        #mxh-search-icon {
-            background-color: #1e1e1e !important;
+        /* Clear button - Overlayed to prevent pushing */
+        #mxh-search-clear {
+            position: absolute !important;
+            right: 5px !important;
+            background: transparent !important;
             border: none !important;
-            border-top: 2px solid #2a2a2a !important;
-            border-bottom: 2px solid #2a2a2a !important;
-            border-left: 2px solid #2a2a2a !important;
-            border-right: none !important;
-            border-radius: 0 !important;
-            color: #888 !important;
-            transition: all 0.3s ease !important;
-            box-shadow: none !important;
+            color: #6b7280 !important;
+            padding: 5px !important;
+            border-radius: 4px !important;
+            display: none;
+            /* Controlled by JS */
+            z-index: 6 !important;
+            transition: color 0.2s ease, background-color 0.2s ease !important;
+            line-height: 1 !important;
         }
 
-        /* Clear button - Base style - Đảm bảo có đủ viền, đặc biệt là border-right */
-        #mxh-search-clear.btn,
-        #mxh-search-clear,
-        #mxh-search-group .btn#mxh-search-clear {
-            border: none !important;
-            border-top: 2px solid #2a2a2a !important;
-            border-bottom: 2px solid #2a2a2a !important;
-            border-right: 2px solid #2a2a2a !important;
-            border-left: none !important;
-            border-radius: 0 !important;
-            background-color: #1e1e1e !important;
-            color: #888 !important;
-            transition: all 0.3s ease !important;
-            padding: 0.25rem 0.5rem !important;
-            min-width: 38px !important;
+        #mxh-search-clear:hover {
+            color: #e5e7eb !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        #mxh-search-clear i {
+            font-size: 0.9rem !important;
+        }
+
+        /* Unified height for action buttons */
+        .btn-mxh-action,
+        #mxh-search-group {
+            height: 36px !important;
+        }
+
+        /* ========================================
+   🎛 ACTION BUTTONS - Cân xứng với search bar
+   ======================================== */
+        .btn-mxh-action {
+            padding: 0.43rem 0.85rem !important;
+            font-size: 0.85rem !important;
+            line-height: 1.4 !important;
+            min-height: 36px !important;
             display: inline-flex !important;
             align-items: center !important;
-            justify-content: center !important;
-            box-shadow: none !important;
+            border-radius: 7px !important;
+            font-weight: 500 !important;
+            letter-spacing: 0.01em !important;
+            transition: filter 0.15s ease, box-shadow 0.15s ease !important;
         }
 
-        /* Đảm bảo clear button luôn có border-right khi hiển thị */
-        #mxh-search-clear:not([style*="display: none"]),
-        #mxh-search-clear[style*="display: block"],
-        #mxh-search-group.has-clear-button #mxh-search-clear {
-            border-right: 2px solid #2a2a2a !important;
+        .btn-mxh-action:hover {
+            filter: brightness(1.1) !important;
         }
 
-        /* Input group khi focus - Viền xanh đơn giản, không có glow */
-        #mxh-search-group:focus-within #mxh-search-icon {
-            border-top: 2px solid #00b8d4 !important;
-            border-bottom: 2px solid #00b8d4 !important;
-            border-left: 2px solid #00b8d4 !important;
-            border-right: none !important;
-            background-color: #1e1e1e !important;
-            color: #00b8d4 !important;
-            box-shadow: none !important;
-        }
-
-        /* Input khi focus - Có clear button: không có border phải */
-        #mxh-search-group:focus-within.has-clear-button #mxh-search-input {
-            border-top: 2px solid #00b8d4 !important;
-            border-bottom: 2px solid #00b8d4 !important;
-            border-left: none !important;
-            border-right: none !important;
-            outline: none !important;
-            background-color: #1e1e1e !important;
-            box-shadow: none !important;
-        }
-
-        /* Input khi focus - KHÔNG có clear button: có border phải */
-        #mxh-search-group:focus-within:not(.has-clear-button) #mxh-search-input {
-            border-top: 2px solid #00b8d4 !important;
-            border-bottom: 2px solid #00b8d4 !important;
-            border-left: none !important;
-            border-right: 2px solid #00b8d4 !important;
-            outline: none !important;
-            background-color: #1e1e1e !important;
-            box-shadow: none !important;
-        }
-
-        /* Clear button khi focus - Viền xanh đơn giản */
-        #mxh-search-group:focus-within.has-clear-button #mxh-search-clear,
-        #mxh-search-group:focus-within #mxh-search-clear.btn,
-        #mxh-search-group:focus-within #mxh-search-clear {
-            border-top: 2px solid #00b8d4 !important;
-            border-bottom: 2px solid #00b8d4 !important;
-            border-right: 2px solid #00b8d4 !important;
-            border-left: none !important;
-            border-radius: 0 !important;
-            background-color: #1e1e1e !important;
-            color: #00b8d4 !important;
-            box-shadow: none !important;
-        }
-
-        /* Clear button khi hover - Viền xanh nhẹ hơn */
-        #mxh-search-clear:hover,
-        #mxh-search-clear.btn:hover {
-            border-top: 2px solid #00b8d4 !important;
-            border-bottom: 2px solid #00b8d4 !important;
-            border-right: 2px solid #00b8d4 !important;
-            border-left: none !important;
-            border-radius: 0 !important;
-            background-color: #1e1e1e !important;
-            color: #00b8d4 !important;
-            box-shadow: none !important;
+        .btn-group>.btn-mxh-action {
+            border-radius: 7px !important;
         }
     </style>
 
@@ -1821,7 +1823,9 @@
         }
 
         // Helper function to calculate nearby countdown
+        // Chỉ hiển thị cho tài khoản >= 1 năm tuổi
         function calculateNearbyCountdown(account, now) {
+            if (!isEligibleNearbyPeople(account)) return ''; // Ẩn hoàn toàn nếu < 1 năm tuổi
             const createdDate = new Date(account.wechat_created_year, (account.wechat_created_month || 1) - 1, account.wechat_created_day || 1);
             const totalHours = calculateTimeDifferenceInHours(createdDate, now);
             const totalDays = Math.floor(totalHours / 24);
@@ -2352,7 +2356,7 @@
                 </span>
                 <span class="text-muted mx-1">|</span>
                 <span class="stats-clickable d-inline-flex align-items-center ${activeFilter === 'has_notice' ? 'active-stat-filter' : ''}" onclick="applyQuickFilter('has_notice')">
-                    <span class="fw-semibold text-nowrap">Đến hạn:</span> <span class="ms-1 fw-bold text-warning">${noticeExpiredCards}</span>
+                    <span class="fw-semibold text-nowrap">Thông Báo:</span> <span class="ms-1 fw-bold text-warning">${noticeExpiredCards}</span>
                 </span>
                 <span class="text-muted mx-1">|</span>
                 <span class="stats-clickable d-inline-flex align-items-center ${activeFilter === 'need_hk' ? 'active-stat-filter' : ''}" onclick="applyQuickFilter('need_hk')">
@@ -2998,18 +3002,10 @@
                 ` : ''}
 
 
-                <!-- 5. Copy SĐT / Nearby People (WeChat) -->
-                ${platform === 'wechat' ? `
-                <div class="mxh-menu-item has-submenu">
-                    <span><i class="bi bi-geo-alt me-2"></i>Nearby People</span>
-                    <div class="mxh-submenu">
-                        <div class="mxh-menu-item" data-action="nearby-active">
-                            <i class="bi bi-check-circle me-2"></i>Active
-                        </div>
-                        <div class="mxh-menu-item" data-action="nearby-cam">
-                            <i class="bi bi-volume-mute me-2"></i>Câm
-                        </div>
-                    </div>
+                <!-- 5. Copy SĐT / Nearby People (WeChat >= 1 năm tuổi) -->
+                ${platform === 'wechat' && isEligibleNearbyPeople(account) ? `
+                <div class="mxh-menu-item" data-action="nearby-active">
+                    <i class="bi bi-geo-alt me-2"></i>Nearby People
                 </div>
                 ` : (account.phone ? `
                 <div class="mxh-menu-item" data-action="copy-phone">
@@ -3279,7 +3275,7 @@
                     openAccountModalForEdit(currentContextAccountId);
                     hideCardContextMenu();
                 }
-            // copy-nickname removed
+                // copy-nickname removed
             } else if (action === 'copy-phone') {
                 const account = mxhAccounts.find(acc => acc.id === currentContextAccountId);
                 if (account && account.phone) {
@@ -3289,9 +3285,9 @@
                     }
                 }
                 hideCardContextMenu();
-            } else if (action === 'nearby-active' || action === 'nearby-cam') {
+            } else if (action === 'nearby-active') {
                 if (currentContextAccountId) {
-                    handleNearbyAction(currentContextAccountId, action === 'nearby-active' ? 'active' : 'cam');
+                    handleNearbyAction(currentContextAccountId, 'active');
                 }
                 hideCardContextMenu();
             } else if (action === 'toggle-notice') {
@@ -4494,13 +4490,11 @@
                     const query = event.target.value;
                     mxhSearchQuery = query; // Cập nhật biến global
 
-                    // Hiển thị/ẩn nút clear và thêm/xóa class
+                    // Hiển thị/ẩn nút clear (X)
                     if (query) {
                         clearButton.style.display = 'block';
-                        searchGroup.classList.add('has-clear-button');
                     } else {
                         clearButton.style.display = 'none';
-                        searchGroup.classList.remove('has-clear-button');
                     }
 
                     // Lên lịch render lại
@@ -4515,7 +4509,7 @@
                     searchInput.value = '';
                     mxhSearchQuery = '';
                     clearButton.style.display = 'none';
-                    searchGroup.classList.remove('has-clear-button');
+                    searchInput.focus();
                     scheduleRender();
                 });
             }
@@ -4674,20 +4668,20 @@
         async function loadPhoneHistory(accountId) {
             const listContainer = document.getElementById('phone-history-list');
             listContainer.innerHTML = '<div class="text-muted" style="font-size:0.75rem;text-align:center;padding:8px 0;"><i class="bi bi-hourglass me-1"></i>Đang tải...</div>';
-            
+
             try {
                 const response = await fetch(`/mxh/api/accounts/${accountId}/phone-history`);
                 const history = await response.json();
-                
+
                 if (history && history.length > 0) {
                     listContainer.innerHTML = history.map(h => {
                         // Format date
                         let dStr = '';
                         if (h.changed_at) {
                             const d = new Date(h.changed_at);
-                            dStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+                            dStr = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
                         }
-                        
+
                         return `
                             <div class="d-flex align-items-center justify-content-between border-bottom border-secondary mb-1 pb-1" style="font-size:0.8rem;border-bottom-color: rgba(255,255,255,0.1) !important;">
                                 <div>
@@ -4709,7 +4703,7 @@
             }
         }
 
-        window.copyPhoneHistory = function(phone) {
+        window.copyPhoneHistory = function (phone) {
             navigator.clipboard.writeText(phone);
             if (typeof showToast === 'function') showToast(`Đã copy: ${phone}`, 'success');
         };
@@ -4733,15 +4727,15 @@
             if (!currentContextAccountId) return;
             const inputEl = document.getElementById('input-new-phone-history');
             const phoneStr = inputEl.value.trim();
-            if(!phoneStr) return;
-            
+            if (!phoneStr) return;
+
             try {
                 const response = await fetch(`/mxh/api/accounts/${currentContextAccountId}/phone-history/add`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone: phoneStr })
                 });
-                
+
                 if (response.ok) {
                     if (typeof showToast === 'function') showToast('Đã thêm vào lịch sử SĐT', 'success');
                     inputEl.value = '';
@@ -4757,13 +4751,13 @@
 
         document.getElementById('btn-clear-phone-history').addEventListener('click', async () => {
             if (!currentContextAccountId) return;
-            if(!confirm('Bạn có chắc muốn xóa toàn bộ lịch sử SĐT của tài khoản này?')) return;
-            
+            if (!confirm('Bạn có chắc muốn xóa toàn bộ lịch sử SĐT của tài khoản này?')) return;
+
             try {
                 const response = await fetch(`/mxh/api/accounts/${currentContextAccountId}/phone-history`, {
                     method: 'DELETE'
                 });
-                
+
                 if (response.ok) {
                     if (typeof showToast === 'function') showToast('Đã xóa lịch sử', 'success');
                     loadPhoneHistory(currentContextAccountId);

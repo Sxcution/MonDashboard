@@ -81,4 +81,8 @@
     - **Mandatory Updates:**
       1. `project_structure.md`: Add new files, update descriptions
       2. `naming_registry.json`: Add new IDs, button names, variables
-    - **Goal:** Keep documentation in sync with codebase
+## X. ECC PERFORMANCE SYSTEM (Everything Claude Code)
+17. **ECC Rules Integration:**
+    - **Location:** `.agent/rules/`
+    - **Action:** ALWAYS adhere to the coding standards, patterns, and security guidelines defined in the `.agent/rules/` directory.
+    - **Priority:** In case of conflict, project-specific rules in this `Rule.md` take precedence, but ECC rules serve as the primary engineering standard.

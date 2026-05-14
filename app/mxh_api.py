@@ -619,10 +619,7 @@ def update_nearby_people():
         now = datetime.now(timezone.utc)
         
         if action == 'active':
-            # Add 7 days
-            delta = 7 * 24 * 60 * 60
-        elif action == 'cam':
-            # Add 30 days
+            # Add 30 days (WeChat now requires 1 month for Nearby People visibility)
             delta = 30 * 24 * 60 * 60
         else:
             return jsonify({"success": False, "error": "Invalid action"}), 400

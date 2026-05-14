@@ -118,11 +118,11 @@
         "action_add_sub_clone_app": "add-sub-clone-app",
         "css_border_yellow": "mxh-border-yellow",
         "action_nearby_active": "nearby-active",
-        "action_nearby_cam": "nearby-cam",
         "filter_nearby_people": "nearby_people",
         "badge_nearby_eligible": "nearby-eligible-badge",
         "fn_is_eligible_nearby_people": "isEligibleNearbyPeople",
-        "fn_is_nearby_people_active": "isNearbyPeopleActive"
+        "fn_is_nearby_people_active": "isNearbyPeopleActive",
+        "class_btn_mxh_action": "btn-mxh-action"
     },
     "UI_NOTES": {
         "tab_pane": "notes-tool-pane",
