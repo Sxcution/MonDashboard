@@ -67,3 +67,16 @@ Thumbs.db
 
 # Gemini IDE
 .gemini/
+brain/
+
+# AI/Agent Specific Documentation
+project_structure.md
+naming_registry.json
+Rule.md
+SKILL.md
+.agent/
+.agent_instincts/
+ai_support_prompt.md
+task.md
+implementation_plan.md
+walkthrough.md

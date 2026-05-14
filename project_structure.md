@@ -1,6 +1,7 @@
 # Project Structure: MonDashboard
 
 ## Root Directory (`Dashboard/`)
+- `.agent/`: ECC performance system (Rules, Workflows, Skills).
 - `run.pyw`: Main entry point. Starts Flask server in a daemon thread and system tray icon.
 - `dashboard.db`: SQLite database file.
 - `requirements.txt`: Python dependencies.
@@ -26,7 +27,7 @@
 
 ## Templates (`app/templates/`)
 - `home.html`: Main Dashboard UI (Chat interface).
-- `mxh.html`: Social Media management interface. Features: Dropdown Tabs, **Optimized Stats Panels (Smart Filters)**, **Update In-Place Filtering (High Performance)**, Inline Editing (username, phone, email), 3D Flip Cards, **Global View Mode (Card 2/3)**, **Smart Scan Countdown**, **Scan History Logger**, **UnVerify/Verify Success Status**, **Container Type Sub-Accounts (Shelter/Security Folder/Multi User/Clone App)**, **Nearby People Badge & Filter** (icon xanh dương trên card + submenu + bộ lọc stats, chỉ hiện khi tk >= 1 năm + không Die + đang Active).
+- `mxh.html`: Social Media management interface. Features: Dropdown Tabs, **Optimized Stats Panels (Smart Filters)**, **Update In-Place Filtering (High Performance)**, Inline Editing (username, phone, email), 3D Flip Cards, **Global View Mode (Card 2/3)**, **Smart Scan Countdown**, **Scan History Logger**, **UnVerify/Verify Success Status**, **Container Type Sub-Accounts (Shelter/Security Folder/Multi User/Clone App)**, **Nearby People Badge & Filter**, **Modern Theme-Consistent Search Bar (Integrated Style)**, **Standardized Action Buttons (.btn-mxh-action)**.
 - `notes.html`: Notes management interface.
 - `telegram.html`: Telegram management interface.
 - `settings.html`: Settings interface.
