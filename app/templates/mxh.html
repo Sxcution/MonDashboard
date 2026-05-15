@@ -7,10 +7,10 @@
 
 
         <!-- Action Buttons and Groups - All in one row -->
-        <div class="d-flex align-items-center mb-3 flex-wrap gap-2">
+        <div class="mxh-toolbar-grid mb-3">
 
             <!-- 1. Stats Panel (LEFT) -->
-            <div class="d-none d-lg-block me-3">
+            <div class="mxh-toolbar-left d-none d-lg-block">
                 <div class="card mxh-stats-card mxh-stats-merged" id="mxh-stats-panel" style="min-width: 320px;">
                     <div class="card-body py-1 px-2">
                         <div class="d-flex flex-wrap align-items-center gap-2 small mxh-stats-line mb-1">
@@ -26,7 +26,7 @@
             </div>
 
             <!-- 2. Search bar (CENTER) -->
-            <div class="flex-grow-1 mx-3" style="min-width: 250px; max-width: 600px;">
+            <div class="mxh-toolbar-center">
                 <div class="mxh-search-container" id="mxh-search-group">
                     <span id="mxh-search-icon"><i class="bi bi-search"></i></span>
                     <input type="text" id="mxh-search-input" placeholder="Tìm tên, SĐT, email, số card..."
@@ -42,7 +42,7 @@
             </div>
 
             <!-- 3. Action buttons (RIGHT) -->
-            <div class="d-flex gap-2 align-items-center flex-wrap ms-auto">
+            <div class="mxh-toolbar-right d-flex gap-2 align-items-center flex-wrap">
                 <div class="d-flex gap-2 align-items-center flex-wrap" id="mxh-groups-nav"></div>
                 <div class="btn-group">
                     <button class="btn btn-mxh-action btn-outline-secondary dropdown-toggle" type="button"
@@ -946,7 +946,7 @@
             /* Match --border-color */
             border-radius: 8px !important;
             overflow: hidden !important;
-            min-height: 36px !important;
+            min-height: 44px !important;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
             transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
@@ -1015,8 +1015,11 @@
         }
 
         /* Unified height for action buttons */
-        .btn-mxh-action,
         #mxh-search-group {
+            height: 44px !important;
+        }
+
+        .btn-mxh-action {
             height: 36px !important;
         }
 
@@ -1082,10 +1085,167 @@
         window.interactionPaused = false; // set true khi mở modal/context, false khi đóng
         let _mxhGroupsTick = 0;
         let refreshAbortController;
+        let mxhInlineEditActive = false;
+        let mxhInlineEditReleaseTimer = null;
+        let mxhInlineEditSelection = null;
+        let mxhLastDocumentPointerDownAt = 0;
+        let mxhCommitInlineEditOnBlur = false;
+
+        function isMXHEditableElement(el) {
+            return !!(el && el.closest && el.closest('.editable-field[contenteditable="true"]'));
+        }
+
+        function isMXHInlineEditing() {
+            return mxhInlineEditActive || isMXHEditableElement(document.activeElement);
+        }
+
+        function setMXHInlineEditActive(active) {
+            if (mxhInlineEditReleaseTimer) {
+                clearTimeout(mxhInlineEditReleaseTimer);
+                mxhInlineEditReleaseTimer = null;
+            }
+            mxhInlineEditActive = active;
+        }
+
+        function isLeavingBrowserWindow() {
+            return document.hidden || !document.hasFocus();
+        }
+
+        function shouldHoldMXHInlineEditOnBlur() {
+            if (isLeavingBrowserWindow()) return true;
+            if (mxhCommitInlineEditOnBlur) return false;
+            return (performance.now() - mxhLastDocumentPointerDownAt) > 1200;
+        }
+
+        function captureMXHInlineEditSelection(targetEl = document.activeElement) {
+            const el = isMXHEditableElement(targetEl) ? targetEl.closest('.editable-field[contenteditable="true"]') : null;
+            if (!el) return;
+
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0) return;
+
+            const range = selection.getRangeAt(0);
+            if (!el.contains(range.startContainer) || !el.contains(range.endContainer)) return;
+
+            const before = range.cloneRange();
+            before.selectNodeContents(el);
+            before.setEnd(range.startContainer, range.startOffset);
+
+            mxhInlineEditSelection = {
+                accountId: el.dataset.accountId,
+                field: el.dataset.field,
+                start: before.toString().length,
+                end: before.toString().length + range.toString().length
+            };
+        }
+
+        function setContentEditableRange(el, start, end) {
+            const range = document.createRange();
+            const selection = window.getSelection();
+            let current = 0;
+            let startSet = false;
+            let endSet = false;
+
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            while (walker.nextNode()) {
+                const node = walker.currentNode;
+                const next = current + node.nodeValue.length;
+
+                if (!startSet && start <= next) {
+                    range.setStart(node, Math.max(0, start - current));
+                    startSet = true;
+                }
+                if (!endSet && end <= next) {
+                    range.setEnd(node, Math.max(0, end - current));
+                    endSet = true;
+                    break;
+                }
+                current = next;
+            }
+
+            if (!startSet) range.setStart(el, el.childNodes.length);
+            if (!endSet) range.setEnd(el, el.childNodes.length);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+
+        function restoreMXHInlineEditSelection() {
+            if (!mxhInlineEditSelection) return;
+
+            const el = Array.from(document.querySelectorAll('.editable-field[contenteditable="true"]')).find(item =>
+                item.dataset.accountId === mxhInlineEditSelection.accountId &&
+                item.dataset.field === mxhInlineEditSelection.field
+            );
+            if (!el) return;
+
+            el.focus({ preventScroll: true });
+            setContentEditableRange(el, mxhInlineEditSelection.start, mxhInlineEditSelection.end);
+        }
+
+        document.addEventListener('focusin', (event) => {
+            if (isMXHEditableElement(event.target)) setMXHInlineEditActive(true);
+        });
+
+        document.addEventListener('pointerdown', () => {
+            mxhLastDocumentPointerDownAt = performance.now();
+        }, true);
+
+        document.addEventListener('keydown', (event) => {
+            if (isMXHEditableElement(event.target) && event.key === 'Enter') {
+                mxhCommitInlineEditOnBlur = true;
+                setTimeout(() => { mxhCommitInlineEditOnBlur = false; }, 1000);
+            }
+        }, true);
+
+        document.addEventListener('selectionchange', () => {
+            if (isMXHEditableElement(document.activeElement)) captureMXHInlineEditSelection();
+        });
+
+        document.addEventListener('input', (event) => {
+            if (isMXHEditableElement(event.target)) captureMXHInlineEditSelection();
+        });
+
+        document.addEventListener('focusout', (event) => {
+            if (!isMXHEditableElement(event.target)) return;
+            captureMXHInlineEditSelection(event.target);
+            mxhInlineEditReleaseTimer = setTimeout(() => {
+                if (isLeavingBrowserWindow()) {
+                    mxhInlineEditActive = true;
+                    return;
+                }
+                if (!document.hidden && !isMXHEditableElement(document.activeElement)) {
+                    mxhInlineEditActive = false;
+                }
+            }, 250);
+        });
+
+        window.addEventListener('blur', () => {
+            if (isMXHEditableElement(document.activeElement)) {
+                captureMXHInlineEditSelection();
+                setMXHInlineEditActive(true);
+            }
+        });
+
+        window.addEventListener('focus', () => {
+            setTimeout(() => {
+                if (!document.hidden && mxhInlineEditActive) {
+                    restoreMXHInlineEditSelection();
+                }
+                if (!document.hidden && !isMXHEditableElement(document.activeElement)) {
+                    mxhInlineEditActive = false;
+                }
+            }, 250);
+        });
 
         // Tự dừng/bật auto-refresh theo trạng thái tab
         document.addEventListener('visibilitychange', () => {
-            document.hidden ? stopAutoRefresh() : startAutoRefresh();
+            if (document.hidden) {
+                captureMXHInlineEditSelection();
+                stopAutoRefresh();
+            } else {
+                startAutoRefresh();
+                if (mxhInlineEditActive) setTimeout(restoreMXHInlineEditSelection, 50);
+            }
         });
 
         // MXH Global State
@@ -1212,6 +1372,7 @@
         // ===== REAL-TIME DATA LOADING WITH SMART UPDATES =====
         // Load MXH data from API with optimized rendering
         async function loadMXHData(forceRender = false) {
+            if (isMXHInlineEditing()) return; // Keep caret/selection stable while editing inline fields.
             if (window.interactionPaused || document.hidden) return; // (1) chặn khi đang tương tác/ẩn tab
 
             // (3) chống race-condition
@@ -2380,6 +2541,7 @@
         let lastRenderedGroupId = null;
 
         function renderMXHAccounts(forceRender = false) {
+            if (isMXHInlineEditing()) return;
             if (isRendering) return;
             isRendering = true;
 
@@ -4433,7 +4595,7 @@
                     // console.log('⏸️ MXH Auto-refresh paused (tab hidden)');
                 } else {
                     startAutoRefresh();
-                    loadMXHData(true); // Immediate refresh when tab becomes visible
+                    if (!isMXHInlineEditing()) loadMXHData(false); // Resume quietly without rebuilding an active edit.
                     // console.log('▶️ MXH Auto-refresh resumed (tab visible)');
                 }
             });
@@ -4799,6 +4961,15 @@
 
         // Save inline edit when user clicks away or presses Enter
         window.saveInlineEdit = async function (element, accountId, field) {
+            if (shouldHoldMXHInlineEditOnBlur()) {
+                captureMXHInlineEditSelection(element);
+                setMXHInlineEditActive(true);
+                element.style.borderBottom = '1px dashed #007bff';
+                return;
+            }
+            mxhInlineEditActive = false;
+            mxhInlineEditSelection = null;
+
             const newValue = element.textContent.trim();
 
             // Remove emoji and extra characters
@@ -4825,6 +4996,8 @@
             // If unchanged, do nothing
             if (cleanValue === originalValue) {
                 element.style.borderBottom = '1px dashed transparent';
+                mxhInlineEditActive = false;
+                mxhInlineEditSelection = null;
                 return;
             }
 
@@ -4842,6 +5015,9 @@
             }
 
             element.style.borderBottom = '1px dashed transparent';
+            mxhInlineEditActive = false;
+            mxhInlineEditSelection = null;
+            mxhCommitInlineEditOnBlur = false;
         };
 
         // Quick update field (instant local update, debounced API call)
@@ -4958,6 +5134,15 @@
 
                 // Handle blur - save changes
                 field.addEventListener('blur', async (e) => {
+                    if (shouldHoldMXHInlineEditOnBlur()) {
+                        captureMXHInlineEditSelection(e.target);
+                        setMXHInlineEditActive(true);
+                        e.target.style.borderBottom = '1px dashed #007bff';
+                        return;
+                    }
+                    mxhInlineEditActive = false;
+                    mxhInlineEditSelection = null;
+
                     let newValue = e.target.textContent.trim();
                     const accountId = parseInt(e.target.dataset.accountId);
                     const fieldName = e.target.dataset.field;
