@@ -1,5 +1,4 @@
 "use strict";
-// @ts-nocheck
 /**
  * Console Mirror - In-Page Fallback
  * Captures console.*, window.onerror, unhandledrejection

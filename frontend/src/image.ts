@@ -99,11 +99,11 @@ function loadCollageHistoryFromStorage() {
             // Create thumbnail from first image
             const thumbnailSrc = item.images[0] || '';
             return `
-                <div class="history-item" 
+                <div class="history-item"
                      data-id="${item.id}"
-                     title="${item.date} - ${item.imageCount} photos"
-                     onclick="loadHistoryForEdit('${item.id}')"
-                     oncontextmenu="showHistoryContextMenu(event, '${item.id}'); return false;">
+                     data-image-history-edit="${item.id}"
+                     data-image-history-menu="${item.id}"
+                     title="${item.date} - ${item.imageCount} photos">
                     <img src="${thumbnailSrc}" alt="Collage">
                     <div class="history-item-date">${item.imageCount} photos</div>
                 </div>
@@ -150,10 +150,9 @@ function loadHistoryForEdit(historyId) {
                 const col = document.createElement('div');
                 col.className = 'col-auto';
                 col.innerHTML = `
-                    <div class="position-relative" style="width: 80px; height: 80px;">
-                        <img src="${dataURL}" 
-                             class="img-thumbnail" 
-                             style="width: 100%; height: 100%; object-fit: cover;">
+                    <div class="position-relative image-thumb-frame">
+                        <img src="${dataURL}"
+                             class="img-thumbnail image-thumb-img">
                     </div>
                 `;
                 previewContainer.appendChild(col);
@@ -215,7 +214,7 @@ function showHistoryContextMenu(event, historyId) {
     menu.style.left = event.pageX + 'px';
     menu.style.top = event.pageY + 'px';
     menu.innerHTML = `
-        <div class="context-menu-item" onclick="deleteFromHistory('${historyId}'); event.stopPropagation();">
+        <div class="context-menu-item" data-image-history-delete="${historyId}">
             <i class="bi bi-trash"></i>Delete
         </div>
     `;
@@ -474,10 +473,9 @@ function processUploadedFiles(files) {
                 const col = document.createElement('div');
                 col.className = 'col-auto';
                 col.innerHTML = `
-                    <div class="position-relative" style="width: 80px; height: 80px;">
-                        <img src="${event.target.result}" 
-                             class="img-thumbnail" 
-                             style="width: 100%; height: 100%; object-fit: cover;">
+                    <div class="position-relative image-thumb-frame">
+                        <img src="${event.target.result}"
+                             class="img-thumbnail image-thumb-img">
                     </div>
                 `;
                 previewContainer.appendChild(col);
@@ -942,7 +940,7 @@ function showCropOverlay() {
     };
     
     cropOverlay.innerHTML = `
-        <svg width="100%" height="100%" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+        <svg width="100%" height="100%" class="image-crop-svg">
             <!-- Dimmed area outside crop -->
             <defs>
                 <mask id="cropMask">
@@ -975,16 +973,16 @@ function showCropOverlay() {
                   stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
             
             <!-- Corner handles (larger, easier to grab) -->
-            <circle cx="${cropRect.x}" cy="${cropRect.y}" r="10" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="nw" style="pointer-events: all; cursor: nw-resize;"/>
-            <circle cx="${cropRect.x + cropRect.width}" cy="${cropRect.y}" r="10" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="ne" style="pointer-events: all; cursor: ne-resize;"/>
-            <circle cx="${cropRect.x}" cy="${cropRect.y + cropRect.height}" r="10" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="sw" style="pointer-events: all; cursor: sw-resize;"/>
-            <circle cx="${cropRect.x + cropRect.width}" cy="${cropRect.y + cropRect.height}" r="10" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="se" style="pointer-events: all; cursor: se-resize;"/>
+            <circle cx="${cropRect.x}" cy="${cropRect.y}" r="10" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="nw"/>
+            <circle cx="${cropRect.x + cropRect.width}" cy="${cropRect.y}" r="10" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="ne"/>
+            <circle cx="${cropRect.x}" cy="${cropRect.y + cropRect.height}" r="10" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="sw"/>
+            <circle cx="${cropRect.x + cropRect.width}" cy="${cropRect.y + cropRect.height}" r="10" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="se"/>
             
             <!-- Edge handles -->
-            <circle cx="${cropRect.x + cropRect.width/2}" cy="${cropRect.y}" r="8" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="n" style="pointer-events: all; cursor: n-resize;"/>
-            <circle cx="${cropRect.x + cropRect.width/2}" cy="${cropRect.y + cropRect.height}" r="8" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="s" style="pointer-events: all; cursor: s-resize;"/>
-            <circle cx="${cropRect.x}" cy="${cropRect.y + cropRect.height/2}" r="8" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="w" style="pointer-events: all; cursor: w-resize;"/>
-            <circle cx="${cropRect.x + cropRect.width}" cy="${cropRect.y + cropRect.height/2}" r="8" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="e" style="pointer-events: all; cursor: e-resize;"/>
+            <circle cx="${cropRect.x + cropRect.width/2}" cy="${cropRect.y}" r="8" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="n"/>
+            <circle cx="${cropRect.x + cropRect.width/2}" cy="${cropRect.y + cropRect.height}" r="8" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="s"/>
+            <circle cx="${cropRect.x}" cy="${cropRect.y + cropRect.height/2}" r="8" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="w"/>
+            <circle cx="${cropRect.x + cropRect.width}" cy="${cropRect.y + cropRect.height/2}" r="8" fill="#00ffff" stroke="white" stroke-width="2" class="crop-handle" data-handle="e"/>
         </svg>
     `;
     
@@ -1623,7 +1621,7 @@ function renderLayoutTemplates() {
     const availableTemplates = layoutTemplates.filter(layout => layout.maxPhotos === collageImages.length);
     
     if (availableTemplates.length === 0) {
-        html = `<div class="text-center text-muted p-2 w-100" style="font-size: 0.85rem;">
+        html = `<div class="text-center text-muted p-2 w-100 image-layout-empty">
                     <i class="bi bi-info-circle"></i> No layouts for ${collageImages.length} photos
                 </div>`;
         container.innerHTML = html;
@@ -1639,14 +1637,13 @@ function renderLayoutTemplates() {
         const svgHeight = layout.rows * scale;
         
         html += `
-            <div class="layout-template ${selectedLayout === layout.id ? 'selected' : ''}" 
-                 onclick="selectLayout('${layout.id}')"
-                 title="${layout.name} (${layout.maxPhotos} photo${layout.maxPhotos > 1 ? 's' : ''})"
-                 style="cursor: pointer; padding: 8px; border: 2px solid ${selectedLayout === layout.id ? '#0d6efd' : '#495057'}; border-radius: 4px; background: #212529; transition: all 0.2s;">
+            <div class="layout-template ${selectedLayout === layout.id ? 'selected' : ''}"
+                 data-image-layout-id="${layout.id}"
+                 title="${layout.name} (${layout.maxPhotos} photo${layout.maxPhotos > 1 ? 's' : ''})">
                 <svg viewBox="0 0 ${layout.cols * 100} ${layout.rows * 100}" 
                      width="${svgWidth}" 
                      height="${svgHeight}"
-                     style="display: block; margin: 0 auto;">
+                     class="image-layout-svg">
                     ${layout.cells.map(cell => {
                         const [x, y, w, h] = cell;
                         const cellX = x * 100;
@@ -1660,7 +1657,7 @@ function renderLayoutTemplates() {
                                      rx="5" ry="5"/>`;
                     }).join('')}
                 </svg>
-                <small class="d-block text-center mt-1" style="font-size: 0.65rem; color: #adb5bd;">${layout.name}</small>
+                <small class="d-block text-center mt-1 image-layout-label">${layout.name}</small>
             </div>
         `;
     });
@@ -1706,10 +1703,9 @@ document.getElementById('collageUpload').addEventListener('change', function(e) 
                 const col = document.createElement('div');
                 col.className = 'col-auto';
                 col.innerHTML = `
-                    <div class="position-relative" style="width: 80px; height: 80px;">
-                        <img src="${event.target.result}" 
-                             class="img-thumbnail" 
-                             style="width: 100%; height: 100%; object-fit: cover;">
+                    <div class="position-relative image-thumb-frame">
+                        <img src="${event.target.result}"
+                             class="img-thumbnail image-thumb-img">
                     </div>
                 `;
                 previewContainer.appendChild(col);
@@ -2094,9 +2090,12 @@ function renderTextLayer(layer, autoEdit = false) {
         let html = '';
         for (let i = 0; i < layer.text.length; i++) {
             const color = colors[i % colors.length];
-            html += `<span style="color: ${color};">${layer.text[i] === '\n' ? '<br>' : layer.text[i]}</span>`;
+            html += `<span data-image-rainbow-color="${color}">${layer.text[i] === '\n' ? '<br>' : layer.text[i]}</span>`;
         }
         textContent.innerHTML = html;
+        textContent.querySelectorAll('[data-image-rainbow-color]').forEach(span => {
+            span.style.color = span.dataset.imageRainbowColor;
+        });
     } else {
         textContent.style.color = layer.color;
         textContent.innerHTML = layer.text.replace(/\n/g, '<br>');
@@ -2671,10 +2670,9 @@ function restoreCachedImages() {
                             const col = document.createElement('div');
                             col.className = 'col-auto';
                             col.innerHTML = `
-                                <div class="position-relative" style="width: 80px; height: 80px;">
-                                    <img src="${img.src}" 
-                                         class="img-thumbnail" 
-                                         style="width: 100%; height: 100%; object-fit: cover;">
+                                <div class="position-relative image-thumb-frame">
+                                    <img src="${img.src}"
+                                         class="img-thumbnail image-thumb-img">
                                 </div>
                             `;
                             previewContainer.appendChild(col);
@@ -2958,8 +2956,8 @@ async function viewHistoryCollage(collageId) {
             const canvasContainer = document.getElementById('collageCanvasContainer');
             canvasContainer.style.display = 'block';
             canvasContainer.innerHTML = 
-                '<div style="width: 100%; height: 720px; display: flex; align-items: center; justify-content: center; background: #000;">' +
-                    '<img src="' + url + '" style="max-width: 100%; max-height: 100%; object-fit: contain;" alt="Saved Collage">' +
+                '<div class="image-history-viewer">' +
+                    '<img src="' + url + '" class="image-history-viewer-img" alt="Saved Collage">' +
                 '</div>';
             
             showToast('History collage loaded (view only)', 'info');
@@ -2991,11 +2989,11 @@ async function loadCollageHistory() {
         }
         
         container.innerHTML = data.history.map(item => `
-            <div class="history-item" 
+            <div class="history-item"
                  data-id="${item.id}"
-                 title="${item.date} - ${item.imageCount} photos"
-                 onclick="viewHistoryCollage('${item.id}')"
-                 oncontextmenu="showContextMenu(event, '${item.id}'); return false;">
+                 data-image-collage-view="${item.id}"
+                 data-image-collage-menu="${item.id}"
+                 title="${item.date} - ${item.imageCount} photos">
                 <img src="/image/api/collage-thumbnail/${item.id}" alt="Collage">
                 <div class="history-item-date">${item.imageCount} photos</div>
             </div>
@@ -3020,7 +3018,7 @@ function showContextMenu(event, id) {
     menu.style.left = event.pageX + 'px';
     menu.style.top = event.pageY + 'px';
     menu.innerHTML = `
-        <div class="context-menu-item" onclick="deleteCollageFromHistory('${id}')">
+        <div class="context-menu-item" data-image-collage-delete="${id}">
             <i class="bi bi-trash"></i>Delete
         </div>
     `;
@@ -3075,15 +3073,61 @@ function bindImageTemplateActions() {
 
     document.addEventListener('click', (event) => {
         const actionEl = event.target.closest('[data-image-action]');
-        if (!actionEl) return;
-        const action = actionEl.dataset.imageAction;
-        if (action === 'click-target') {
-            const targetId = actionEl.dataset.imageTarget;
-            if (targetId) document.getElementById(targetId)?.click();
+        if (actionEl) {
+            const action = actionEl.dataset.imageAction;
+            if (action === 'click-target') {
+                const targetId = actionEl.dataset.imageTarget;
+                if (targetId) document.getElementById(targetId)?.click();
+                return;
+            }
+            if (clickActions[action]) {
+                clickActions[action]();
+                return;
+            }
+        }
+
+        const historyEditEl = event.target.closest('[data-image-history-edit]');
+        if (historyEditEl) {
+            loadHistoryForEdit(historyEditEl.dataset.imageHistoryEdit);
             return;
         }
-        if (clickActions[action]) {
-            clickActions[action]();
+
+        const historyDeleteEl = event.target.closest('[data-image-history-delete]');
+        if (historyDeleteEl) {
+            event.stopPropagation();
+            deleteFromHistory(historyDeleteEl.dataset.imageHistoryDelete);
+            return;
+        }
+
+        const layoutEl = event.target.closest('[data-image-layout-id]');
+        if (layoutEl) {
+            selectLayout(layoutEl.dataset.imageLayoutId);
+            return;
+        }
+
+        const collageViewEl = event.target.closest('[data-image-collage-view]');
+        if (collageViewEl) {
+            viewHistoryCollage(collageViewEl.dataset.imageCollageView);
+            return;
+        }
+
+        const collageDeleteEl = event.target.closest('[data-image-collage-delete]');
+        if (collageDeleteEl) {
+            event.stopPropagation();
+            deleteCollageFromHistory(collageDeleteEl.dataset.imageCollageDelete);
+        }
+    });
+
+    document.addEventListener('contextmenu', (event) => {
+        const historyMenuEl = event.target.closest('[data-image-history-menu]');
+        if (historyMenuEl) {
+            showHistoryContextMenu(event, historyMenuEl.dataset.imageHistoryMenu);
+            return;
+        }
+
+        const collageMenuEl = event.target.closest('[data-image-collage-menu]');
+        if (collageMenuEl) {
+            showContextMenu(event, collageMenuEl.dataset.imageCollageMenu);
         }
     });
 

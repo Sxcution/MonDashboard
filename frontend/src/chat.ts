@@ -1,4 +1,4 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 let currentSessionId = null;
 let providerSettings = {}; // Store settings for all providers
 
@@ -203,10 +203,15 @@ function showContextMenu(x, y, sessionId) {
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';
     menu.innerHTML = `
-        <div class="context-menu-item" onclick="deleteChat('${sessionId}')">
+        <div class="context-menu-item" data-chat-delete-session="${sessionId}">
             <i class="bi bi-trash me-2"></i>Delete Chat
         </div>
     `;
+    menu.addEventListener('click', (event) => {
+        const deleteItem = event.target.closest('[data-chat-delete-session]');
+        if (!deleteItem) return;
+        deleteChat(deleteItem.dataset.chatDeleteSession);
+    });
     document.body.appendChild(menu);
 }
 
@@ -420,7 +425,7 @@ async function sendMessage() {
     // Display User Message
     let displayContent = message;
     if (currentImageBase64) {
-        displayContent = `<img src="${currentImageBase64}" style="max-width: 200px; border-radius: 8px; display: block; margin-bottom: 5px;">` + message;
+        displayContent = `<img src="${currentImageBase64}" class="chat-message-image" alt="Uploaded image">` + message;
     }
     appendMessage('user', displayContent);
 

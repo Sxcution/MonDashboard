@@ -1,4 +1,3 @@
-// @ts-nocheck
 // MXH render helpers. Kept as a classic global wrapper before moving to modules/TypeScript.
 (function () {
     function getGroupBadgeMarkup(ctx, badgeInfo, fallbackColor) {
@@ -172,9 +171,9 @@
 
             if (hasNotice) {
                 const dueDate = new Date(noticeObj.due_date || noticeObj.dueDate);
-                if (dueDate instanceof Date && !isNaN(dueDate)) {
+                if (dueDate instanceof Date && !isNaN(dueDate.getTime())) {
                     const today = new Date();
-                    const remainTime = dueDate - today;
+                    const remainTime = dueDate.getTime() - today.getTime();
                     const remainHours = Math.floor(remainTime / (1000 * 60 * 60));
                     const remainDays = Math.floor(remainHours / 24);
 
@@ -222,7 +221,7 @@
             let disableDays = 0;
             if (account.disabled_date) {
                 const disabledDate = new Date(account.disabled_date + 'T00:00:00');
-                const disableHours = Math.floor((now - disabledDate) / (1000 * 60 * 60));
+                const disableHours = Math.floor((now.getTime() - disabledDate.getTime()) / (1000 * 60 * 60));
                 disableDays = Math.floor(disableHours / 24);
             }
             disabledInfo = `

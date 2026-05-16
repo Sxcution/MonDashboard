@@ -1,4 +1,3 @@
-// @ts-nocheck
 // MXH page startup and UI binding. Classic global wrapper, no ES modules yet.
 (function () {
     function initializeCardsPerRow(ctx) {

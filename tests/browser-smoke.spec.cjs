@@ -30,6 +30,11 @@ for (const path of ["/", "/mxh", "/notes", "/image/", "/settings/", "/telegram"]
     const response = await page.goto(base + path, { waitUntil: "domcontentloaded" });
     expect(response.status()).toBeLessThan(400);
     await page.waitForTimeout(700);
+    const dashboardMenuVisible = await page.locator("#dashboard-context-menu").evaluate((el) => {
+      const style = window.getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0";
+    });
+    expect(dashboardMenuVisible).toBe(false);
     expect(failures, failures.join("\n")).toEqual([]);
   });
 }

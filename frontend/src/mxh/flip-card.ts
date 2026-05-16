@@ -1,4 +1,3 @@
-// @ts-nocheck
 // MXH card flip animation helpers. Classic global wrapper, no ES modules yet.
 (function () {
     function flipCardToAccount(ctx, cardId, accountId) {

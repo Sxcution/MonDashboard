@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * STool Dashboard - Global JavaScript Functions
  * File này chứa các functions dùng chung cho toàn bộ ứng dụng
@@ -62,12 +61,12 @@ function showToast(message, type = 'success', title = 'Thông báo') {
 document.addEventListener('DOMContentLoaded', function() {
     // Lắng nghe sự kiện khi modal được hiển thị
     document.addEventListener('shown.bs.modal', function(event) {
-        const modal = event.target;
+        const modal = event.target as HTMLElement;
         
         // Tìm nút primary hoặc danger trong modal (ưu tiên danger cho modal xóa)
         const dangerBtn = modal.querySelector('.modal-footer .btn-danger');
         const primaryBtn = modal.querySelector('.modal-footer .btn-primary');
-        const actionBtn = dangerBtn || primaryBtn;
+        const actionBtn = (dangerBtn || primaryBtn) as HTMLButtonElement | null;
         
         // Handler cho phím Enter
         const enterHandler = function(e) {
@@ -245,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Thêm trình nghe sự kiện Click (dùng event delegation)
         containerToProcess.addEventListener('click', (event) => {
-            const target = event.target;
+            const target = event.target as HTMLElement;
             // Kiểm tra xem có click đúng vào .smart-token không
             if (target.classList.contains('smart-token') && target.dataset.copyValue) {
                 event.preventDefault();
