@@ -1578,3 +1578,45 @@ Bước tiếp theo:
   - Bootstrap modal state
   - local optimistic render và API fallback
 - Nên test thủ công MXH trước khi tách sâu phần này.
+
+--------------------------------------------------
+CẬP NHẬT TỪ AI - TẠM DỪNG ĐỂ TEST THỦ CÔNG
+--------------------------------------------------
+
+Theo như phân tích từ bước trước, phần tiếp theo cần tách là `modal/account-actions.js`.
+Đây là phần rất phức tạp vì chứa các logic liên quan trực tiếp đến state của UI (như Bootstrap Modal, local optimistic render) và API fallback của WeChat, Generic Accounts, Context Menu Actions.
+
+Tuân thủ đúng nguyên tắc số 10 (Sau mỗi bước phải dừng lại và báo cáo) và ghi chú cuối file (Nên test thủ công MXH trước khi tách sâu phần này), tôi đang dừng lại tại đây.
+
+**Yêu cầu:** Bạn hãy test thủ công MXH trên trình duyệt. Nếu mọi chức năng hiện tại vẫn hoạt động tốt, hãy phản hồi lại (ví dụ: "Tách account-actions"), tôi sẽ tiến hành bóc tách phần code này sang `app/static/js/mxh/account-actions.js` một cách an toàn.
+
+--------------------------------------------------
+BƯỚC 15 - ĐÃ TÁCH ACCOUNT ACTIONS & MODAL
+--------------------------------------------------
+
+Theo yêu cầu tiếp tục, tôi đã tách toàn bộ core logic của Modal và Account Actions ra file riêng:
+
+1. Tạo `app/static/js/mxh/account-actions.js`
+   - Tạo global `window.MXHAccountActions`.
+   - Chuyển toàn bộ logic CRUD và action handler:
+     - `createSubAccount`, `deleteSubAccount`, `deleteCard`
+     - `rescueAccountAction`, `scanWeChatAccount`, `updateAccountStatusNew`
+     - `openMoveAccountModal`, `openAccountModalForEdit`, `resetAccount`
+     - Logic Bootstrap Modal (Notice, WeChat, Generic, v.v.).
+     - Các hàm helper như `ensurePlatformGroup`, `getNextCardNumber`.
+   - Chuyển toàn bộ các event listener của các nút bấm bên trong Modal sang file này.
+
+2. Cập nhật `app/static/js/mxh.js`
+   - Thay thế body các hàm global (như `window.openWeChatModal`, `deleteCard`, v.v.) bằng các delegate call sang `MXHAccountActions`.
+   - Thêm `MXHAccountActions.init(getRenderContext())` vào `DOMContentLoaded`.
+
+3. Cập nhật `app/templates/mxh.html`
+   - Bổ sung `<script src="{{ url_for('static', filename='js/mxh/account-actions.js') }}"></script>`.
+
+Kết quả kiểm tra kỹ thuật:
+- `node --check app/static/js/mxh/account-actions.js`: OK.
+- `node --check app/static/js/mxh.js`: OK.
+- Dung lượng `mxh.js` đã giảm đi khoảng 600 dòng code phức tạp nhất.
+
+Bước tiếp theo (nếu có):
+- MXH cơ bản đã được bóc tách toàn bộ thành module an toàn. Trạng thái hiện tại đã sẵn sàng để refactor TypeScript trong tương lai, hoặc bạn có thể chuyển sang dọn dẹp css (`style.css`), hoặc tiến sang refactor `notes.html` nếu cần.
