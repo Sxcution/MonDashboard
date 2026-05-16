@@ -1,5 +1,4 @@
 "use strict";
-// @ts-nocheck
 /**
  * STool Dashboard - Global JavaScript Functions
  * File này chứa các functions dùng chung cho toàn bộ ứng dụng
@@ -61,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Tìm nút primary hoặc danger trong modal (ưu tiên danger cho modal xóa)
         const dangerBtn = modal.querySelector('.modal-footer .btn-danger');
         const primaryBtn = modal.querySelector('.modal-footer .btn-primary');
-        const actionBtn = dangerBtn || primaryBtn;
+        const actionBtn = (dangerBtn || primaryBtn);
         // Handler cho phím Enter
         const enterHandler = function (e) {
             if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {

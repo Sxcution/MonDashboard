@@ -1,5 +1,4 @@
 "use strict";
-// @ts-nocheck
 // MXH inline edit helpers. Classic global wrapper before TypeScript modules.
 (function () {
     function createRuntime(ctx) {

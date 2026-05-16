@@ -1,6 +1,6 @@
 # MON DASHBOARD - FRONTEND REFACTOR SNAPSHOT
 
-Cập nhật: 2026-05-16
+Cập nhật: 2026-05-17
 
 ## Phạm vi đã làm
 
@@ -72,8 +72,18 @@ Cập nhật: 2026-05-16
 ## Inline còn lại
 
 - Template chính không còn `<style>`, `<script>` inline lớn, `onclick`, `onchange`, `oninput`, hoặc `style`.
-- Vẫn còn một ít HTML string động trong JS legacy có `onclick`/`style` nội bộ, chủ yếu ở Image/app/chat cũ.
-- Các file TS lớn như `image.ts`, `notes.ts`, `app.ts`, `chat.ts` vẫn đang ở dạng legacy-compatible, chưa type hóa sâu 100%.
+- HTML string động trong TS đã được gỡ các inline handler kiểu `onclick`, `onchange`, `oninput`, `oncontextmenu`.
+- Dashboard context menu đã được khóa `display: none` mặc định ở CSS global để không tự hiện trên các tab.
+- Một số style động vẫn được set bằng JS runtime qua `element.style`/CSS variable vì phụ thuộc dữ liệu runtime như màu note, màu text, vị trí menu, crop/canvas.
+- Các file TS lớn vẫn đang ở dạng legacy-compatible, chưa type hóa sâu 100%:
+  - `app.ts`
+  - `chat.ts`
+  - `dashboard.ts`
+  - `image.ts`
+  - `mxh.ts`
+  - `notes.ts`
+  - `settings.ts`
+  - `telegram.ts`
 
 ## Kiểm tra đã chạy
 
@@ -91,14 +101,10 @@ Cập nhật: 2026-05-16
   - `/image/`
   - `/settings/`
   - `/telegram`
+  - Kiểm tra thêm `#dashboard-context-menu` không tự hiện khi load page.
   - Kết quả: 6 passed.
 
 ## Việc còn lại nếu muốn siết thật sâu
 
-- Type hóa sâu các file legacy lớn:
-  - `frontend/src/notes.ts`
-  - `frontend/src/image.ts`
-  - `frontend/src/app.ts`
-  - `frontend/src/chat.ts`
-- Gỡ nốt HTML string động có inline handler/style trong JS cũ.
-- Có thể tách sâu tiếp `image.ts` và `notes.ts` theo module nhỏ giống MXH.
+- Muốn siết tiếp thì chỉ còn type hóa sâu các file legacy-compatible lớn và tách `image.ts`/`notes.ts` thành module nhỏ hơn.
+- Không còn việc template-inline lớn hoặc lỗi context menu đang biết.

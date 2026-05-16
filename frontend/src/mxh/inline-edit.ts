@@ -1,4 +1,3 @@
-// @ts-nocheck
 // MXH inline edit helpers. Classic global wrapper before TypeScript modules.
 (function () {
     function createRuntime(ctx) {
@@ -93,7 +92,7 @@
         function restoreSelection() {
             if (!selectionState) return;
 
-            const el = Array.from(doc.querySelectorAll('.editable-field[contenteditable="true"]')).find(item =>
+            const el = (Array.from(doc.querySelectorAll('.editable-field[contenteditable="true"]')) as HTMLElement[]).find(item =>
                 item.dataset.accountId === selectionState.accountId &&
                 item.dataset.field === selectionState.field
             );

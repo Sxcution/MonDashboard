@@ -1,5 +1,4 @@
-﻿// @ts-nocheck
-/**
+﻿/**
  * Console Mirror - In-Page Fallback
  * Captures console.*, window.onerror, unhandledrejection
  * Sends logs to Flask backend via /__console

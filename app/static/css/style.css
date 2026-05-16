@@ -249,6 +249,23 @@ body {
 }
 
 
+.custom-context-menu {
+    position: fixed;
+    display: none;
+    min-width: 190px;
+    padding: 0.35rem;
+    background-color: #16181d;
+    border: 1px solid #3b4250;
+    border-radius: 0.5rem;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+    color: var(--text-color);
+    z-index: 10000;
+}
+
+.custom-context-menu.show {
+    display: block;
+}
+
 .custom-context-menu .menu-item {
     padding: 0.9rem 1.5rem;
     /* Tăng 50% */
@@ -600,6 +617,21 @@ body {
 
 .context-menu-item:last-child {
     border-radius: 0 0 0.375rem 0.375rem;
+}
+
+.chat-message-image {
+    max-width: 200px;
+    border-radius: 8px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.dashboard-cell-editable {
+    cursor: text;
+}
+
+.app-note-card {
+    border-left: 4px solid var(--app-note-border, #0d6efd);
 }
 
 /* Messages */

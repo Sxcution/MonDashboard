@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function () {
                   const rowHtml = (s, i) => {
                         const liveIcon = s.is_live === null ? '<i class="bi bi-question-circle-fill text-secondary"></i>' : (s.is_live ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-x-circle-fill text-danger"></i>');
                         const statusClass = s.is_live === null ? 'text-secondary' : (s.is_live ? 'text-success' : 'text-danger');
-                        return `<tr data-filename="${s.filename}"><td><input class="form-check-input tg-session-checkbox" type="checkbox"></td><td>${i + 1}</td><td>${s.phone}</td><td class="d-none d-md-table-cell" style="cursor: text;">${s.full_name || 'N/A'}</td><td class="d-none d-md-table-cell" style="cursor: text;">${s.username || ''}</td><td class="text-center">${liveIcon}</td><td><span class="${statusClass}">${s.status_text || 'Sáºµn sÃ ng'}</span></td></tr>`;
+                        return `<tr data-filename="${s.filename}"><td><input class="form-check-input tg-session-checkbox" type="checkbox"></td><td>${i + 1}</td><td>${s.phone}</td><td class="d-none d-md-table-cell dashboard-cell-editable">${s.full_name || 'N/A'}</td><td class="d-none d-md-table-cell dashboard-cell-editable">${s.username || ''}</td><td class="text-center">${liveIcon}</td><td><span class="${statusClass}">${s.status_text || 'Sáºµn sÃ ng'}</span></td></tr>`;
                   };
                   const mid = Math.ceil(sessions.length / 2);
                   leftBody.innerHTML = sessions.slice(0, mid).map((s, i) => rowHtml(s, i)).join('');
@@ -799,7 +799,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const liveIcon = s.is_live === null ? '<i class="bi bi-question-circle-fill text-secondary"></i>' : (s.is_live ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-x-circle-fill text-danger"></i>');
                     const statusClass = s.is_live === null ? 'text-secondary' : (s.is_live ? 'text-success' : 'text-danger');
                     // MODIFY THE RETURN STATEMENT TO THE FOLLOWING:
-                    return `<tr data-filename="${s.filename}"><td><input class="form-check-input tg-session-checkbox" type="checkbox"></td><td>${i + 1}</td><td>${s.phone}</td><td class="d-none d-md-table-cell" style="cursor: text;">${s.full_name || 'N/A'}</td><td class="d-none d-md-table-cell" style="cursor: text;">${s.username || ''}</td><td class="text-center">${liveIcon}</td><td><span class="${statusClass}">${s.status_text || 'Sáºµn sÃ ng'}</span></td></tr>`;
+                    return `<tr data-filename="${s.filename}"><td><input class="form-check-input tg-session-checkbox" type="checkbox"></td><td>${i + 1}</td><td>${s.phone}</td><td class="d-none d-md-table-cell dashboard-cell-editable">${s.full_name || 'N/A'}</td><td class="d-none d-md-table-cell dashboard-cell-editable">${s.username || ''}</td><td class="text-center">${liveIcon}</td><td><span class="${statusClass}">${s.status_text || 'Sáºµn sÃ ng'}</span></td></tr>`;
                 };
                 const mid = Math.ceil(sessions.length / 2);
                 leftBody.innerHTML = sessions.slice(0, mid).map((s, i) => rowHtml(s, i)).join('');
@@ -1671,7 +1671,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const noteBodyHtml = note.content_html.trim() || '';
 
             col.innerHTML = `
-                <div class="card h-100 w-100" style="border-left: 4px solid ${borderColor};">
+                <div class="card h-100 w-100 app-note-card">
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h5 class="card-title mb-0">${noteTitleText}</h5>
@@ -1681,12 +1681,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="d-flex justify-content-between align-items-center mt-3">
                             ${statusHTML}
                             <div>
-                                <button class="btn btn-sm btn-outline-secondary" onclick="prepareEditNoteModal('${note.id}')"><i class="bi bi-pencil-fill"></i></button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteNote('${note.id}')"><i class="bi bi-trash-fill"></i></button>
+                                <button class="btn btn-sm btn-outline-secondary" data-app-note-edit="${note.id}"><i class="bi bi-pencil-fill"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" data-app-note-delete="${note.id}"><i class="bi bi-trash-fill"></i></button>
                             </div>
                         </div>
                     </div>
                 </div>`;
+
+            const noteCardElement = col.querySelector('.app-note-card');
+            if (noteCardElement) {
+                noteCardElement.style.setProperty('--app-note-border', borderColor);
+            }
 
             const noteBodyElement = col.querySelector('.card-note-body');
             if (noteBodyElement) {
@@ -1802,6 +1807,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 fetchAndRenderNotes();
             }, 'Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a ghi chÃº nÃ y?');
         };
+
+        container.addEventListener('click', (event) => {
+            const editButton = event.target.closest('[data-app-note-edit]');
+            if (editButton) {
+                window.prepareEditNoteModal(editButton.dataset.appNoteEdit);
+                return;
+            }
+
+            const deleteButton = event.target.closest('[data-app-note-delete]');
+            if (deleteButton) {
+                window.deleteNote(deleteButton.dataset.appNoteDelete);
+            }
+        });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
