@@ -302,7 +302,9 @@ function getRenderContext() {
         MXHState,
         MXHApi,
         get mxhAccounts() { return mxhAccounts; },
+        set mxhAccounts(value) { mxhAccounts = Array.isArray(value) ? value : []; },
         get mxhGroups() { return mxhGroups; },
+        set mxhGroups(value) { mxhGroups = Array.isArray(value) ? value : []; },
         get activeGroupId() { return activeGroupId; },
         get activeFilter() { return activeFilter; },
         set activeFilter(value) { activeFilter = value; },
@@ -311,6 +313,9 @@ function getRenderContext() {
         get mxhSearchQuery() { return mxhSearchQuery; },
         set mxhSearchQuery(value) { mxhSearchQuery = value; },
         get currentContextAccountId() { return currentContextAccountId; },
+        set currentContextAccountId(value) { currentContextAccountId = value; },
+        get currentContextCardId() { return currentContextCardId; },
+        set currentContextCardId(value) { currentContextCardId = value; },
         setCurrentContext(cardId, accountId) {
             currentContextCardId = cardId;
             currentContextAccountId = accountId;
@@ -352,6 +357,8 @@ function getRenderContext() {
         ensureNoticeParsed,
         needsHongKongNumber,
         renderCardFace,
+        flipCardToAccount,
+        updateStatsPanels,
         applyQuickFilter,
         isMXHInlineEditing,
         shouldHoldMXHInlineEditOnBlur,
@@ -1188,18 +1195,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateMainNavBadge();
         checkNoticeExpirations(); // Check for expired notices on load
     }, 100);
-    document.addEventListener('DOMContentLoaded', async () => {
-        MXHAccountActions.init(getRenderContext());
-
-        await loadMXHData(true);
-
-        startAutoRefresh();
-
-        MXHContextMenu.bindBackgroundContextMenu(getRenderContext());
-    });
-    // Start auto-refresh
-    startAutoRefresh();
-
     // Function to check and notify expired notices
     function checkNoticeExpirations() {
         if (typeof showPlatformNotification !== 'function') return;
@@ -1341,6 +1336,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ===== 🔍 END: Xử lý sự kiện cho Thanh Tìm Kiếm =====
 
     MXHContextMenu.bindBackgroundContextMenu(getRenderContext());
+
+    await loadMXHData(true);
+    startAutoRefresh();
 
     // console.log('✅ MXH Tab Ready - Real-time mode enabled!');
 });

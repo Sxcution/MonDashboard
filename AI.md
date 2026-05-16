@@ -1620,3 +1620,58 @@ Kết quả kiểm tra kỹ thuật:
 
 Bước tiếp theo (nếu có):
 - MXH cơ bản đã được bóc tách toàn bộ thành module an toàn. Trạng thái hiện tại đã sẵn sàng để refactor TypeScript trong tương lai, hoặc bạn có thể chuyển sang dọn dẹp css (`style.css`), hoặc tiến sang refactor `notes.html` nếu cần.
+
+--------------------------------------------------
+BƯỚC 16 - SỬA LỖI SAU PATCH ACCOUNT ACTIONS
+--------------------------------------------------
+
+Ghi chú:
+- Bước 15 do một AI khác thực hiện, đã tạo account-actions.js nhưng có một số lỗi runtime không bị node --check bắt được.
+- Không coi Bước 15 là "ổn hoàn toàn" nếu chưa test thủ công trên trình duyệt.
+
+Đã sửa trong Bước 16:
+1. Sửa filter/stat quick buttons không hoạt động.
+   - Nguyên nhân trực tiếp:
+     - app/static/js/mxh/filters.js gọi ctx.updateStatsPanels(...)
+     - nhưng app/static/js/mxh.js getRenderContext() chưa export updateStatsPanels
+     - click filter thống kê sẽ văng lỗi JS và không áp dụng filter.
+   - Đã thêm updateStatsPanels vào getRenderContext().
+
+2. Sửa context thiếu dependency cho account-actions.js.
+   - Thêm setter cho:
+     - ctx.mxhAccounts
+     - ctx.mxhGroups
+     - ctx.currentContextAccountId
+     - ctx.currentContextCardId
+   - Thêm export:
+     - flipCardToAccount
+   - Lý do:
+     - account-actions.js đang gán ctx.mxhAccounts = ...
+     - account-actions.js đang gán ctx.currentContextAccountId = ...
+     - account-actions.js gọi ctx.flipCardToAccount(...)
+
+3. Sửa lỗi init bị lồng DOMContentLoaded.
+   - Trước đó trong app/static/js/mxh.js có document.addEventListener('DOMContentLoaded') lồng bên trong một DOMContentLoaded khác.
+   - Đoạn await loadMXHData(true) nằm trong listener lồng nên có thể không chạy.
+   - Đã đưa loadMXHData(true) ra luồng init chính:
+     - bind filter/search/context menu trước
+     - sau đó load data
+     - sau đó start auto refresh.
+
+Đã kiểm tra sau Bước 16:
+- node --check app/static/js/mxh.js: OK.
+- node --check toàn bộ app/static/js/mxh/*.js: OK.
+- python -m compileall app: OK.
+- Jinja render smoke mxh.html: OK.
+- Smoke test MXHFilters.applyQuickFilter bằng Node mock: OK.
+- git diff --check: OK, chỉ còn warning LF/CRLF của Git cho app/static/js/mxh.js.
+
+Trạng thái hiện tại:
+- Filter/stat quick buttons đã được nối lại đúng context.
+- Initial load không còn nằm trong DOMContentLoaded bị lồng.
+- account-actions.js vẫn là phần cần test thủ công kỹ vì là patch lớn/phức tạp từ Bước 15.
+
+Nên test thủ công ngay:
+- Click các stat filter: Scan VN, Scan HK, Thông Báo, Cần HK, Nearby People.
+- Click dropdown Lọc.
+- Thêm/sửa/xóa tài khoản, flip card, context menu, WeChat modal.
