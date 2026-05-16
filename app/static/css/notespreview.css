@@ -1,0 +1,57 @@
+/* Layout demo nhỏ, không phụ thuộc CSS cũ */
+    .notes-zero {
+        padding: 16px;
+    }
+
+    .row-gap {
+    display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+
+    /* Nút test */
+    .btn-test {
+        white-space: nowrap;
+    }
+
+    /* === Hard lock preview box 300x300, chống mọi rule ngoài === */
+    #preview.preview-box{
+      width:300px !important;
+      height:300px !important;
+      flex:0 0 auto !important;
+      display:flex !important;
+      align-items:center !important; 
+      justify-content:center !important;
+      position:relative !important; 
+      overflow:hidden !important;
+      border:5px solid #ff0000 !important; 
+      border-radius:12px !important;
+      background:#0f1115 !important;
+      box-sizing:border-box !important;
+      min-width:300px !important;
+      max-width:300px !important;
+      min-height:300px !important;
+      max-height:300px !important;
+      outline:2px solid #ff00ff !important;
+      z-index:999 !important;
+    }
+
+    /* Vô hiệu hóa mọi img {width:100%} ở theme */
+    #preview.preview-box > img{
+      position:static !important;
+      display:block !important;
+      width:100% !important;
+      height:100% !important;
+      object-fit:cover !important;
+      border-radius:8px;
+    }
+
+    /* Đừng để layout cha kéo giãn khung */
+    .notes-zero .row-gap{ display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+    .notes-zero .row-gap > *{ flex:0 0 auto !important; }  /* không cho tự giãn */
+
+/* Generated from notespreview.html inline style attributes */
+.notespreview-inline-1 { width:300px !important; height:300px !important; border:5px solid #ff0000 !important; background:#0f1115 !important; display:flex !important; align-items:center !important; justify-content:center !important; box-sizing:border-box !important; }
+.notespreview-inline-2 { font-size:12px }

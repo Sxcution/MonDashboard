@@ -1,0 +1,8 @@
+{
+  "vite/mxh-entry.ts": {
+    "file": "mxh.bundle.js",
+    "name": "mxh-entry",
+    "src": "vite/mxh-entry.ts",
+    "isEntry": true
+  }
+}

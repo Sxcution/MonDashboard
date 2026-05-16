@@ -1,0 +1,40 @@
+/* Real-time indicator animation */
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .pulse-dot {
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Card hover effects */
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        /* transform: translateY(-2px); */
+        /* box-shadow: 0 8px 16px rgba(0,0,0,0.2); */
+    }
+
+    /* Switch animations */
+    .form-check-input {
+        transition: all 0.3s ease;
+    }
+
+    .form-check-input:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+
+/* Generated from settings.html inline style attributes */
+.settings-inline-1 { cursor: pointer; width: 3em; height: 1.5em; }
+.settings-inline-2 { max-width: 100px; }

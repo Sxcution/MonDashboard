@@ -1,9 +1,9 @@
+"use strict";
 // MXH pure utility helpers.
 (function () {
     function areGroupsEqual(a, b) {
         return JSON.stringify(a) === JSON.stringify(b);
     }
-
     function debounce(func, delay) {
         let timeoutId;
         return function (...args) {
@@ -11,7 +11,6 @@
             timeoutId = setTimeout(() => func.apply(this, args), delay);
         };
     }
-
     function throttle(func, interval) {
         let lastCall = 0;
         return function (...args) {
@@ -22,7 +21,6 @@
             }
         };
     }
-
     function escapeHtml(text) {
         const map = {
             '&': '&amp;',
@@ -33,7 +31,6 @@
         };
         return String(text).replace(/[&<>"']/g, char => map[char]);
     }
-
     function getPlatformColor(platform) {
         const colors = {
             facebook: '#1877f2',
@@ -46,7 +43,6 @@
         };
         return colors[platform] || '#6c757d';
     }
-
     function getPlatformIconClass(platform) {
         const p = String(platform || '').toLowerCase();
         return ({
@@ -59,7 +55,6 @@
             whatsapp: 'bi-whatsapp'
         }[p]) || 'bi-person-badge';
     }
-
     function getContainerTypeIcon(containerType) {
         return ({
             shelter: 'bi-shield-shaded',
@@ -68,7 +63,6 @@
             multi_user: 'bi-people'
         }[containerType]) || 'bi-people';
     }
-
     function getContainerTypeColorClass(containerType) {
         return ({
             shelter: 'mxh-menu-icon-shelter',
@@ -77,7 +71,6 @@
             multi_user: 'mxh-menu-icon-multi-user'
         }[containerType]) || 'mxh-menu-icon-multi-user';
     }
-
     function getContainerTypeTitle(containerType) {
         return ({
             shelter: 'Shelter',
@@ -86,7 +79,6 @@
             multi_user: 'Multi User'
         }[containerType]) || 'Multi User';
     }
-
     window.MXHUtils = {
         areGroupsEqual,
         debounce,
