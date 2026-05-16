@@ -561,19 +561,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/mxh/utils.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/state.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/api.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/account-rules.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/filters.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/render.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/flip-card.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/context-menu.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/inline-edit.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/phone-history.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/scan-history.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/notice-preview.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/modal-forms.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh/account-actions.js') }}"></script>
-<script src="{{ url_for('static', filename='js/mxh.js') }}"></script>
+<script src="{{ url_for('static', filename='dist/mxh.bundle.js') }}"></script>
 {% endblock %}

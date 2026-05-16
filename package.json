@@ -1,0 +1,19 @@
+{
+  "name": "mon-dashboard-frontend",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "npm run build:ts && npm run vite:build",
+    "build:ts": "tsc -p tsconfig.json",
+    "build:mxh": "npm run build:ts",
+    "check:ts": "tsc -p tsconfig.json --noEmit",
+    "check:mxh": "npm run check:ts",
+    "test:browser": "playwright test tests/browser-smoke.spec.cjs --reporter=line",
+    "vite:build": "node frontend/build-pages.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.13"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "none",
+    "ignoreDeprecations": "6.0",
+    "lib": ["DOM", "ES2020"],
+    "rootDir": "frontend/src",
+    "outDir": "app/static/js",
+    "allowJs": false,
+    "checkJs": false,
+    "strict": false,
+    "noEmitOnError": true,
+    "skipLibCheck": true,
+    "removeComments": false,
+    "sourceMap": false
+  },
+  "include": ["frontend/src/**/*.ts", "frontend/src/**/*.d.ts"],
+  "exclude": ["node_modules"]
+}

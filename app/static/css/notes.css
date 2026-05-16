@@ -1,0 +1,1627 @@
+/* Notes Layout Container */
+    .notes-layout-container {
+        display: flex;
+        gap: 1rem;
+    }
+
+    #notes-list-wrapper {
+        flex-grow: 1;
+        width: 100%;
+        transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    #notes-detail-wrapper {
+        flex-shrink: 0;
+        width: 0;
+        transform: translateX(30px);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    #notes-detail-wrapper.visible {
+        width: 66.666667%;
+        transform: translateX(0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    #notes-list-wrapper.shrunk {
+        width: 33.333333%;
+    }
+
+    /* Grid View */
+    #notes-container.notes-grid-view .note-card-wrapper {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+        padding: 0 !important;
+    }
+
+    #notes-container.notes-grid-view .card {
+        height: 120px;
+    }
+
+    /* List View */
+    #notes-container.notes-list-view .note-card-wrapper {
+        flex: 0 0 100%;
+        max-width: 100%;
+        padding: 0 !important;
+    }
+
+    #notes-container.notes-list-view .card {
+        height: 70px;
+    }
+
+    #notes-container.notes-list-view .card .card-title {
+        font-size: 1.14rem;
+        margin-bottom: 0.2rem;
+    }
+
+    #notes-container.notes-list-view .card .card-note-body {
+        font-size: 0.75rem;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+    }
+
+    #notes-container.notes-list-view .card .card-body {
+        padding: 0.5rem;
+    }
+
+    /* Card Animations */
+    #notes-container .card {
+        border-left: 4px solid var(--bs-card-border-color);
+        border-radius: 0;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+            box-shadow 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+            border-color 0.2s ease-in-out;
+    }
+
+    #notes-container .card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 8px 32px 0 rgba(0, 224, 255, 0.2),
+            0 12px 30px rgba(0, 0, 0, 0.4);
+        border-color: #00e0ff;
+    }
+
+    #notes-container .card-body {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 0.75rem;
+        overflow: hidden;
+    }
+
+    #notes-container .card-note-body {
+        flex-grow: 1;
+        margin-right: 8px;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        word-break: break-word;
+    }
+
+    .note-card-active {
+        transform: scale(1.02);
+        box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3) !important;
+        border: 2px solid var(--primary-color) !important;
+    }
+
+    /* Card Size Modifiers */
+    #notes-container.h-minus-2 .card {
+        height: 80px;
+    }
+
+    #notes-container.h-minus-4 .card {
+        height: 65px;
+    }
+
+    #notes-container.h-minus-4 .card .card-note-body {
+        display: none;
+    }
+
+    #notes-container.h-minus-4 .card .card-title {
+        font-size: 0.9rem;
+        white-space: normal;
+    }
+
+    #notes-container.h-minus-2 .card .card-title {
+        font-size: 0.9rem;
+    }
+
+    #notes-container.h-minus-2 .card .card-note-body {
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+    }
+
+    /* Profile highlighting */
+    .has-profile {
+        background-color: rgba(0, 224, 255, 0.2);
+        padding: 2px 4px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .has-profile:hover {
+        background-color: rgba(0, 224, 255, 0.3);
+    }
+
+    /* Card Enter Animation */
+    .note-card-enter-active {
+        animation: noteCardEnter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    @keyframes noteCardEnter {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Profile Highlight Animation */
+    .profile-highlight {
+        display: inline-block;
+        animation: profile-bounce 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    @keyframes profile-bounce {
+        0% {
+            transform: translateY(0);
+        }
+
+        25% {
+            transform: translateY(-10px);
+        }
+
+        50% {
+            transform: translateY(0);
+        }
+
+        75% {
+            transform: translateY(-5px);
+        }
+    }
+
+    /* Context Menu Styles */
+    .custom-context-menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999;
+        min-width: 180px;
+        max-width: 260px;
+
+        background: #1f1f1f;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+
+        font-size: 13px;
+        line-height: 1.4;
+        padding: 4px 0;
+        user-select: none;
+
+        /* Ẩn mặc định */
+        display: none;
+        visibility: hidden;
+        opacity: 0;
+    }
+
+    .custom-context-menu.show {
+        display: block;
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .menu-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .menu-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .custom-context-menu hr {
+        border: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin: 4px 0;
+    }
+
+    .menu-divider {
+        height: 1px;
+        background-color: var(--border-color);
+        margin: 4px 0;
+    }
+
+    .color-palette {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+        padding: 8px;
+        margin-top: 4px;
+    }
+
+    .color-palette span {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: border-color 0.2s;
+    }
+
+    .color-palette span:hover {
+        border-color: #fff;
+    }
+
+    /* Submenu styles */
+    .menu-item.has-submenu {
+        position: relative;
+    }
+
+    .submenu {
+        position: absolute;
+        left: 100%;
+        top: 0;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 8px 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        display: none;
+        min-width: 180px;
+    }
+
+    .menu-item.has-submenu:hover .submenu {
+        display: block;
+    }
+
+    .submenu-arrow {
+        margin-left: auto;
+    }
+
+    .color-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+        padding: 8px;
+    }
+
+    .color-option {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: border-color 0.2s;
+    }
+
+    .color-option:hover {
+        border-color: #fff;
+    }
+
+    /* ===== HARD-LOCK preview 400x400 (copy từ notespreview) ===== */
+    .profile-popover-content .preview-container {
+        width: 400px !important;
+        height: 400px !important;
+        min-width: 400px !important;
+        max-width: 400px !important;
+        min-height: 400px !important;
+        max-height: 400px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        border: 1px solid #444;
+        border-radius: 10px;
+        background: #0f1115;
+    }
+
+    /* Vô hiệu hóa mọi img {width:100%} toàn cục */
+    .profile-popover-content .preview-container>img {
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        object-fit: contain !important;
+    }
+
+    /* Popover chứa preview: khóa bề ngang, chống rule .popover{max-width:...} đè */
+    .popover.profile-popover-500 {
+        width: 448px !important;
+        max-width: 448px !important;
+    }
+
+    .popover.profile-popover-500 .popover-body {
+        overflow: hidden;
+    }
+
+    .profile-popover-content .preview-container {
+        outline: 1px dashed #666;
+    }
+
+
+
+    /* Thumbnail kiểu Telegram bên trong editor của Gán Profile */
+    #notes-profile-content-editor .tg-thumb {
+        width: 160px;
+        height: 160px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px solid #444;
+        border-radius: 10px;
+        margin: 4px;
+        cursor: pointer;
+        background: #0f1115;
+    }
+
+    #notes-profile-content-editor .tg-thumb>img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* Nếu ai đó chèn img trần → tự co lại */
+    #notes-profile-content-editor img:not(.tg-thumb > img) {
+        max-width: 200px;
+        max-height: 200px;
+        object-fit: contain;
+    }
+
+    /* === Notes: Code block wrapper === */
+    .code-block-wrapper {
+        background: #0b0f14 !important;
+        border: 3px solid #00ff00 !important;
+        /* ĐỔI SANG XANH LÁ ĐẬM để test */
+        /* viền rõ hơn */
+        border-radius: 12px !important;
+        margin: 10px 0 !important;
+        overflow: hidden !important;
+        /* để header bo theo góc */
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+        /* nổi khung nhẹ */
+        color: #e6edf3 !important;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+        display: block !important;
+    }
+
+
+    .code-block-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        /* đẩy Copy sang phải */
+        padding: 8px 10px !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+        /* thanh header giống Gemini */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+    }
+
+    .code-block-title {
+        font-size: 12px !important;
+        opacity: 0.9 !important;
+        color: #e6edf3 !important;
+    }
+
+    .copy-btn {
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #e6edf3 !important;
+        border-radius: 10px !important;
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        cursor: pointer !important;
+    }
+
+    .copy-btn:hover {
+        background: rgba(255, 255, 255, 0.14) !important;
+    }
+
+    .code-block-wrapper pre {
+        margin: 0 !important;
+        padding: 10px !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+        overflow-x: auto !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .code-block-wrapper code {
+        display: block !important;
+        color: inherit !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+        font-family: inherit !important;
+    }
+
+    /* === FORCE Code Block styles to win against global "#editor div { ... !important }" rules === */
+    #notes-content-editor div.code-block-wrapper,
+    #notes-profile-content-editor div.code-block-wrapper,
+    #detail-editable-full div.code-block-wrapper {
+        background: #0b0f14 !important;
+        border: 1px solid #2d333b !important;
+        /* viền thật */
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10) !important;
+        /* viền phụ */
+        border-radius: 12px !important;
+        margin: 10px 0 !important;
+        overflow: hidden !important;
+        color: #e6edf3 !important;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+        display: block !important;
+    }
+
+    #notes-content-editor div.code-block-header,
+    #notes-profile-content-editor div.code-block-header,
+    #detail-editable-full div.code-block-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        /* Copy về cuối dòng */
+        width: 100% !important;
+        padding: 8px 10px !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+    }
+
+    #notes-content-editor .code-block-title,
+    #notes-profile-content-editor .code-block-title,
+    #detail-editable-full .code-block-title {
+        font-size: 12px !important;
+        opacity: 0.9 !important;
+        color: #e6edf3 !important;
+    }
+
+    #notes-content-editor button.copy-btn,
+    #notes-profile-content-editor button.copy-btn,
+    #detail-editable-full button.copy-btn {
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #e6edf3 !important;
+        border-radius: 10px !important;
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        cursor: pointer !important;
+    }
+
+    #notes-content-editor button.copy-btn:hover,
+    #notes-profile-content-editor button.copy-btn:hover,
+    #detail-editable-full button.copy-btn:hover {
+        background: rgba(255, 255, 255, 0.14) !important;
+    }
+
+    #notes-content-editor div.code-block-wrapper pre,
+    #notes-profile-content-editor div.code-block-wrapper pre,
+    #detail-editable-full div.code-block-wrapper pre {
+        margin: 0 !important;
+        padding: 10px !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+        overflow-x: auto !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    #notes-content-editor div.code-block-wrapper code,
+    #notes-profile-content-editor div.code-block-wrapper code,
+    #detail-editable-full div.code-block-wrapper code {
+        display: block !important;
+        color: inherit !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+        font-family: inherit !important;
+    }
+
+    #detail-editable-full .code-block-actions,
+    #notes-content-editor .code-block-actions,
+    #notes-profile-content-editor .code-block-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    #detail-editable-full button.delete-btn.delete-btn,
+    #notes-content-editor button.delete-btn.delete-btn,
+    #notes-profile-content-editor button.delete-btn.delete-btn {
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        background: rgba(255, 0, 0, 0.10) !important;
+        color: #e6edf3 !important;
+        border-radius: 10px !important;
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        cursor: pointer !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    #detail-editable-full button.delete-btn.delete-btn:hover,
+    #notes-content-editor button.delete-btn.delete-btn:hover,
+    #notes-profile-content-editor button.delete-btn.delete-btn:hover {
+        background: rgba(255, 0, 0, 0.18) !important;
+    }
+
+    #detail-editable-full button.delete-btn.delete-btn:focus,
+    #notes-content-editor button.delete-btn.delete-btn:focus,
+    #notes-profile-content-editor button.delete-btn.delete-btn:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* === Split View Styles === */
+    #notes-detail-content-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 200px);
+        /* Ensure wrapper has explicit height */
+        overflow: hidden;
+    }
+
+    #notes-detail-content {
+        flex: 1;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .split-view-container {
+        display: grid;
+        grid-template-columns: 1fr 4px 1fr;
+        gap: 0;
+        height: 100% !important;
+        min-height: 400px;
+    }
+
+    .split-pane {
+        overflow-y: auto;
+        height: 100%;
+        border: 1px solid var(--border-color, #2d333b);
+        border-radius: 8px;
+        padding: 10px;
+        background: var(--card-bg, #161b22);
+    }
+
+    .split-pane.readonly-pane {
+        opacity: 0.95;
+        cursor: default;
+    }
+
+    .split-divider {
+        width: 4px;
+        background: linear-gradient(180deg, transparent, #00e0ff, transparent);
+        border-radius: 2px;
+        cursor: col-resize;
+        flex-shrink: 0;
+    }
+
+    /* Responsive: stack vertically on narrow screens */
+    @media (max-width: 768px) {
+        .split-view-container {
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        .split-divider {
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #00e0ff, transparent);
+            cursor: row-resize;
+        }
+    }
+
+    /* Split dropdown button styling */
+    .btn-split-view {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #e6edf3;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 6px;
+    }
+
+    .btn-split-view:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+
+    .btn-split-view.active {
+        background: rgba(0, 224, 255, 0.2);
+        border-color: #00e0ff;
+        color: #00e0ff;
+    }
+
+    /* Remove focus outline from split pane editors */
+    #detail-editable-right:focus,
+    #detail-editable-right:focus-visible,
+    #split-pane-right:focus,
+    #split-pane-right:focus-visible,
+    .split-pane [contenteditable]:focus,
+    .split-pane [contenteditable]:focus-visible {
+        outline: none !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+/* Force win even if there is #detail-editable-full div { ... !important } later */
+
+    #detail-editable-full div.code-block-wrapper.code-block-wrapper,
+    #notes-content-editor div.code-block-wrapper.code-block-wrapper,
+    #notes-profile-content-editor div.code-block-wrapper.code-block-wrapper {
+        background: #0b0f14 !important;
+        border: 2px solid #2d333b !important;
+        /* viền khung */
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        margin: 10px 0 !important;
+        display: block !important;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10) !important;
+        width: 50% !important;
+        max-width: 50% !important;
+    }
+
+    #detail-editable-full div.code-block-header.code-block-header,
+    #notes-content-editor div.code-block-header.code-block-header,
+    #notes-profile-content-editor div.code-block-header.code-block-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        /* Copy về cuối dòng */
+        width: 100% !important;
+        padding: 8px 10px !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+    }
+
+    #detail-editable-full .code-block-title,
+    #notes-content-editor .code-block-title,
+    #notes-profile-content-editor .code-block-title {
+        font-size: 12px !important;
+        opacity: 0.9 !important;
+        color: #e6edf3 !important;
+        display: inline-block !important;
+        min-width: 24px !important;
+        padding: 2px 6px !important;
+        border-radius: 8px !important;
+    }
+
+    #detail-editable-full .code-block-title:focus,
+    #notes-content-editor .code-block-title:focus,
+    #notes-profile-content-editor .code-block-title:focus {
+        outline: none !important;
+        box-shadow: none !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+    }
+
+    #detail-editable-full .code-block-title:empty:before,
+    #notes-content-editor .code-block-title:empty:before,
+    #notes-profile-content-editor .code-block-title:empty:before {
+        content: attr(data-placeholder);
+        opacity: 0.45;
+    }
+
+    #detail-editable-full button.copy-btn.copy-btn,
+    #notes-content-editor button.copy-btn.copy-btn,
+    #notes-profile-content-editor button.copy-btn.copy-btn {
+        margin-left: auto !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #e6edf3 !important;
+        border-radius: 10px !important;
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        cursor: pointer !important;
+    }
+
+    #detail-editable-full button.copy-btn.copy-btn:hover,
+    #notes-content-editor button.copy-btn.copy-btn:hover,
+    #notes-profile-content-editor button.copy-btn.copy-btn:hover {
+        background: rgba(255, 255, 255, 0.14) !important;
+    }
+
+    #detail-editable-full div.code-block-wrapper.code-block-wrapper pre,
+    #notes-content-editor div.code-block-wrapper.code-block-wrapper pre,
+    #notes-profile-content-editor div.code-block-wrapper.code-block-wrapper pre {
+        margin: 0 !important;
+        padding: 10px !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+        overflow-x: auto !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    #detail-editable-full div.code-block-wrapper.code-block-wrapper code,
+    #notes-content-editor div.code-block-wrapper.code-block-wrapper code,
+    #notes-profile-content-editor div.code-block-wrapper.code-block-wrapper code {
+        display: block !important;
+        color: inherit !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+        font-family: inherit !important;
+        outline: none !important;
+    }
+
+    #detail-editable-full div.code-block-wrapper.code-block-wrapper code:focus,
+    #notes-content-editor div.code-block-wrapper.code-block-wrapper code:focus,
+    #notes-profile-content-editor div.code-block-wrapper.code-block-wrapper code:focus {
+        outline: none !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+/* Extracted Notes utility classes */
+.notes-menu-item-danger { color: #dc3545; }
+.notes-color-swatch { background-color: var(--notes-swatch-color); }
+.notes-search-width { width: 50%; }
+.notes-search-icon { z-index: 10; }
+.notes-search-input-rounded { border-radius: 25px; }
+.notes-back-icon { font-size: 2rem; }
+.notes-title-editor { min-height: 40px; }
+.notes-content-editor { height: 200px; overflow-y: auto; }
+.notes-profile-modal-header { padding: 0.5rem 1rem; }
+.notes-profile-modal-title { margin: 0.3rem; }
+.notes-profile-modal-body { padding: 0 1rem; }
+.notes-label-tight { margin-bottom: 0; }
+.notes-profile-row-tight { margin-top: -0.5rem; }
+.notes-compact-control { height: 28px; padding: 0.25rem 0.5rem; }
+.notes-profile-content-editor { min-height: 160px; max-height: 260px; overflow: auto; padding: 0.375rem; }
+.notes-hidden { display: none; }
+.notes-profile-images-list { min-height: 50px; }
+.notes-compact-modal-footer { padding: 0.25rem 0.5rem !important; margin: 0 !important; }
+.notes-compact-modal-btn { padding: 0.15rem 0.4rem !important; margin: 0 !important; }
+.notes-image-preview-body { min-height: 60vh; }
+.notes-image-preview-img { max-width: 95vw; max-height: 90vh; display: block; }
+.notes-split-editable { outline: none !important; border: none !important; }
+.notes-close-detail-btn { font-size: 0.8rem; }
+.notes-search-highlight { background-color: #007aff !important; color: white !important; padding: 1px 2px !important; border-radius: 2px !important; display: inline !important; }
+.notes-rendered-link { color: #69b3ff; text-decoration: underline; }
+.notes-profile-thumb-img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+.notes-profile-thumb-delete { top: -5px; right: -5px; padding: 2px 6px; font-size: 10px; z-index: 10; }
+.notes-copy-preview-container { width: 400px; height: 400px; overflow: hidden; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+.notes-copy-preview-img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.notes-copy-profile-content { margin-top: 8px; max-width: 400px; word-wrap: break-word; }
+
+/* Migrated from global style.css: Notes */
+/* ===== NOTES LAYOUT STYLES ===== */
+/* New Layout System with Animation */
+.notes-layout-container {
+    display: flex;
+    gap: 1rem;
+    background-color: #1b1b1bd3;
+    /* Nền màu khung nội dung ghi chú */
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+#notes-list-wrapper {
+    flex-grow: 1;
+    width: 100%;
+    transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+#notes-detail-wrapper {
+    flex-shrink: 0;
+    width: 0;
+    transform: translateX(30px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+#notes-detail-wrapper.visible {
+    width: 66.666667%;
+    /* Panel now takes up 2/3 of the space */
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+#notes-list-wrapper.shrunk {
+    width: 33.333333%;
+    /* List now takes up 1/3 of the space */
+}
+
+/* Grid View: Cards are in a multi-column grid */
+#notes-container.notes-grid-view .note-card-wrapper {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+    padding: 0 !important;
+    /* Remove all padding */
+}
+
+#notes-container.notes-grid-view .card {
+    height: 120px;
+}
+
+/* List View: Cards are in a single vertical list */
+#notes-container.notes-list-view .note-card-wrapper {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding: 0 !important;
+    /* Remove all padding */
+}
+
+#notes-container.notes-list-view .card {
+    height: 70px;
+    /* Giảm từ 100px xuống 70px */
+}
+
+/* Font size adjustments for list view */
+#notes-container.notes-list-view .card .card-title {
+    font-size: 1.14rem;
+    /* Tăng thêm 20% từ 0.95rem lên 1.14rem */
+    margin-bottom: 0.2rem;
+    /* Giảm khoảng cách giữa title và body */
+}
+
+#notes-container.notes-list-view .card .card-note-body {
+    font-size: 0.75rem;
+    /* Giảm kích thước font body */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    /* Chỉ hiển thị 1 dòng */
+    line-clamp: 1;
+    overflow: hidden;
+}
+
+#notes-container.notes-list-view .card .card-body {
+    padding: 0.5rem;
+    /* Giảm padding của card body */
+}
+
+/* Grid view - also truncate content */
+#notes-container.notes-grid-view .card .card-note-body {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+    font-size: 0.8rem;
+}
+
+/* Compact notes container */
+#notes-container {
+    max-width: 100%;
+    margin: 0;
+}
+
+#notes-list-container {
+    transition: all 0.3s ease;
+}
+
+/* Responsive adjustments for notes */
+@media (max-width: 991.98px) {
+    #notes-list-container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        border: none;
+        min-height: auto;
+    }
+
+    .row.g-0 {
+        gap: 0.5rem !important;
+    }
+}
+
+/* Note Card Styles */
+#notes-container .card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+    background-color: #141414;
+    /* Nền màu thẻ ghi chú */
+    color: var(--text-color);
+}
+
+#notes-container .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+#notes-container .card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    /* Make body fill the card height */
+    padding: 0.75rem;
+    overflow: hidden;
+}
+
+/* Container rule: Use line-clamp for proper multi-line truncation */
+#notes-container .card-note-body {
+    flex-grow: 1;
+    margin-right: 8px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* Limit to 2 lines */
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+    /* Ensure long words wrap */
+}
+
+#notes-container .card-body .mt-auto {
+    margin-top: auto !important;
+    /* Push status to the bottom */
+}
+
+/* --- Profile Highlight Animation --- */
+@keyframes profile-bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    25% {
+        transform: translateY(-10px);
+    }
+
+    50% {
+        transform: translateY(0);
+    }
+
+    75% {
+        transform: translateY(-5px);
+    }
+}
+
+.profile-highlight {
+    display: inline-block;
+    /* Ensure transform works correctly */
+    animation: profile-bounce 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* --- Grid View Specific Styles (Xem Mặc Định) --- */
+.notes-grid-view .col-lg-4,
+.notes-grid-view .col-md-6 {
+    /* Remove padding to make cards flush */
+    padding: 0 !important;
+}
+
+.notes-grid-view .card {
+    --note-card-height: 120px;
+    /* Default height for grid view */
+    height: var(--note-card-height);
+    transition: height 0.3s ease-in-out;
+    /* Add transition */
+}
+
+/* --- List View Specific Styles (Xem Danh Sách) --- */
+.notes-list-view .col-lg-4,
+.notes-list-view .col-md-6 {
+    /* In list view, each item is a full-width row */
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding: 0 !important;
+    /* Only bottom padding for spacing */
+}
+
+.notes-list-view .card {
+    --note-card-height: 100px;
+    /* Default height for list view */
+    height: var(--note-card-height);
+    transition: height 0.3s ease-in-out;
+    /* Add transition */
+}
+
+/* --- Card Height Modifiers --- */
+#notes-container.h-minus-2 .card {
+    --note-card-height: 80px;
+    /* Shorter cards */
+}
+
+#notes-container.h-minus-4 .card {
+    --note-card-height: 65px;
+    /* Shortest cards */
+}
+
+#notes-container.h-minus-4 .card .card-note-body {
+    display: none;
+    /* Hide body completely on smallest size */
+}
+
+#notes-container.h-minus-4 .card .card-title {
+    font-size: 0.9rem;
+    /* Keep font size reasonable */
+    white-space: normal;
+    /* Allow title to wrap */
+    overflow: hidden;
+    /* Still hide overflow if it's too long */
+    text-overflow: ellipsis;
+    /* Add ellipsis for very long titles */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* Allow up to 2 lines for title */
+    -webkit-box-orient: vertical;
+}
+
+/* Content scaling for smaller cards */
+#notes-container.h-minus-2 .card .card-title {
+    font-size: 0.9rem;
+}
+
+#notes-container.h-minus-2 .card .card-note-body {
+    -webkit-line-clamp: 1;
+    /* Show only 1 line of preview */
+    line-clamp: 1;
+    font-size: 0.8rem;
+}
+
+/* Notes Search Bar Styles */
+.notes-search-container {
+    background-color: transparent;
+    border: none;
+}
+
+#notes-search-input {
+    background-color: #1a1a1a !important;
+    /* Nền màu ô tìm kiếm ghi chú */
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+#notes-search-input:focus {
+    background-color: #1a1a1a !important;
+    /* Nền màu ô tìm kiếm khi focus */
+    border-color: var(--primary-color) !important;
+    color: var(--text-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+}
+
+#notes-search-input::placeholder {
+    color: #9ca3af !important;
+}
+
+.input-group-text {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+#notes-clear-search {
+    border-left: none !important;
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+    transition: all 0.2s ease;
+}
+
+#notes-clear-search:hover {
+    background-color: var(--hover-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #dc3545 !important;
+}
+
+/* Adjust search input width when panel is shrunk */
+.notes-search-container {
+    transition: transform 0.3s ease;
+    /* Only animate transform for smooth movement */
+}
+
+/* Grid view: Search bar centered */
+.notes-layout-container .notes-search-container {
+    margin: 0 auto;
+    /* Center the search bar */
+    transform: translateX(0);
+    /* Default position */
+}
+
+/* List view: Search bar moves to left when panel is shrunk */
+#notes-list-wrapper.shrunk .notes-search-container {
+    width: 100% !important;
+    /* Search takes full width of the shrunk panel */
+    margin: 0;
+    /* Remove center alignment */
+    transform: translateX(-1%);
+    /* Move left by a smaller amount to stay visible */
+}
+
+/* Notes Detail Panel Styles */
+#notes-detail-column {
+    /* This enables the smooth animation */
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, visibility 0.3s;
+}
+
+.notes-detail-hidden {
+    /* The state when the panel is hidden */
+    opacity: 0;
+    transform: translateX(30px);
+    /* Increased distance for a clearer slide effect */
+    visibility: hidden;
+    /* Hide it completely */
+    pointer-events: none;
+    /* Prevent mouse interaction when hidden */
+}
+
+.notes-detail-visible {
+    /* The state when the panel is shown */
+    opacity: 1;
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+}
+
+#notes-detail-panel {
+    background-color: #1b1b1bd3;
+    /* Nền màu panel nội dung chi tiết ghi chú */
+    border: 1px solid var(--border-color);
+    height: 100%;
+    min-height: 600px;
+    /* Always visible in DOM */
+}
+
+#notes-detail-panel .card-header {
+    background-color: #0c0c0cc2;
+    /* Nền màu header panel chi tiết ghi chú */
+    border-bottom: 1px solid var(--border-color);
+}
+
+.note-card-active {
+    transform: scale(1.02);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3) !important;
+    border: 2px solid var(--primary-color) !important;
+    transition: all 0.3s ease;
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+/* Perfect button alignment for note action buttons */
+.flex-shrink-0.btn-group-vertical {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+}
+
+.flex-shrink-0 .btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 22px !important;
+    height: 22px !important;
+    padding: 0 !important;
+    border-radius: 4px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.flex-shrink-0 .btn i {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    font-size: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+/* Specific styling for edit and delete buttons */
+.btn-outline-secondary {
+    border: 1px solid #6c757d !important;
+    background-color: transparent !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    transform: scale(1.05) !important;
+}
+
+.btn-outline-danger {
+    border: 1px solid #dc3545 !important;
+    background-color: transparent !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    transform: scale(1.05) !important;
+}
+
+/* Inline Editor Styles */
+#detail-editable-content {
+    outline: none;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+    min-height: 150px;
+    /* Ensure a minimum height */
+}
+
+#detail-editable-content:hover,
+#detail-editable-content:focus {
+    background-color: var(--hover-color);
+}
+
+#detail-editable-content:empty:before {
+    content: attr(data-placeholder);
+    color: #6c757d;
+}
+
+#detail-editable-full {
+    outline: none;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+    min-height: 150px;
+    background-color: #1b1b1bd3;
+    /* Nền màu vùng chỉnh sửa ghi chú */
+    /* Ensure a minimum height */
+}
+
+#detail-editable-full:hover,
+#detail-editable-full:focus {
+    background-color: #1b1b1bd3;
+    /* Nền màu vùng chỉnh sửa ghi chú - không sáng */
+}
+
+#detail-editable-full:empty:before {
+    content: attr(data-placeholder);
+    color: #6c757d;
+}
+
+/* --- START: Reset styles for any pasted content in notes editor --- */
+#detail-editable-full * {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+/* --- END: Reset styles for pasted content --- */
+
+/* --- START: Fix for URL rendering bug in notes editor --- */
+#detail-editable-full a {
+    overflow-wrap: break-word;
+    /* Force long URLs to wrap to the next line */
+    word-wrap: break-word;
+    /* Legacy fallback for older browsers */
+    background-color: transparent !important;
+    /* Remove any unwanted background color */
+    color: #69b3ff;
+    /* Use a standard, readable link color */
+    text-decoration: underline;
+    /* Ensure links are clearly identifiable */
+    cursor: pointer;
+    /* Show pointer cursor on hover */
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+    /* Smooth transition */
+}
+
+#detail-editable-full a:hover {
+    color: #00e0ff;
+    /* Brighter cyan on hover */
+    text-shadow: 0 0 8px rgba(0, 224, 255, 0.5);
+    /* Subtle glow effect */
+}
+
+.auto-seeding-time-input::-webkit-outer-spin-button,
+.auto-seeding-time-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.auto-seeding-time-input {
+    -moz-appearance: textfield;
+}
+
+/* --- END: Fix for URL rendering bug --- */
+
+/* ===== CONTEXT MENU STYLES ===== */
+.custom-context-menu {
+    position: fixed;
+    z-index: 9999;
+    min-width: 200px;
+    display: none;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.custom-context-menu.show {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    background: #23272f;
+    color: #e6e6e6;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+    padding: 8px 0;
+    display: none;
+    font-size: 1rem;
+    border: 1px solid #333a4a;
+    animation: fadeInMenu 0.15s;
+}
+
+@keyframes fadeInMenu {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.custom-context-menu .menu-item {
+    padding: 10px 22px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    color: inherit;
+    border-radius: 8px;
+    transition: background 0.15s;
+    font-family: inherit;
+}
+
+.custom-context-menu .menu-item:hover {
+    background: #313846;
+    color: #00e0ff;
+}
+
+/* Add these new styles */
+.custom-context-menu .menu-item.has-submenu {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.custom-context-menu .submenu {
+    position: absolute;
+    left: 100%;
+    top: -8px;
+    /* Align with parent item */
+    display: none;
+    min-width: 150px;
+    background: #2c3340;
+    /* Slightly different color for distinction */
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 8px;
+    border: 1px solid #444a59;
+    animation: fadeInMenu 0.1s;
+}
+
+.custom-context-menu .menu-item.has-submenu:hover>.submenu {
+    display: block;
+}
+
+.custom-context-menu .submenu .menu-item {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+}
+
+.custom-context-menu .submenu .menu-item i.bi-check-circle-fill {
+    color: #00e0ff;
+}
+
+/* Profile span context menu specific styles */
+.context-menu-header {
+    padding: 8px 22px;
+    font-weight: 600;
+    color: #00e0ff;
+    border-bottom: 1px solid #333a4a;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.color-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 8px 22px;
+    margin-bottom: 8px;
+}
+
+.color-option {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.color-option:hover {
+    border-color: #ffffff;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+
+#profile-span-context-menu .submenu {
+    padding: 8px;
+    width: 170px;
+    /* Set a fixed width for the color palette */
+}
+
+#profile-span-context-menu .color-grid {
+    padding: 0;
+    margin: 0;
+}
+
+.has-profile {
+    color: #00e0ff !important;
+    /* CORRECTED: Cyan/Blue */
+    /* font-weight: bold; REMOVED */
+    border-bottom: 1px dashed #00e0ff;
+    /* CORRECTED: Cyan/Blue */
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.has-profile:hover {
+    background-color: rgba(0, 224, 255, 0.15);
+    /* CORRECTED: Cyan/Blue glow */
+    text-shadow: 0 0 8px rgba(0, 224, 255, 0.5);
+    /* CORRECTED: Cyan/Blue glow */
+}
+
+#notes-context-menu {
+    display: none;
+}
+
+#notes-context-menu .menu-item {
+    position: relative;
+}
+
+#notes-context-menu .color-palette {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: -8px;
+    background: #2c3340;
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    width: 150px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+#notes-context-menu .menu-item:hover>.color-palette {
+    display: grid;
+}
+
+#notes-context-menu .color-palette span {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid #555;
+    transition: transform 0.2s;
+}
+
+#notes-context-menu .color-palette span:hover {
+    transform: scale(1.15);
+}
+
+
+/* --- Animation cho thẻ Ghi chú mới --- */
+@keyframes noteCardEnterAnimation {
+    0% {
+        opacity: 0;
+        transform: translateY(25px) scale(0.95);
+        box-shadow: 0 0 15px rgba(0, 224, 255, 0.4);
+    }
+
+    60% {
+        opacity: 1;
+        transform: translateY(0) scale(1.02);
+        box-shadow: 0 8px 25px rgba(0, 224, 255, 0.25);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        box-shadow: none;
+    }
+}
+
+.note-card-enter .card {
+    animation: noteCardEnterAnimation 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+#notes-container .card {
+    /* Transition mượt mà cho các thuộc tính sẽ thay đổi khi hover */
+    transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+        box-shadow 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+        border-color 0.2s ease-in-out;
+}
+
+#notes-container .card:hover {
+    /* Hiệu ứng dở card */
+    transform: translateY(-10px);
+    /* Hiệu ứng viền và bóng sáng giống hệt trang chủ */
+    border-color: #00e0ff;
+    /* <-- Thêm viền sáng */
+    box-shadow: 0 8px 32px 0 rgba(0, 255, 255, 0.2),
+        0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.note-card-enter-active {
+    transform: translateY(-10px);
+    border-color: #00e0ff;
+    box-shadow: 0 8px 32px 0 rgba(0, 255, 255, 0.2), 0 12px 30px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    /* <-- ADD THIS LINE */
+}
+
+/* === Notes internal scroll === */
+.notes-layout-container {
+    height: calc(100vh - 120px);
+}
+
+#notes-list-wrapper,
+#notes-detail-wrapper {
+    min-height: 0;
+    overflow: hidden;
+}
+
+#notes-detail-panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#notes-detail-content-wrapper {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Notes page background moved from global style.css */
+#notes-tool-pane,
+#notes-tool-pane .notes-layout-container,
+#notes-detail-panel,
+#notes-detail-panel .card-header,
+#notes-detail-content-wrapper,
+#detail-editable-full,
+#detail-editable-right,
+.split-pane {
+    background-color: #1a1a1a !important;
+    background: #1a1a1a !important;
+}
+
+#notes-container .card {
+    background-color: #141414 !important;
+}
