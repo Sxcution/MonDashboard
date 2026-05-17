@@ -11,7 +11,10 @@
 # Simple LaMa depends on PyTorch. Install a PyTorch build that matches your machine
 # from https://pytorch.org/get-started/locally/ before or after this file.
 #
-# Upscale/Enhance first uses the installed Upscayl app:
+# Upscale/Enhance first uses the bundled Upscayl app in this project:
+#   tools\upscayl\resources\bin\upscayl-bin.exe
+#   tools\upscayl\resources\models\upscayl-standard-4x.*
+# It falls back to the installed Upscayl app if the bundled copy is missing:
 #   C:\Program Files\Upscayl\resources\bin\upscayl-bin.exe
 #   C:\Program Files\Upscayl\resources\models\upscayl-standard-4x.*
 # Override paths with UPSCAYL_BIN and UPSCAYL_MODELS_DIR if needed.

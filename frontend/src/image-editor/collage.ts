@@ -12,6 +12,7 @@ function bindLockedDrag(img: HTMLImageElement, imageIndex?: number): void {
     let startPosX = 50, startPosY = 50; // object-position ban Ä‘áº§u (%)
 
     img.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0 && e.button !== 2) return;
         // Don't allow dragging if locked (editing text)
         if (isImageDraggingLocked) {
             console.log('â›” Image drag blocked - text editing in progress');
@@ -47,8 +48,8 @@ function bindLockedDrag(img: HTMLImageElement, imageIndex?: number): void {
         const deltaYPercent = (deltaY / rect.height) * 100;
         
         // TÃ­nh vá»‹ trÃ­ má»›i (kÃ©o chuá»™t pháº£i = áº£nh sang pháº£i, kÃ©o lÃªn = áº£nh lÃªn)
-        let newX = startPosX + deltaXPercent;
-        let newY = startPosY + deltaYPercent;
+        let newX = startPosX - deltaXPercent;
+        let newY = startPosY - deltaYPercent;
         
         // Clamp 0â€“100% Ä‘á»ƒ khÃ´ng bao giá» há»Ÿ ná»n
         newX = Math.max(0, Math.min(100, newX));
@@ -70,6 +71,7 @@ function bindLockedDrag(img: HTMLImageElement, imageIndex?: number): void {
     };
     img.addEventListener('pointerup', end);
     img.addEventListener('pointercancel', end);
+    img.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 // ===== HELPER FUNCTIONS FOR CANVAS COLLAGE =====
@@ -674,8 +676,8 @@ function enableCanvasDrag(cells: ImageCanvasCell[]): void {
         const dx = cx - start.x, dy = cy - start.y;
         start = {x:cx, y:cy};
         imageOffsets[active] = imageOffsets[active] || {x:0, y:0};
-        imageOffsets[active].x += dx;
-        imageOffsets[active].y += dy;
+        imageOffsets[active].x -= dx;
+        imageOffsets[active].y -= dy;
 
         // váº½ láº¡i (clamp sáº½ Ã¡p trong createCanvasCollage)
         if (currentImages && currentLayoutKey) {

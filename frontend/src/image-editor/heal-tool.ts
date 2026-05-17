@@ -130,9 +130,15 @@ function updateObjectRemoveCursorSize(): void {
 }
 
 function moveObjectRemoveCursor(event: MouseEvent): void {
-    if (!blemishToolActive || isProcessingHeal) return;
+    if (!blemishToolActive) return;
+    if (isProcessingHeal) {
+        if (singleImageCanvas) singleImageCanvas.style.cursor = 'progress';
+        hideObjectRemoveCursor();
+        return;
+    }
     const cursor = ensureObjectRemoveCursor();
     updateObjectRemoveCursorSize();
+    if (singleImageCanvas) singleImageCanvas.style.cursor = 'none';
     cursor.style.left = `${event.clientX}px`;
     cursor.style.top = `${event.clientY}px`;
     cursor.style.display = 'block';
@@ -321,6 +327,8 @@ async function processBlemishHealingAuto(): Promise<void> {
 
     try {
         isProcessingHeal = true;
+        if (singleImageCanvas) singleImageCanvas.style.cursor = 'progress';
+        hideObjectRemoveCursor();
         saveCanvasState();
 
         restoreObjectRemoveBaseImage();
@@ -367,5 +375,6 @@ async function processBlemishHealingAuto(): Promise<void> {
         showToast(getImageErrorMessage(error), 'danger');
     } finally {
         isProcessingHeal = false;
+        if (blemishToolActive && singleImageCanvas) singleImageCanvas.style.cursor = 'none';
     }
 }

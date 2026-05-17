@@ -61,12 +61,14 @@ def _pil_upscale_fallback(image, scale):
 
 
 def _find_upscayl_bin():
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     candidates = []
     env_path = os.environ.get('UPSCAYL_BIN')
     if env_path:
         candidates.append(env_path)
 
     candidates.extend([
+        os.path.join(project_root, 'tools', 'upscayl', 'resources', 'bin', 'upscayl-bin.exe'),
         r'C:\Program Files\Upscayl\resources\bin\upscayl-bin.exe',
         r'C:\Program Files (x86)\Upscayl\resources\bin\upscayl-bin.exe',
         os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Upscayl', 'resources', 'bin', 'upscayl-bin.exe'),
@@ -79,12 +81,14 @@ def _find_upscayl_bin():
 
 
 def _find_upscayl_models_dir():
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     candidates = []
     env_path = os.environ.get('UPSCAYL_MODELS_DIR')
     if env_path:
         candidates.append(env_path)
 
     candidates.extend([
+        os.path.join(project_root, 'tools', 'upscayl', 'resources', 'models'),
         r'C:\Program Files\Upscayl\resources\models',
         r'C:\Program Files (x86)\Upscayl\resources\models',
         os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Upscayl', 'resources', 'models'),

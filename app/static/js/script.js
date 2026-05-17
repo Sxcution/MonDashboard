@@ -19,29 +19,28 @@ function showToast(message, type = 'success', title = 'Thông báo') {
         console.warn('Toast element not found!');
         return;
     }
-    // Set message
-    toastBody.textContent = message;
-    // Reset header classes
-    toastHeader.className = 'toast-header';
-    // Apply styling based on type
-    if (type === 'success') {
-        toastHeader.classList.add('bg-success', 'text-white');
-        toastTitle.textContent = '✅ Thành công';
-    }
-    else if (type === 'error') {
-        toastHeader.classList.add('bg-danger', 'text-white');
-        toastTitle.textContent = '❌ Lỗi';
-    }
-    else if (type === 'warning') {
-        toastHeader.classList.add('bg-warning', 'text-dark');
-        toastTitle.textContent = '⚠️ Cảnh báo';
-    }
-    else {
-        toastHeader.classList.add('bg-info', 'text-white');
-        toastTitle.textContent = title;
-    }
+    const normalizedType = type === 'danger' ? 'error' : type;
+    const labelMap = {
+        success: 'Thông báo',
+        info: title || 'Thông báo',
+        warning: 'Cảnh báo',
+        error: 'Lỗi'
+    };
+    const classMap = {
+        success: ['bg-success', 'text-white'],
+        info: ['bg-info', 'text-white'],
+        warning: ['bg-warning', 'text-dark'],
+        error: ['bg-danger', 'text-white']
+    };
+    const toastType = labelMap[normalizedType] ? normalizedType : 'info';
+    const cleanMessage = String(message || '').replace(/\s+/g, ' ').trim();
+    toastHeader.className = 'toast-header d-none';
+    toastTitle.textContent = labelMap[toastType];
+    toastBody.textContent = `${labelMap[toastType]}: ${cleanMessage}`;
+    toastEl.className = 'toast dashboard-toast';
+    toastEl.classList.add(...classMap[toastType]);
     // Show toast
-    const toast = new bootstrap.Toast(toastEl);
+    const toast = new bootstrap.Toast(toastEl, { delay: 2600 });
     toast.show();
 }
 // ===== GLOBAL HELPERS =====

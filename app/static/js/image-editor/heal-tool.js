@@ -125,10 +125,18 @@ function updateObjectRemoveCursorSize() {
     objectRemoveBrushCursor.style.height = `${diameter}px`;
 }
 function moveObjectRemoveCursor(event) {
-    if (!blemishToolActive || isProcessingHeal)
+    if (!blemishToolActive)
         return;
+    if (isProcessingHeal) {
+        if (singleImageCanvas)
+            singleImageCanvas.style.cursor = 'progress';
+        hideObjectRemoveCursor();
+        return;
+    }
     const cursor = ensureObjectRemoveCursor();
     updateObjectRemoveCursorSize();
+    if (singleImageCanvas)
+        singleImageCanvas.style.cursor = 'none';
     cursor.style.left = `${event.clientX}px`;
     cursor.style.top = `${event.clientY}px`;
     cursor.style.display = 'block';
@@ -306,6 +314,9 @@ async function processBlemishHealingAuto() {
         return;
     try {
         isProcessingHeal = true;
+        if (singleImageCanvas)
+            singleImageCanvas.style.cursor = 'progress';
+        hideObjectRemoveCursor();
         saveCanvasState();
         restoreObjectRemoveBaseImage();
         showToast('Đang xoá vật thể...', 'info');
@@ -350,5 +361,7 @@ async function processBlemishHealingAuto() {
     }
     finally {
         isProcessingHeal = false;
+        if (blemishToolActive && singleImageCanvas)
+            singleImageCanvas.style.cursor = 'none';
     }
 }

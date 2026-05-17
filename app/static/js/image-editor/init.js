@@ -164,10 +164,7 @@ function getCanvasFontFamily(fontFamily) {
     const fallback = (fontFamily || 'Georgia').replace(/"/g, '');
     return `"${fallback}", Georgia, serif`;
 }
-function drawCanvasTextLayer(ctx, layer, canvasSize) {
-    const x = (layer.x / 100) * canvasSize;
-    const y = (layer.y / 100) * canvasSize;
-    const fontSize = layer.fontSize * (canvasSize / 720);
+function drawTextLayerAt(ctx, layer, x, y, fontSize) {
     const lineHeight = fontSize * 1.25;
     const lines = layer.text.split(/\r?\n/);
     const startY = y - ((lines.length - 1) * lineHeight) / 2;
@@ -203,13 +200,79 @@ function drawCanvasTextLayer(ctx, layer, canvasSize) {
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
 }
+function drawCanvasTextLayer(ctx, layer, canvasWidth, canvasHeight = canvasWidth) {
+    const x = (layer.x / 100) * canvasWidth;
+    const y = (layer.y / 100) * canvasHeight;
+    const fontSize = layer.fontSize * (Math.min(canvasWidth, canvasHeight) / 720);
+    drawTextLayerAt(ctx, layer, x, y, fontSize);
+}
+function drawSingleImageTextLayer(ctx, layer) {
+    if (!singleImageCanvas)
+        return;
+    const canvasRect = singleImageCanvas.getBoundingClientRect();
+    const layerElement = document.getElementById(layer.id);
+    const scaleX = singleImageCanvas.width / canvasRect.width;
+    const scaleY = singleImageCanvas.height / canvasRect.height;
+    let x = (layer.x / 100) * singleImageCanvas.width;
+    let y = (layer.y / 100) * singleImageCanvas.height;
+    if (layerElement && canvasRect.width > 0 && canvasRect.height > 0) {
+        const layerRect = layerElement.getBoundingClientRect();
+        x = (layerRect.left + layerRect.width / 2 - canvasRect.left) * scaleX;
+        y = (layerRect.top + layerRect.height / 2 - canvasRect.top) * scaleY;
+    }
+    drawTextLayerAt(ctx, layer, x, y, layer.fontSize * Math.min(scaleX, scaleY));
+}
 async function saveCollage() {
     const tilesContainer = document.getElementById('collage-tiles');
-    if (tilesContainer.style.display === 'none' || collageImages.length === 0) {
+    const singleViewer = document.getElementById('singleImageViewer');
+    const isSingleImageMode = Boolean(singleViewer &&
+        getComputedStyle(singleViewer).display !== 'none' &&
+        singleImageCanvas &&
+        singleImageCanvas.width > 0 &&
+        singleImageCanvas.height > 0 &&
+        collageImages.length === 1);
+    const isCollageMode = Boolean(tilesContainer &&
+        getComputedStyle(tilesContainer).display !== 'none' &&
+        collageImages.length > 0);
+    if (!isSingleImageMode && !isCollageMode) {
         showToast('Tạo ảnh trước khi lưu', 'warning');
         return;
     }
     try {
+        if (isSingleImageMode) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = singleImageCanvas.width;
+            canvas.height = singleImageCanvas.height;
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(singleImageCanvas, 0, 0);
+            for (const layer of textLayers) {
+                drawSingleImageTextLayer(ctx, layer);
+            }
+            const blob = await imageCanvasToBlob(canvas);
+            const link = document.createElement('a');
+            link.download = `image-${Date.now()}.png`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+            const formData = new FormData();
+            formData.append('image', blob, 'image.png');
+            formData.append('imageCount', '1');
+            formData.append('layout', 'single');
+            formData.append('thumbnails', canvas.toDataURL('image/png'));
+            if (window.ImageApi) {
+                await window.ImageApi.saveCollage(formData);
+                showToast('Đã lưu ảnh', 'success');
+                return;
+            }
+            const response = await fetch('/image/api/save-collage', {
+                method: 'POST',
+                body: formData
+            });
+            showToast(response.ok ? 'Đã lưu ảnh' : 'Đã tải ảnh, nhưng chưa lưu được vào lịch sử', response.ok ? 'success' : 'warning');
+            return;
+        }
         // Get settings
         const gutter = parseInt(document.getElementById('collageGutter').value);
         const radius = parseInt(document.getElementById('collageRadius').value);
