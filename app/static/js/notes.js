@@ -1226,10 +1226,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // CRITICAL FIX: Reposition cursor AFTER modal is fully hidden
     document.getElementById('notes-addProfileModal')
         ?.addEventListener('hidden.bs.modal', () => {
-        console.log('[DEBUG] Modal fully hidden, checking for span to reposition');
         if (window._lastProfileSpan) {
             const span = window._lastProfileSpan;
-            console.log('[DEBUG] Found span, repositioning cursor after:', span.innerText);
             // Focus the content editor
             contentEditor.focus();
             // Move cursor outside the span
@@ -1240,11 +1238,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const selection = window.getSelection();
             selection.removeAllRanges();
             selection.addRange(newRange);
-            console.log('[DEBUG] Cursor repositioned. Selection:', {
-                rangeCount: selection.rangeCount,
-                anchorNode: selection.anchorNode?.nodeName,
-                focusNode: selection.focusNode?.nodeName
-            });
             // Clear the reference
             window._lastProfileSpan = null;
         }
@@ -1336,7 +1329,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         else if (savedSelection) {
             // Creating new profile
-            console.log('[DEBUG] Creating new profile span');
             const span = document.createElement('span');
             span.className = 'has-profile';
             span.dataset.profileId = profileId;
@@ -1348,14 +1340,11 @@ document.addEventListener('DOMContentLoaded', function () {
             span.setAttribute('contenteditable', 'false');
             span.appendChild(savedSelection.extractContents());
             savedSelection.insertNode(span);
-            console.log('[DEBUG] Span inserted, innerText:', span.innerText);
             // ✅ Insert spacer to place cursor outside span
             const spacer = document.createTextNode('\u200B'); // Zero-width space
             span.parentNode.insertBefore(spacer, span.nextSibling);
-            console.log('[DEBUG] Spacer text node inserted after span');
             // ✅ CRITICAL FIX: Store the CORRECT editor (detail-editable-full, not notes-content-editor)
             const editor = span.closest('[contenteditable="true"]');
-            console.log('[DEBUG] Storing editor:', editor?.id || editor?.className);
             window._lastProfileSpan = span;
             window._lastProfileSpacer = spacer;
             window._lastProfileEditor = editor;
@@ -1368,7 +1357,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         profileModal.hide();
-        console.log('[DEBUG] Modal hidden, saving changes');
         savedSelection = null;
         currentProfileSpan = null;
         saveNoteChanges(activeNoteId, true);

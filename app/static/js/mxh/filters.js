@@ -38,6 +38,7 @@
             ctx.activeFilter === 'new_month' ||
             ctx.activeFilter === 'disabled' ||
             ctx.activeFilter === 'unverified' ||
+            ctx.activeFilter === 'incomplete_info' ||
             ctx.activeFilter === 'need_hk' ||
             ctx.activeFilter === 'nearby_people');
         const viewDims = (ctx.activeViewFilter === 'card2' || ctx.activeViewFilter === 'card3');
@@ -103,6 +104,9 @@
                 }
                 else if (ctx.activeFilter === 'unverified') {
                     isFilterMatch = accounts.some(account => account.wechat_status === 'unverified');
+                }
+                else if (ctx.activeFilter === 'incomplete_info') {
+                    isFilterMatch = accounts.some(account => ctx.hasIncompleteProfileInfo(account));
                 }
                 else if (ctx.activeFilter === 'need_hk') {
                     isFilterMatch = accounts.some(account => ctx.needsHongKongNumber(account));

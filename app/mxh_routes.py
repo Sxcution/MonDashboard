@@ -1,10 +1,12 @@
 import sqlite3
 import json
+import logging
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, render_template
 from app.database import get_db_connection
 
 mxh_bp = Blueprint("mxh", __name__, url_prefix="/mxh")
+logger = logging.getLogger(__name__)
 
 
 # --- ALIAS: giữ tương thích FE cũ - tạo/xóa CARD qua /api/accounts ---
@@ -320,8 +322,7 @@ def update_account_direct(account_id):
         }
         
         # 🔍 Debug: Kiểm tra dữ liệu nhận được từ frontend
-        print(f"🔍 [update_account_direct] Received data: {data}")
-        print(f"🔍 [update_account_direct] Email in data: {data.get('email', 'NOT FOUND')}")
+        logger.debug("MXH account update received account_id=%s fields=%s", account_id, list(data.keys()))
         
         updates = {}
         for field in allowed_fields:
@@ -329,8 +330,7 @@ def update_account_direct(account_id):
                 updates[field] = data[field]
         
         # 🔍 Debug: Kiểm tra các trường sẽ được cập nhật
-        print(f"🔍 [update_account_direct] Fields to update: {list(updates.keys())}")
-        print(f"🔍 [update_account_direct] Email in updates: {updates.get('email', 'NOT FOUND')}")
+        logger.debug("MXH account fields to update account_id=%s fields=%s", account_id, list(updates.keys()))
         
         # Update card_name if provided
         if card_name is not None:
@@ -366,8 +366,7 @@ def update_account_direct(account_id):
             
             # 🔍 Debug: Kiểm tra SQL query và giá trị
             sql_query = f"UPDATE mxh_accounts SET {set_clause} WHERE id = ?"
-            print(f"🔍 [update_account_direct] SQL: {sql_query}")
-            print(f"🔍 [update_account_direct] Values: {values}")
+            logger.debug("MXH account update SQL account_id=%s sql=%s", account_id, sql_query)
             
             conn.execute(sql_query, values)
         
@@ -384,7 +383,7 @@ def update_account_direct(account_id):
         # 🔍 Debug: Kiểm tra kết quả sau khi cập nhật
         if updated:
             updated_dict = dict(updated)
-            print(f"🔍 [update_account_direct] Updated account email: {updated_dict.get('email', 'NOT FOUND')}")
+            logger.debug("MXH account updated account_id=%s", account_id)
             return jsonify(updated_dict)
         return jsonify({"error": "Account not found after update"}), 404
         
@@ -671,16 +670,14 @@ def acc_reset(account_id):
     """POST /mxh/api/accounts/<account_id>/reset - reset account về trạng thái mặc định"""
     conn = get_db_connection()
     try:
-        print(f"🔄 Resetting account {account_id}...")
+        logger.info("Resetting MXH account %s", account_id)
         now_iso = _now_iso()
         
         # Check if account exists first
         existing = conn.execute("SELECT id, username, phone FROM mxh_accounts WHERE id = ?", (account_id,)).fetchone()
         if not existing:
-            print(f"❌ Account {account_id} not found!")
+            logger.warning("MXH account %s not found for reset", account_id)
             return jsonify({"error": "Account not found"}), 404
-        
-        print(f"📝 Before reset: user={existing['username']}, phone={existing['phone']}")
         
         cursor = conn.execute("""
             UPDATE mxh_accounts
@@ -701,10 +698,9 @@ def acc_reset(account_id):
         """, (now_iso, account_id))
         
         rows_affected = cursor.rowcount
-        print(f"📊 UPDATE affected {rows_affected} rows")
+        logger.debug("MXH reset affected rows=%s account_id=%s", rows_affected, account_id)
         
         conn.commit()
-        print(f"✅ Committed transaction")
         
         # Return updated account data
         updated = conn.execute("""
@@ -715,13 +711,10 @@ def acc_reset(account_id):
         """, (account_id,)).fetchone()
         
         if updated:
-            print(f"📤 After reset: user={updated['username']}, phone={updated['phone']}")
             return jsonify(dict(updated))
         return jsonify({"message": "Account reset successfully"})
     except Exception as e:
-        print(f"❌ Error resetting account: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.exception("Error resetting MXH account %s", account_id)
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
@@ -808,7 +801,13 @@ def move_account_to_card(account_id):
             WHERE a.id = ?
         """, (account_id,)).fetchone()
 
-        print(f"✅ Moved account {account_id} ({account['username']}) to Card {target_card['card_name']} (id={target_card_id})")
+        logger.info(
+            "Moved MXH account %s (%s) to card %s (id=%s)",
+            account_id,
+            account['username'],
+            target_card['card_name'],
+            target_card_id
+        )
 
         if updated:
             return jsonify(dict(updated))

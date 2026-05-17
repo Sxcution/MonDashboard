@@ -7,9 +7,11 @@ from bs4 import BeautifulSoup
 from PIL import Image
 import io
 import base64
+import logging
 
 SOUNDS_FOLDER = os.path.join(DATA_DIR, "sounds")
 NOTES_IMAGES_FOLDER = os.path.join(DATA_DIR, "notes_images")
+logger = logging.getLogger(__name__)
 
 # --- BLUEPRINT DEFINITION ---
 notes_bp = Blueprint("notes_feature", __name__, url_prefix="/notes")
@@ -108,8 +110,8 @@ def process_base64_images(content_html):
                 f.write(image_data)
                 
             return f"/notes/images/{filename}"
-        except Exception as e:
-            print(f"Error processing image: {e}")
+        except Exception:
+            logger.exception("Error processing embedded note image")
             return match.group(0)
 
     # Find and replace Base64 images

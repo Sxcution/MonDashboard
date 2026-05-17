@@ -589,6 +589,3 @@ def update_session_info():
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
-print('Telegram routes defined successfully (matched with Main.pyw)')
