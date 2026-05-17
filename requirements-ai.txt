@@ -1,0 +1,18 @@
+# Optional AI image tools for the Image tab.
+# Install separately because these packages/models are heavy.
+
+# Object Remove / inpainting backend.
+# Install this after requirements.txt. The package metadata is old and asks for
+# older numpy/pillow/fire, but the dashboard keeps the newer core stack.
+# Recommended command:
+#   python -m pip install simple-lama-inpainting
+#   python -m pip install -r requirements.txt
+
+# Simple LaMa depends on PyTorch. Install a PyTorch build that matches your machine
+# from https://pytorch.org/get-started/locally/ before or after this file.
+#
+# Upscale/Enhance uses the Real-ESRGAN NCNN Vulkan executable, not a pip package.
+# Put realesrgan-ncnn-vulkan.exe in:
+#   tools/realesrgan-ncnn-vulkan/realesrgan-ncnn-vulkan.exe
+# or set:
+#   REAL_ESRGAN_NCNN_EXE=C:\path\to\realesrgan-ncnn-vulkan.exe

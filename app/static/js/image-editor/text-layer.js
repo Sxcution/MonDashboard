@@ -6,6 +6,38 @@ let textLayers = [];
 let currentEditingLayer = null;
 let textLayerCounter = 0;
 let selectedTextRange = null;
+const imageTextFonts = ['Georgia', 'Neorah', 'JuneVille', 'Grovana'];
+function readEditableText(element) {
+    return (element.innerText || element.textContent || '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\u00a0/g, ' ')
+        .trim();
+}
+function appendPlainTextWithBreaks(target, text) {
+    const lines = text.split(/\r?\n/);
+    lines.forEach((line, lineIndex) => {
+        if (lineIndex > 0) {
+            target.appendChild(document.createElement('br'));
+        }
+        target.appendChild(document.createTextNode(line));
+    });
+}
+function appendRainbowTextWithBreaks(target, text) {
+    const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+    let colorIndex = 0;
+    text.split(/\r?\n/).forEach((line, lineIndex) => {
+        if (lineIndex > 0) {
+            target.appendChild(document.createElement('br'));
+        }
+        for (const char of line) {
+            const span = document.createElement('span');
+            span.style.color = colors[colorIndex % colors.length];
+            span.textContent = char;
+            target.appendChild(span);
+            colorIndex++;
+        }
+    });
+}
 function toggleTextLayer() {
     // Deactivate other tools first
     deactivateAllTools();
@@ -23,7 +55,7 @@ function createNewTextLayer() {
         text: 'Double click to edit',
         color: '#ffffff',
         rainbow: false,
-        fontFamily: 'Arial',
+        fontFamily: 'Georgia',
         x: 50, // percentage
         y: 50, // percentage
         fontSize: 32
@@ -61,7 +93,7 @@ function renderTextLayer(layer, autoEdit = false) {
     textContent.style.cssText = `
         font-size: ${layer.fontSize}px;
         font-weight: bold;
-        font-family: ${layer.fontFamily || 'Arial'}, sans-serif;
+        font-family: "${String(layer.fontFamily || 'Georgia').replace(/"/g, '')}", Georgia, serif;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
         padding: 8px 12px;
         border: 2px solid transparent;
@@ -69,22 +101,14 @@ function renderTextLayer(layer, autoEdit = false) {
         pointer-events: auto;
         cursor: move;
         border-radius: 4px;
+        white-space: pre-line;
     `;
     if (layer.rainbow) {
-        const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
-        let html = '';
-        for (let i = 0; i < layer.text.length; i++) {
-            const color = colors[i % colors.length];
-            html += `<span data-image-rainbow-color="${color}">${layer.text[i] === '\n' ? '<br>' : layer.text[i]}</span>`;
-        }
-        textContent.innerHTML = html;
-        textContent.querySelectorAll('[data-image-rainbow-color]').forEach(span => {
-            span.style.color = span.dataset.imageRainbowColor;
-        });
+        appendRainbowTextWithBreaks(textContent, layer.text);
     }
     else {
         textContent.style.color = layer.color;
-        textContent.innerHTML = layer.text.replace(/\n/g, '<br>');
+        appendPlainTextWithBreaks(textContent, layer.text);
     }
     layerDiv.appendChild(textContent);
     // Hover effect
@@ -172,7 +196,7 @@ function editTextLayerInline(layerId) {
     }, 10);
     // Function to save and exit edit mode
     const saveAndExit = () => {
-        const newText = textContent.textContent.trim();
+        const newText = readEditableText(textContent);
         layer.text = newText || 'Double click to edit';
         // Exit edit mode
         textContent.contentEditable = 'false';
@@ -302,39 +326,13 @@ function populatePresetColors() {
     });
 }
 function populateFontList() {
-    const fonts = [
-        'Arial',
-        'Helvetica',
-        'Impact',
-        'Comic Sans MS',
-        'Courier New',
-        'Georgia',
-        'Palatino',
-        'Garamond',
-        'Bookman',
-        'Trebuchet MS',
-        'Arial Black',
-        'Verdana',
-        'Times New Roman',
-        'Brush Script MT',
-        'Lucida Handwriting',
-        'Copperplate',
-        'Papyrus',
-        'Lobster',
-        'Pacifico',
-        'Oswald',
-        'Montserrat',
-        'Playfair Display',
-        'Bebas Neue',
-        'Anton'
-    ];
     const container = document.getElementById('fontList');
     container.innerHTML = '';
-    fonts.forEach(font => {
+    imageTextFonts.forEach(font => {
         const div = document.createElement('div');
         div.className = 'font-item';
         div.textContent = font;
-        div.style.fontFamily = font;
+        div.style.fontFamily = `"${font}", Georgia, serif`;
         div.onclick = () => applyFont(font);
         container.appendChild(div);
     });
@@ -378,7 +376,7 @@ function applyFont(font) {
         return;
     currentEditingLayer.fontFamily = font;
     renderTextLayer(currentEditingLayer);
-    showToast(`Font changed to ${font} âœ“`, 'success');
+    showToast(`Font changed to ${font}`, 'success');
     closeAllMenus();
 }
 function deleteCurrentTextLayer() {

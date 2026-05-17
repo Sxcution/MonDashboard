@@ -337,7 +337,7 @@ function applyCrop() {
     };
     croppedImage.src = singleImageCanvas.toDataURL('image/png');
 }
-// ===== IMAGE ENHANCEMENT =====
+// ===== REAL-ESRGAN UPSCALE / ENHANCE =====
 async function enhanceImage() {
     if (collageImages.length === 0) {
         showToast('Upload a photo first!', 'warning');
@@ -345,27 +345,29 @@ async function enhanceImage() {
     }
     // Only works in single image mode
     if (collageImages.length > 1) {
-        showToast('Enhance tool only works with single images', 'info');
+        showToast('Upscale only works with one photo', 'info');
         return;
     }
     const btn = document.getElementById('enhanceBtn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enhancing...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Upscaling...';
     try {
-        // Save state before enhancement
+        // Save state before upscaling
         saveCanvasState();
         // Convert canvas to blob
         const blob = await imageCanvasToBlob(singleImageCanvas);
         // Create FormData
         const formData = new FormData();
         formData.append('image', blob, 'image.png');
-        // Call enhancement API
+        formData.append('scale', document.getElementById('upscaleScale')?.value || '2');
+        formData.append('model', document.getElementById('upscaleModel')?.value || 'realesrgan-x4plus');
+        // Call Real-ESRGAN NCNN API
         const enhancedBlob = window.ImageApi
-            ? await window.ImageApi.enhanceWebImage(formData)
-            : await fetch('/image/api/enhance_web_image', { method: 'POST', body: formData })
+            ? await window.ImageApi.upscaleImage(formData)
+            : await fetch('/image/api/upscale_image', { method: 'POST', body: formData })
                 .then(response => {
                 if (!response.ok)
-                    throw new Error('Enhancement failed');
+                    throw new Error('Upscale failed');
                 return response.blob();
             });
         const enhancedURL = URL.createObjectURL(enhancedBlob);
@@ -386,7 +388,7 @@ async function enhanceImage() {
             saveCanvasState();
             // Clean up
             URL.revokeObjectURL(enhancedURL);
-            showToast('âœ¨ Image enhanced successfully!', 'success');
+            showToast('Image upscaled', 'success');
         };
         enhancedImg.onerror = function () {
             throw new Error('Failed to load enhanced image');
@@ -394,11 +396,11 @@ async function enhanceImage() {
         enhancedImg.src = enhancedURL;
     }
     catch (error) {
-        console.error('Enhancement error:', error);
-        showToast('Enhancement failed: ' + error.message, 'danger');
+        console.error('Upscale error:', error);
+        showToast('Upscale failed: ' + (error instanceof Error ? error.message : String(error)), 'danger');
     }
     finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-stars me-1"></i>Enhance';
+        btn.innerHTML = '<i class="bi bi-stars me-1"></i>Upscale';
     }
 }

@@ -384,25 +384,27 @@ function applyCrop() {
     croppedImage.src = singleImageCanvas.toDataURL('image/png');
 }
 
-// ===== IMAGE ENHANCEMENT =====
+// ===== REAL-ESRGAN UPSCALE / ENHANCE =====
 async function enhanceImage() {
     if (collageImages.length === 0) {
-        showToast('Upload a photo first!', 'warning');
+        showToast('Chọn ảnh trước', 'warning');
         return;
     }
     
     // Only works in single image mode
     if (collageImages.length > 1) {
-        showToast('Enhance tool only works with single images', 'info');
+        showToast('Làm Nét chỉ dùng cho 1 ảnh', 'info');
         return;
     }
+
+    deactivateAllTools();
     
     const btn = document.getElementById('enhanceBtn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enhancing...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...';
     
     try {
-        // Save state before enhancement
+        // Save state before upscaling
         saveCanvasState();
         
         // Convert canvas to blob
@@ -411,13 +413,16 @@ async function enhanceImage() {
         // Create FormData
         const formData = new FormData();
         formData.append('image', blob, 'image.png');
+        formData.append('scale', (document.getElementById('upscaleScale') as HTMLSelectElement | null)?.value || '2');
+        formData.append('model', (document.getElementById('upscaleModel') as HTMLSelectElement | null)?.value || 'realesrgan-x4plus');
+        formData.append('tile_size', '2048');
         
-        // Call enhancement API
+        // Call Real-ESRGAN NCNN API
         const enhancedBlob = window.ImageApi
-            ? await window.ImageApi.enhanceWebImage(formData)
-            : await fetch('/image/api/enhance_web_image', { method: 'POST', body: formData })
+            ? await window.ImageApi.upscaleImage(formData)
+            : await fetch('/image/api/upscale_image', { method: 'POST', body: formData })
                 .then(response => {
-                    if (!response.ok) throw new Error('Enhancement failed');
+                    if (!response.ok) throw new Error('Upscale failed');
                     return response.blob();
                 });
         const enhancedURL = URL.createObjectURL(enhancedBlob);
@@ -433,6 +438,9 @@ async function enhanceImage() {
             
             // Update collage images array
             collageImages[0] = enhancedImg;
+            if (typeof resetObjectRemoveState === 'function') {
+                resetObjectRemoveState();
+            }
             
             // Save to cache
             const imageDataURLs = [singleImageCanvas.toDataURL('image/png')];
@@ -444,19 +452,19 @@ async function enhanceImage() {
             // Clean up
             URL.revokeObjectURL(enhancedURL);
             
-            showToast('âœ¨ Image enhanced successfully!', 'success');
+            showToast('Đã làm nét ảnh', 'success');
         };
         enhancedImg.onerror = function() {
-            throw new Error('Failed to load enhanced image');
+            throw new Error('Không mở được ảnh đã xử lý');
         };
         enhancedImg.src = enhancedURL;
         
     } catch (error) {
-        console.error('Enhancement error:', error);
-        showToast('Enhancement failed: ' + error.message, 'danger');
+        console.error('Upscale error:', error);
+        showToast('Làm Nét lỗi: ' + (error instanceof Error ? error.message : String(error)), 'danger');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-stars me-1"></i>Enhance';
+        btn.innerHTML = '<i class="bi bi-stars me-1"></i>Làm Nét';
     }
 }
 

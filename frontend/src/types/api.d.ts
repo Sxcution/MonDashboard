@@ -4,6 +4,8 @@ interface ApiErrorPayload {
   error?: string;
   message?: string;
   detail?: string;
+  details?: string;
+  install_hint?: string;
   [key: string]: unknown;
 }
 
@@ -60,8 +62,8 @@ interface NotesApiFactory {
 }
 
 interface ImageApiClient {
-  removeBlemish(formData: FormData): Promise<Blob>;
-  enhanceWebImage(formData: FormData): Promise<Blob>;
+  objectRemove(formData: FormData): Promise<Blob>;
+  upscaleImage(formData: FormData): Promise<Blob>;
   saveCollage(formData: FormData): Promise<unknown>;
   collageHistory(): Promise<{ history: ImageCollageHistoryItem[] }>;
   deleteCollage(id: string): Promise<unknown>;

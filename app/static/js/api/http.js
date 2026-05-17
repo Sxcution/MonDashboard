@@ -35,6 +35,11 @@
     async function blob(url, init = {}) {
         const response = await fetch(url, init);
         if (!response.ok) {
+            const contentType = response.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
+                const payload = await response.json().catch(() => null);
+                throw new Error(payload?.install_hint || payload?.error || payload?.details || `HTTP ${response.status}`);
+            }
             const text = await response.text().catch(() => "");
             throw new Error(text || `HTTP ${response.status}`);
         }

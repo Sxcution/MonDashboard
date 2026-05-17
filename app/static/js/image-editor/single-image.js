@@ -95,13 +95,9 @@ function showSingleImageViewer(image) {
     if (zoomListener) {
         singleImageCanvas.removeEventListener('wheel', zoomListener);
     }
-    // Set canvas size to fit container
-    const container = viewer.parentElement;
-    const maxWidth = container.clientWidth - 40;
-    const maxHeight = container.clientHeight - 40;
-    let scale = Math.min(maxWidth / image.width, maxHeight / image.height);
-    singleImageCanvas.width = image.width * scale;
-    singleImageCanvas.height = image.height * scale;
+    // Keep the canvas at full image resolution. CSS handles visual fitting.
+    singleImageCanvas.width = image.naturalWidth || image.width;
+    singleImageCanvas.height = image.naturalHeight || image.height;
     // Draw image
     singleImageCtx.clearRect(0, 0, singleImageCanvas.width, singleImageCanvas.height);
     singleImageCtx.drawImage(image, 0, 0, singleImageCanvas.width, singleImageCanvas.height);

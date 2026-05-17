@@ -3,14 +3,14 @@
 (function () {
     const http = window.MonHttp;
     window.ImageApi = {
-        removeBlemish(formData) {
-            return http.blob("/image/api/remove_blemish", {
+        objectRemove(formData) {
+            return http.blob("/image/api/object_remove", {
                 method: "POST",
                 body: formData
             });
         },
-        enhanceWebImage(formData) {
-            return http.blob("/image/api/enhance_web_image", {
+        upscaleImage(formData) {
+            return http.blob("/image/api/upscale_image", {
                 method: "POST",
                 body: formData
             });
