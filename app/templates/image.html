@@ -1,10 +1,11 @@
 {% extends "layouts/base.html" %}
+{% set image_asset_v = '20260518-upscayl-model-compare' %}
 
 {% block title %}Chỉnh Ảnh{% endblock %}
 
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/image.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/image.css') }}?v={{ image_asset_v }}">
 {% endblock %}
 
 {% block content %}
@@ -140,19 +141,26 @@
                         <div class="col-auto"><div class="vr image-inline-4"></div></div>
 
                         <div class="col-auto position-relative">
-                            <button class="btn btn-outline-primary btn-sm" data-image-action="enhanceImage" id="enhanceBtn" title="Phóng to/làm nét bằng Real-ESRGAN">
+                            <button class="btn btn-outline-primary btn-sm" data-image-action="toggleUpscaleMenu" id="enhanceBtn" title="Phóng to/làm nét bằng Upscayl">
                                 <i class="bi bi-stars me-1"></i>Làm Nét
                             </button>
-                            <div class="image-ai-upscale-controls">
-                                <select class="form-select form-select-sm" id="upscaleScale" title="Mức phóng to">
+                            <div class="image-ai-upscale-menu" id="upscaleMenu">
+                                <label class="form-label mb-1 small text-muted" for="upscaleScale">Mức phóng to</label>
+                                <select class="form-select form-select-sm mb-2" id="upscaleScale" title="Mức phóng to">
                                     <option value="2" selected>2x</option>
                                     <option value="3">3x</option>
                                     <option value="4">4x</option>
                                 </select>
-                                <select class="form-select form-select-sm" id="upscaleModel" title="Model Real-ESRGAN">
-                                    <option value="realesrgan-x4plus" selected>Ảnh thật</option>
-                                    <option value="realesrgan-x4plus-anime">Anime</option>
-                                </select>
+                                <input type="hidden" id="upscaleModel" value="upscayl-standard-4x">
+                                <label class="form-label mb-1 small text-muted">Mô hình</label>
+                                <button type="button" class="image-upscale-model-trigger" data-image-action="openUpscaleModelDialog">
+                                    <span id="upscaleSelectedModelName">Upscayl Standard</span>
+                                    <small id="upscaleSelectedModelDesc">Phù hợp với hầu hết các hình ảnh.</small>
+                                </button>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary btn-sm flex-fill" data-image-action="applyUpscale">Áp dụng</button>
+                                    <button type="button" class="btn btn-secondary btn-sm flex-fill" data-image-action="cancelUpscaleMenu">Huỷ</button>
+                                </div>
                             </div>
                         </div>
 
@@ -230,6 +238,87 @@
         </div><!-- Close collage interface -->
     </div><!-- Close container -->
 
+<div class="upscale-model-dialog" id="upscaleModelDialog" aria-hidden="true">
+    <div class="upscale-model-dialog-backdrop" data-image-action="closeUpscaleModelDialog"></div>
+    <section class="upscale-model-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="upscaleModelDialogTitle">
+        <header class="upscale-model-dialog-header">
+            <div>
+                <h5 id="upscaleModelDialogTitle">Chọn Mô hình AI</h5>
+                <p>Danh sách model gốc đang có trong Upscayl trên máy này.</p>
+            </div>
+            <button type="button" class="upscale-model-dialog-close" data-image-action="closeUpscaleModelDialog" title="Đóng">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </header>
+
+        <div class="upscale-model-list">
+            <button type="button" class="upscale-model-card is-selected" data-upscale-model="upscayl-standard-4x">
+                <strong>Upscayl Standard</strong>
+                <span>Phù hợp với hầu hết các hình ảnh.</span>
+                <div class="upscale-model-preview">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/upscayl-standard-4x/before.webp') }}" alt="Upscayl Standard trước">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/upscayl-standard-4x/after.webp') }}" alt="Upscayl Standard sau">
+                    <b>Trước</b><b>Sau</b>
+                </div>
+            </button>
+            <button type="button" class="upscale-model-card" data-upscale-model="upscayl-lite-4x">
+                <strong>Upscayl Lite</strong>
+                <span>Phù hợp với hầu hết ảnh, xử lý nhanh hơn với hao hụt chất lượng tối thiểu.</span>
+                <div class="upscale-model-preview">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/upscayl-lite-4x/before.webp') }}" alt="Upscayl Lite trước">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/upscayl-lite-4x/after.webp') }}" alt="Upscayl Lite sau">
+                    <b>Trước</b><b>Sau</b>
+                </div>
+            </button>
+            <button type="button" class="upscale-model-card" data-upscale-model="high-fidelity-4x">
+                <strong>High Fidelity</strong>
+                <span>Dành cho mọi loại ảnh, tập trung chi tiết thực tế và bề mặt mượt.</span>
+                <div class="upscale-model-preview">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/high-fidelity-4x/before.webp') }}" alt="High Fidelity trước">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/high-fidelity-4x/after.webp') }}" alt="High Fidelity sau">
+                    <b>Trước</b><b>Sau</b>
+                </div>
+            </button>
+            <button type="button" class="upscale-model-card" data-upscale-model="remacri-4x">
+                <strong>Remacri (Không thương mại)</strong>
+                <span>Dành cho ảnh tự nhiên, tăng thêm độ sắc nét và chi tiết.</span>
+                <div class="upscale-model-preview">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/remacri-4x/before.webp') }}" alt="Remacri trước">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/remacri-4x/after.webp') }}" alt="Remacri sau">
+                    <b>Trước</b><b>Sau</b>
+                </div>
+            </button>
+            <button type="button" class="upscale-model-card" data-upscale-model="ultramix-balanced-4x">
+                <strong>Ultramix (Không thương mại)</strong>
+                <span>Dành cho ảnh tự nhiên với cân bằng giữa độ sắc nét và chi tiết.</span>
+                <div class="upscale-model-preview">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/ultramix-balanced-4x/before.webp') }}" alt="Ultramix trước">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/ultramix-balanced-4x/after.webp') }}" alt="Ultramix sau">
+                    <b>Trước</b><b>Sau</b>
+                </div>
+            </button>
+            <button type="button" class="upscale-model-card" data-upscale-model="ultrasharp-4x">
+                <strong>Ultrasharp (Không thương mại)</strong>
+                <span>Dành cho ảnh tự nhiên tập trung vào độ sắc nét.</span>
+                <div class="upscale-model-preview">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/ultrasharp-4x/before.webp') }}" alt="Ultrasharp trước">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/ultrasharp-4x/after.webp') }}" alt="Ultrasharp sau">
+                    <b>Trước</b><b>Sau</b>
+                </div>
+            </button>
+            <button type="button" class="upscale-model-card" data-upscale-model="digital-art-4x">
+                <strong>Nghệ thuật Kỹ thuật số</strong>
+                <span>Dành cho digital art và minh hoạ, không ưu tiên ảnh người thật.</span>
+                <div class="upscale-model-preview">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/digital-art-4x/before.webp') }}" alt="Digital Art trước">
+                    <img src="{{ url_for('static', filename='img/upscayl-models/digital-art-4x/after.webp') }}" alt="Digital Art sau">
+                    <b>Trước</b><b>Sau</b>
+                </div>
+            </button>
+        </div>
+    </section>
+</div>
+
 <!-- Text Context Menu (Right-click on text) -->
 <div id="textContextMenu" class="image-inline-38">
 
@@ -293,17 +382,17 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/api/http.js') }}"></script>
-<script src="{{ url_for('static', filename='js/api/imageApi.js') }}"></script>
-<script src="{{ url_for('static', filename='js/image-editor/storage.js') }}"></script>
-<script src="{{ url_for('static', filename='js/image-editor/navigation.js') }}"></script>
-<script src="{{ url_for('static', filename='js/image-editor/history.js') }}"></script>
-<script src="{{ url_for('static', filename='js/image-editor/single-image.js') }}"></script>
-<script src="{{ url_for('static', filename='js/image-editor/upload.js') }}"></script>
-<script src="{{ url_for('static', filename='js/image-editor/heal-tool.js') }}"></script>
-<script src="{{ url_for('static', filename='js/image-editor/crop-tool.js') }}"></script>
-<script src="{{ url_for('static', filename='js/image-editor/collage.js') }}"></script>
-<script src="{{ url_for('static', filename='js/image-editor/text-layer.js') }}"></script>
-<script src="{{ url_for('static', filename='js/image-editor/init.js') }}"></script>
-<script src="{{ url_for('static', filename='js/image.js') }}"></script>
+<script src="{{ url_for('static', filename='js/api/http.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/api/imageApi.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/storage.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/navigation.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/history.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/single-image.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/upload.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/heal-tool.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/crop-tool.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/collage.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/text-layer.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/init.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image.js') }}?v={{ image_asset_v }}"></script>
 {% endblock %}

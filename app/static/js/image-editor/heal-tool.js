@@ -11,13 +11,14 @@ let blemishMaskCanvas = null;
 let blemishMaskCtx = null;
 let originalImageForBlemish = null;
 let blemishSettingsTimeout = null;
+let objectRemoveBrushCursor = null;
 function imageCanvasToBlob(canvas) {
     return new Promise((resolve, reject) => {
         canvas.toBlob((blob) => {
             if (blob)
                 resolve(blob);
             else
-                reject(new Error('Canvas export failed'));
+                reject(new Error('Không xuất được ảnh từ canvas'));
         }, 'image/png');
     });
 }
@@ -51,6 +52,7 @@ function updateBlemishBrushSize(value) {
     const label = document.getElementById('blemishBrushValue');
     if (label)
         label.textContent = String(value);
+    updateObjectRemoveCursorSize();
 }
 function updateBlemishRadius(_value) {
     // Kept for compatibility with older generated bundles/templates.
@@ -68,6 +70,27 @@ function resetObjectRemoveMask() {
     blemishMaskCtx.fillRect(0, 0, blemishMaskCanvas.width, blemishMaskCanvas.height);
     hasDrawnMask = false;
 }
+function resetObjectRemoveState() {
+    originalImageForBlemish = null;
+    isHealing = false;
+    isProcessingHeal = false;
+    hasDrawnMask = false;
+    if (blemishMaskCanvas && blemishMaskCtx && singleImageCanvas) {
+        blemishMaskCanvas.width = singleImageCanvas.width;
+        blemishMaskCanvas.height = singleImageCanvas.height;
+        resetObjectRemoveMask();
+    }
+}
+function restoreObjectRemoveBaseImage() {
+    if (!originalImageForBlemish || !singleImageCtx || !singleImageCanvas)
+        return;
+    if (originalImageForBlemish.width !== singleImageCanvas.width ||
+        originalImageForBlemish.height !== singleImageCanvas.height) {
+        resetObjectRemoveState();
+        return;
+    }
+    singleImageCtx.putImageData(originalImageForBlemish, 0, 0);
+}
 function ensureObjectRemoveMask() {
     if (!singleImageCanvas)
         return;
@@ -83,7 +106,44 @@ function ensureObjectRemoveMask() {
         resetObjectRemoveMask();
     }
 }
+function ensureObjectRemoveCursor() {
+    if (!objectRemoveBrushCursor) {
+        objectRemoveBrushCursor = document.createElement('div');
+        objectRemoveBrushCursor.className = 'object-remove-brush-cursor';
+        document.body.appendChild(objectRemoveBrushCursor);
+    }
+    updateObjectRemoveCursorSize();
+    return objectRemoveBrushCursor;
+}
+function updateObjectRemoveCursorSize() {
+    if (!objectRemoveBrushCursor || !singleImageCanvas)
+        return;
+    const rect = singleImageCanvas.getBoundingClientRect();
+    const scale = rect.width > 0 && singleImageCanvas.width > 0 ? rect.width / singleImageCanvas.width : 1;
+    const diameter = Math.max(4, blemishBrushSize * 2 * scale);
+    objectRemoveBrushCursor.style.width = `${diameter}px`;
+    objectRemoveBrushCursor.style.height = `${diameter}px`;
+}
+function moveObjectRemoveCursor(event) {
+    if (!blemishToolActive || isProcessingHeal)
+        return;
+    const cursor = ensureObjectRemoveCursor();
+    updateObjectRemoveCursorSize();
+    cursor.style.left = `${event.clientX}px`;
+    cursor.style.top = `${event.clientY}px`;
+    cursor.style.display = 'block';
+}
+function hideObjectRemoveCursor() {
+    if (objectRemoveBrushCursor)
+        objectRemoveBrushCursor.style.display = 'none';
+}
 function deactivateAllTools() {
+    if (typeof hideUpscaleCompare === 'function') {
+        hideUpscaleCompare();
+    }
+    if (typeof closeUpscaleModelDialog === 'function') {
+        closeUpscaleModelDialog();
+    }
     if (blemishToolActive) {
         blemishToolActive = false;
         const blemishBtn = document.getElementById('blemishToolBtn');
@@ -94,9 +154,8 @@ function deactivateAllTools() {
         }
         if (singleImageCanvas)
             singleImageCanvas.style.cursor = 'grab';
-        if (originalImageForBlemish && singleImageCtx) {
-            singleImageCtx.putImageData(originalImageForBlemish, 0, 0);
-        }
+        hideObjectRemoveCursor();
+        restoreObjectRemoveBaseImage();
         resetObjectRemoveMask();
         removeBlemishListeners();
         isProcessingHeal = false;
@@ -118,11 +177,11 @@ function toggleBlemishTool() {
         deactivateAllTools();
     }
     if (collageImages.length === 0) {
-        showToast('Upload a photo first!', 'warning');
+        showToast('Chọn ảnh trước', 'warning');
         return;
     }
     if (collageImages.length > 1) {
-        showToast('Object Remove only works with one photo', 'info');
+        showToast('Xoá Vật Thể chỉ dùng cho 1 ảnh', 'info');
         return;
     }
     blemishToolActive = !blemishToolActive;
@@ -133,11 +192,12 @@ function toggleBlemishTool() {
             btn.style.backgroundColor = '#198754';
             btn.style.color = 'white';
         }
-        singleImageCanvas.style.cursor = 'crosshair';
+        singleImageCanvas.style.cursor = 'none';
+        ensureObjectRemoveCursor();
         ensureObjectRemoveMask();
         originalImageForBlemish = singleImageCtx.getImageData(0, 0, singleImageCanvas.width, singleImageCanvas.height);
         setupBlemishListeners();
-        showToast('Paint the object, then release to remove', 'success');
+        showToast('Tô vùng cần xoá rồi thả chuột', 'success');
     }
     else {
         btn?.classList.remove('active');
@@ -146,29 +206,35 @@ function toggleBlemishTool() {
             btn.style.color = '';
         }
         singleImageCanvas.style.cursor = 'grab';
+        hideObjectRemoveCursor();
         removeBlemishListeners();
-        if (originalImageForBlemish) {
-            singleImageCtx.putImageData(originalImageForBlemish, 0, 0);
-        }
+        restoreObjectRemoveBaseImage();
         resetObjectRemoveMask();
-        showToast('Object Remove disabled', 'info');
+        showToast('Đã tắt Xoá Vật Thể', 'info');
     }
 }
 function setupBlemishListeners() {
+    singleImageCanvas.addEventListener('mouseenter', moveObjectRemoveCursor);
+    singleImageCanvas.addEventListener('mousemove', moveObjectRemoveCursor);
     singleImageCanvas.addEventListener('mousedown', startDrawingMask);
     singleImageCanvas.addEventListener('mousemove', continueDrawingMask);
     singleImageCanvas.addEventListener('mouseup', endDrawingMask);
     singleImageCanvas.addEventListener('mouseleave', endDrawingMask);
+    singleImageCanvas.addEventListener('mouseleave', hideObjectRemoveCursor);
     document.addEventListener('keydown', handleBlemishKeys);
 }
 function removeBlemishListeners() {
     if (!singleImageCanvas)
         return;
+    singleImageCanvas.removeEventListener('mouseenter', moveObjectRemoveCursor);
+    singleImageCanvas.removeEventListener('mousemove', moveObjectRemoveCursor);
     singleImageCanvas.removeEventListener('mousedown', startDrawingMask);
     singleImageCanvas.removeEventListener('mousemove', continueDrawingMask);
     singleImageCanvas.removeEventListener('mouseup', endDrawingMask);
     singleImageCanvas.removeEventListener('mouseleave', endDrawingMask);
+    singleImageCanvas.removeEventListener('mouseleave', hideObjectRemoveCursor);
     document.removeEventListener('keydown', handleBlemishKeys);
+    hideObjectRemoveCursor();
 }
 function startDrawingMask(event) {
     if (!blemishToolActive || isProcessingHeal)
@@ -241,8 +307,8 @@ async function processBlemishHealingAuto() {
     try {
         isProcessingHeal = true;
         saveCanvasState();
-        singleImageCtx.putImageData(originalImageForBlemish, 0, 0);
-        showToast('Object Remove is running...', 'info');
+        restoreObjectRemoveBaseImage();
+        showToast('Đang xoá vật thể...', 'info');
         const imageBlob = await imageCanvasToBlob(singleImageCanvas);
         const maskBlob = await imageCanvasToBlob(blemishMaskCanvas);
         const formData = new FormData();
@@ -252,7 +318,7 @@ async function processBlemishHealingAuto() {
             ? await window.ImageApi.objectRemove(formData)
             : await fetch('/image/api/object_remove', { method: 'POST', body: formData }).then((response) => {
                 if (!response.ok)
-                    throw new Error('Object Remove failed');
+                    throw new Error('Xoá Vật Thể lỗi');
                 return response.blob();
             });
         const resultUrl = URL.createObjectURL(resultBlob);
@@ -274,12 +340,10 @@ async function processBlemishHealingAuto() {
             img.onerror = reject;
             img.src = resultUrl;
         });
-        showToast('Object removed', 'success');
+        showToast('Đã xoá vật thể', 'success');
     }
     catch (error) {
-        if (originalImageForBlemish) {
-            singleImageCtx.putImageData(originalImageForBlemish, 0, 0);
-        }
+        restoreObjectRemoveBaseImage();
         resetObjectRemoveMask();
         console.error(error);
         showToast(getImageErrorMessage(error), 'danger');

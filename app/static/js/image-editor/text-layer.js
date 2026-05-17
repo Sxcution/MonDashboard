@@ -42,7 +42,7 @@ function toggleTextLayer() {
     // Deactivate other tools first
     deactivateAllTools();
     if (collageImages.length === 0) {
-        showToast('Upload photos first!', 'warning');
+        showToast('Chọn ảnh trước', 'warning');
         return;
     }
     createNewTextLayer();
@@ -52,7 +52,7 @@ function createNewTextLayer() {
     const layerId = `textLayer_${textLayerCounter}`;
     const textLayer = {
         id: layerId,
-        text: 'Double click to edit',
+        text: 'Bấm đúp để sửa',
         color: '#ffffff',
         rainbow: false,
         fontFamily: 'Georgia',
@@ -64,7 +64,7 @@ function createNewTextLayer() {
     renderTextLayer(textLayer, false); // false = don't auto edit, let user double-click
     // Show helpful hint on first text layer
     if (textLayers.length === 1) {
-        showToast('ðŸ’¡ Double-click text to edit, Drag to move, Right-click for options', 'info');
+        showToast('Bấm đúp để sửa chữ, kéo để di chuyển, chuột phải để đổi tuỳ chọn', 'info');
     }
 }
 function renderTextLayer(layer, autoEdit = false) {
@@ -197,7 +197,7 @@ function editTextLayerInline(layerId) {
     // Function to save and exit edit mode
     const saveAndExit = () => {
         const newText = readEditableText(textContent);
-        layer.text = newText || 'Double click to edit';
+        layer.text = newText || 'Bấm đúp để sửa';
         // Exit edit mode
         textContent.contentEditable = 'false';
         textContent.style.outline = 'none';
@@ -208,7 +208,7 @@ function editTextLayerInline(layerId) {
         lockImageDragging(false);
         // Re-render to apply rainbow if needed
         renderTextLayer(layer);
-        showToast('Text updated âœ“', 'success');
+        showToast('Đã cập nhật chữ', 'success');
     };
     // Save on blur (click outside)
     textContent.onblur = saveAndExit;
@@ -248,7 +248,7 @@ function deleteTextLayer(layerId) {
     const element = document.getElementById(layerId);
     if (element)
         element.remove();
-    showToast('Text layer deleted', 'success');
+    showToast('Đã xoá chữ', 'success');
 }
 function showTextContextMenu(event, layerId) {
     event.preventDefault();
@@ -343,7 +343,7 @@ function applyColor(color) {
     currentEditingLayer.color = color;
     currentEditingLayer.rainbow = false;
     renderTextLayer(currentEditingLayer);
-    showToast('Color applied âœ“', 'success');
+    showToast('Đã đổi màu', 'success');
     closeAllMenus();
 }
 function applyCustomColor() {
@@ -355,7 +355,7 @@ function applyCustomColor() {
     }
     // Validate hex color
     if (!/^#[0-9A-F]{6}$/i.test(color)) {
-        showToast('Invalid color code! Use format: #FFFFFF', 'warning');
+        showToast('Mã màu không hợp lệ. Dùng dạng #FFFFFF', 'warning');
         return;
     }
     applyColor(color);
@@ -369,14 +369,14 @@ function applyRainbowMode(enabled) {
         currentEditingLayer.color = document.getElementById('colorCodeInput').value || '#FFFFFF';
     }
     renderTextLayer(currentEditingLayer);
-    showToast(enabled ? 'Rainbow mode enabled ðŸŒˆ' : 'Rainbow mode disabled', 'success');
+    showToast(enabled ? 'Đã bật màu cầu vồng' : 'Đã tắt màu cầu vồng', 'success');
 }
 function applyFont(font) {
     if (!currentEditingLayer)
         return;
     currentEditingLayer.fontFamily = font;
     renderTextLayer(currentEditingLayer);
-    showToast(`Font changed to ${font}`, 'success');
+    showToast(`Đã đổi font sang ${font}`, 'success');
     closeAllMenus();
 }
 function deleteCurrentTextLayer() {
@@ -386,7 +386,7 @@ function deleteCurrentTextLayer() {
     const element = document.getElementById(currentEditingLayer.id);
     if (element)
         element.remove();
-    showToast('Text layer deleted', 'success');
+    showToast('Đã xoá chữ', 'success');
     closeAllMenus();
     currentEditingLayer = null;
 }

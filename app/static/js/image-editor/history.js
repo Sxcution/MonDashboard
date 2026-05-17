@@ -54,7 +54,7 @@ function loadCollageHistoryFromStorage() {
         const history = window.ImageEditorStorage.readCollageHistory();
         const container = document.getElementById('collageHistory');
         if (history.length === 0) {
-            container.innerHTML = '<small class="text-muted text-center py-3">No saved collages</small>';
+            container.innerHTML = '<small class="text-muted text-center py-3">Chưa có ảnh đã lưu</small>';
             return;
         }
         container.innerHTML = history.map(item => {
@@ -65,9 +65,9 @@ function loadCollageHistoryFromStorage() {
                      data-id="${item.id}"
                      data-image-history-edit="${item.id}"
                      data-image-history-menu="${item.id}"
-                     title="${item.date} - ${item.imageCount} photos">
-                    <img src="${thumbnailSrc}" alt="Collage">
-                    <div class="history-item-date">${item.imageCount} photos</div>
+                    title="${item.date} - ${item.imageCount} ảnh">
+                    <img src="${thumbnailSrc}" alt="Ảnh đã lưu">
+                    <div class="history-item-date">${item.imageCount} ảnh</div>
                 </div>
             `;
         }).join('');
@@ -82,7 +82,7 @@ function loadHistoryForEdit(historyId) {
         const history = JSON.parse(localStorage.getItem(STORAGE_KEY_COLLAGE_HISTORY) || '[]');
         const item = history.find(h => h.id === historyId);
         if (!item) {
-            showToast('History item not found', 'danger');
+            showToast('Không tìm thấy ảnh trong lịch sử', 'danger');
             return;
         }
         // Clear current state
@@ -116,7 +116,7 @@ function loadHistoryForEdit(historyId) {
                     // Check if single image
                     if (item.images.length === 1) {
                         showSingleImageViewer(collageImages[0]);
-                        showToast(`Loaded 1 photo from history`, 'success');
+                        showToast('Đã tải 1 ảnh từ lịch sử', 'success');
                     }
                     else {
                         // Hide single image viewer
@@ -136,7 +136,7 @@ function loadHistoryForEdit(historyId) {
                         if (matchingLayout) {
                             selectLayout(matchingLayout.id);
                         }
-                        showToast(`Loaded ${item.imageCount} photos from history`, 'success');
+                        showToast(`Đã tải ${item.imageCount} ảnh từ lịch sử`, 'success');
                     }
                 }
             };
@@ -145,7 +145,7 @@ function loadHistoryForEdit(historyId) {
     }
     catch (e) {
         console.error('Failed to load history for edit:', e);
-        showToast('Error loading history', 'danger');
+        showToast('Lỗi khi tải lịch sử', 'danger');
     }
 }
 function showHistoryContextMenu(event, historyId) {
@@ -162,7 +162,7 @@ function showHistoryContextMenu(event, historyId) {
     menu.style.top = event.pageY + 'px';
     menu.innerHTML = `
         <div class="context-menu-item" data-image-history-delete="${historyId}">
-            <i class="bi bi-trash"></i>Delete
+            <i class="bi bi-trash"></i>Xoá
         </div>
     `;
     document.body.appendChild(menu);
@@ -185,10 +185,10 @@ function deleteFromHistory(historyId) {
         history = history.filter(h => h.id !== historyId);
         localStorage.setItem(STORAGE_KEY_COLLAGE_HISTORY, JSON.stringify(history));
         loadCollageHistoryFromStorage();
-        showToast('Deleted from history', 'info');
+        showToast('Đã xoá khỏi lịch sử', 'info');
     }
     catch (e) {
         console.error('Failed to delete from history:', e);
-        showToast('Error deleting from history', 'danger');
+        showToast('Lỗi khi xoá lịch sử', 'danger');
     }
 }

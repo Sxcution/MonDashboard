@@ -200,47 +200,47 @@ let dragInitialOffsetY = 0;
 // Layout templates definitions - [col, row, colSpan, rowSpan]
 const layoutTemplates: ImageLayoutTemplate[] = [
     // === 1 PHOTO ===
-    { id: 'layout-1', name: '1 photo', cols: 1, rows: 1, maxPhotos: 1, cells: [[0,0,1,1]] },
+    { id: 'layout-1', name: '1 ảnh', cols: 1, rows: 1, maxPhotos: 1, cells: [[0,0,1,1]] },
     
     // === 2 PHOTOS ===
-    { id: 'layout-2h', name: '2 horizontal', cols: 2, rows: 1, maxPhotos: 2, cells: [[0,0,1,1], [1,0,1,1]] },
-    { id: 'layout-2v', name: '2 vertical', cols: 1, rows: 2, maxPhotos: 2, cells: [[0,0,1,1], [0,1,1,1]] },
+    { id: 'layout-2h', name: '2 ảnh ngang', cols: 2, rows: 1, maxPhotos: 2, cells: [[0,0,1,1], [1,0,1,1]] },
+    { id: 'layout-2v', name: '2 ảnh dọc', cols: 1, rows: 2, maxPhotos: 2, cells: [[0,0,1,1], [0,1,1,1]] },
     
     // === 3 PHOTOS ===
-    { id: 'layout-3h', name: '3 horizontal', cols: 3, rows: 1, maxPhotos: 3, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1]] },
-    { id: 'layout-3v', name: '3 vertical', cols: 1, rows: 3, maxPhotos: 3, cells: [[0,0,1,1], [0,1,1,1], [0,2,1,1]] },
-    { id: 'layout-3-left', name: '3 left large', cols: 2, rows: 2, maxPhotos: 3, cells: [[0,0,1,2], [1,0,1,1], [1,1,1,1]] },
-    { id: 'layout-3-right', name: '3 right large', cols: 2, rows: 2, maxPhotos: 3, cells: [[0,0,1,1], [0,1,1,1], [1,0,1,2]] },
-    { id: 'layout-3-top', name: '3 top large', cols: 2, rows: 2, maxPhotos: 3, cells: [[0,0,2,1], [0,1,1,1], [1,1,1,1]] },
-    { id: 'layout-3-bottom', name: '3 bottom large', cols: 2, rows: 2, maxPhotos: 3, cells: [[0,0,1,1], [1,0,1,1], [0,1,2,1]] },
+    { id: 'layout-3h', name: '3 ảnh ngang', cols: 3, rows: 1, maxPhotos: 3, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1]] },
+    { id: 'layout-3v', name: '3 ảnh dọc', cols: 1, rows: 3, maxPhotos: 3, cells: [[0,0,1,1], [0,1,1,1], [0,2,1,1]] },
+    { id: 'layout-3-left', name: '3 ảnh trái lớn', cols: 2, rows: 2, maxPhotos: 3, cells: [[0,0,1,2], [1,0,1,1], [1,1,1,1]] },
+    { id: 'layout-3-right', name: '3 ảnh phải lớn', cols: 2, rows: 2, maxPhotos: 3, cells: [[0,0,1,1], [0,1,1,1], [1,0,1,2]] },
+    { id: 'layout-3-top', name: '3 ảnh trên lớn', cols: 2, rows: 2, maxPhotos: 3, cells: [[0,0,2,1], [0,1,1,1], [1,1,1,1]] },
+    { id: 'layout-3-bottom', name: '3 ảnh dưới lớn', cols: 2, rows: 2, maxPhotos: 3, cells: [[0,0,1,1], [1,0,1,1], [0,1,2,1]] },
     
     // === 4 PHOTOS ===
-    { id: 'layout-4-grid', name: '4 grid 2Ã—2', cols: 2, rows: 2, maxPhotos: 4, cells: [[0,0,1,1], [1,0,1,1], [0,1,1,1], [1,1,1,1]] },
-    { id: 'layout-4h', name: '4 horizontal', cols: 4, rows: 1, maxPhotos: 4, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [3,0,1,1]] },
-    { id: 'layout-4v', name: '4 vertical', cols: 1, rows: 4, maxPhotos: 4, cells: [[0,0,1,1], [0,1,1,1], [0,2,1,1], [0,3,1,1]] },
-    { id: 'layout-4-left', name: '4 left large', cols: 2, rows: 3, maxPhotos: 4, cells: [[0,0,1,3], [1,0,1,1], [1,1,1,1], [1,2,1,1]] },
-    { id: 'layout-4-right', name: '4 right large', cols: 2, rows: 3, maxPhotos: 4, cells: [[0,0,1,1], [0,1,1,1], [0,2,1,1], [1,0,1,3]] },
-    { id: 'layout-4-top', name: '4 top large', cols: 3, rows: 2, maxPhotos: 4, cells: [[0,0,3,1], [0,1,1,1], [1,1,1,1], [2,1,1,1]] },
-    { id: 'layout-4-bottom', name: '4 bottom large', cols: 3, rows: 2, maxPhotos: 4, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [0,1,3,1]] },
-    { id: 'layout-4-center', name: '4 center large', cols: 3, rows: 3, maxPhotos: 4, cells: [[0,0,1,1], [2,0,1,1], [1,1,1,1], [0,2,1,1]] },
+    { id: 'layout-4-grid', name: '4 ảnh lưới 2x2', cols: 2, rows: 2, maxPhotos: 4, cells: [[0,0,1,1], [1,0,1,1], [0,1,1,1], [1,1,1,1]] },
+    { id: 'layout-4h', name: '4 ảnh ngang', cols: 4, rows: 1, maxPhotos: 4, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [3,0,1,1]] },
+    { id: 'layout-4v', name: '4 ảnh dọc', cols: 1, rows: 4, maxPhotos: 4, cells: [[0,0,1,1], [0,1,1,1], [0,2,1,1], [0,3,1,1]] },
+    { id: 'layout-4-left', name: '4 ảnh trái lớn', cols: 2, rows: 3, maxPhotos: 4, cells: [[0,0,1,3], [1,0,1,1], [1,1,1,1], [1,2,1,1]] },
+    { id: 'layout-4-right', name: '4 ảnh phải lớn', cols: 2, rows: 3, maxPhotos: 4, cells: [[0,0,1,1], [0,1,1,1], [0,2,1,1], [1,0,1,3]] },
+    { id: 'layout-4-top', name: '4 ảnh trên lớn', cols: 3, rows: 2, maxPhotos: 4, cells: [[0,0,3,1], [0,1,1,1], [1,1,1,1], [2,1,1,1]] },
+    { id: 'layout-4-bottom', name: '4 ảnh dưới lớn', cols: 3, rows: 2, maxPhotos: 4, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [0,1,3,1]] },
+    { id: 'layout-4-center', name: '4 ảnh giữa lớn', cols: 3, rows: 3, maxPhotos: 4, cells: [[0,0,1,1], [2,0,1,1], [1,1,1,1], [0,2,1,1]] },
     
     // === 5 PHOTOS ===
-    { id: 'layout-5h', name: '5 horizontal', cols: 5, rows: 1, maxPhotos: 5, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [3,0,1,1], [4,0,1,1]] },
-    { id: 'layout-5v', name: '5 vertical', cols: 1, rows: 5, maxPhotos: 5, cells: [[0,0,1,1], [0,1,1,1], [0,2,1,1], [0,3,1,1], [0,4,1,1]] },
-    { id: 'layout-5-left', name: '5 left large', cols: 3, rows: 2, maxPhotos: 5, cells: [[0,0,1,2], [1,0,1,1], [2,0,1,1], [1,1,1,1], [2,1,1,1]] },
-    { id: 'layout-5-right', name: '5 right large', cols: 3, rows: 2, maxPhotos: 5, cells: [[0,0,1,1], [1,0,1,1], [0,1,1,1], [1,1,1,1], [2,0,1,2]] },
-    { id: 'layout-5-top2', name: '5 top 2', cols: 3, rows: 2, maxPhotos: 5, cells: [[0,0,2,1], [2,0,1,1], [0,1,1,1], [1,1,1,1], [2,1,1,1]] },
-    { id: 'layout-5-top3', name: '5 top 3', cols: 3, rows: 2, maxPhotos: 5, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [0,1,2,1], [2,1,1,1]] },
-    { id: 'layout-5-center', name: '5 center large', cols: 3, rows: 3, maxPhotos: 5, cells: [[0,0,1,1], [2,0,1,1], [1,1,1,1], [0,2,1,1], [2,2,1,1]] },
-    { id: 'layout-5-grid', name: '5 grid mixed', cols: 3, rows: 2, maxPhotos: 5, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [0,1,1,1], [1,1,2,1]] },
+    { id: 'layout-5h', name: '5 ảnh ngang', cols: 5, rows: 1, maxPhotos: 5, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [3,0,1,1], [4,0,1,1]] },
+    { id: 'layout-5v', name: '5 ảnh dọc', cols: 1, rows: 5, maxPhotos: 5, cells: [[0,0,1,1], [0,1,1,1], [0,2,1,1], [0,3,1,1], [0,4,1,1]] },
+    { id: 'layout-5-left', name: '5 ảnh trái lớn', cols: 3, rows: 2, maxPhotos: 5, cells: [[0,0,1,2], [1,0,1,1], [2,0,1,1], [1,1,1,1], [2,1,1,1]] },
+    { id: 'layout-5-right', name: '5 ảnh phải lớn', cols: 3, rows: 2, maxPhotos: 5, cells: [[0,0,1,1], [1,0,1,1], [0,1,1,1], [1,1,1,1], [2,0,1,2]] },
+    { id: 'layout-5-top2', name: '5 ảnh trên 2 ô', cols: 3, rows: 2, maxPhotos: 5, cells: [[0,0,2,1], [2,0,1,1], [0,1,1,1], [1,1,1,1], [2,1,1,1]] },
+    { id: 'layout-5-top3', name: '5 ảnh trên 3 ô', cols: 3, rows: 2, maxPhotos: 5, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [0,1,2,1], [2,1,1,1]] },
+    { id: 'layout-5-center', name: '5 ảnh giữa lớn', cols: 3, rows: 3, maxPhotos: 5, cells: [[0,0,1,1], [2,0,1,1], [1,1,1,1], [0,2,1,1], [2,2,1,1]] },
+    { id: 'layout-5-grid', name: '5 ảnh lưới mix', cols: 3, rows: 2, maxPhotos: 5, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [0,1,1,1], [1,1,2,1]] },
     
     // === 6 PHOTOS ===
-    { id: 'layout-6-grid', name: '6 grid 2Ã—3', cols: 3, rows: 2, maxPhotos: 6, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [0,1,1,1], [1,1,1,1], [2,1,1,1]] },
-    { id: 'layout-6h', name: '6 horizontal', cols: 6, rows: 1, maxPhotos: 6, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [3,0,1,1], [4,0,1,1], [5,0,1,1]] },
-    { id: 'layout-6v', name: '6 vertical', cols: 1, rows: 6, maxPhotos: 6, cells: [[0,0,1,1], [0,1,1,1], [0,2,1,1], [0,3,1,1], [0,4,1,1], [0,5,1,1]] },
+    { id: 'layout-6-grid', name: '6 ảnh lưới 2x3', cols: 3, rows: 2, maxPhotos: 6, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [0,1,1,1], [1,1,1,1], [2,1,1,1]] },
+    { id: 'layout-6h', name: '6 ảnh ngang', cols: 6, rows: 1, maxPhotos: 6, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [3,0,1,1], [4,0,1,1], [5,0,1,1]] },
+    { id: 'layout-6v', name: '6 ảnh dọc', cols: 1, rows: 6, maxPhotos: 6, cells: [[0,0,1,1], [0,1,1,1], [0,2,1,1], [0,3,1,1], [0,4,1,1], [0,5,1,1]] },
     
     // === 9 PHOTOS ===
-    { id: 'layout-9-grid', name: '9 grid 3Ã—3', cols: 3, rows: 3, maxPhotos: 9, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [0,1,1,1], [1,1,1,1], [2,1,1,1], [0,2,1,1], [1,2,1,1], [2,2,1,1]] }
+    { id: 'layout-9-grid', name: '9 ảnh lưới 3x3', cols: 3, rows: 3, maxPhotos: 9, cells: [[0,0,1,1], [1,0,1,1], [2,0,1,1], [0,1,1,1], [1,1,1,1], [2,1,1,1], [0,2,1,1], [1,2,1,1], [2,2,1,1]] }
 ];
 
 // Update slider values display and trigger collage update
@@ -303,7 +303,7 @@ function renderLayoutTemplates() {
     
     if (availableTemplates.length === 0) {
         html = `<div class="text-center text-muted p-2 w-100 image-layout-empty">
-                    <i class="bi bi-info-circle"></i> No layouts for ${collageImages.length} photos
+                    <i class="bi bi-info-circle"></i> Chưa có bố cục cho ${collageImages.length} ảnh
                 </div>`;
         container.innerHTML = html;
         return;
@@ -320,7 +320,7 @@ function renderLayoutTemplates() {
         html += `
             <div class="layout-template ${selectedLayout === layout.id ? 'selected' : ''}"
                  data-image-layout-id="${layout.id}"
-                 title="${layout.name} (${layout.maxPhotos} photo${layout.maxPhotos > 1 ? 's' : ''})">
+                 title="${layout.name} (${layout.maxPhotos} ảnh)">
                 <svg viewBox="0 0 ${layout.cols * 100} ${layout.rows * 100}" 
                      width="${svgWidth}" 
                      height="${svgHeight}"
@@ -399,14 +399,14 @@ document.getElementById('collageUpload').addEventListener('change', function(e) 
                     if (files.length === 1) {
                         // Single image viewer mode
                         showSingleImageViewer(collageImages[0]);
-                        showToast('1 photo uploaded - Single viewer mode', 'success');
+                        showToast('Đã thêm 1 ảnh', 'success');
                     } else {
                         // Collage mode (2+ images)
                         // Hide single image viewer when switching to collage
                         document.getElementById('singleImageViewer').style.display = 'none';
                         
                         previewContainer.style.display = 'flex';
-                        showToast(`${files.length} photos uploaded`, 'success');
+                        showToast(`Đã thêm ${files.length} ảnh`, 'success');
                         
                         // Re-render templates to show only matching photo count
                         renderLayoutTemplates();
@@ -535,7 +535,7 @@ function applyUI() {
 
 function createCollageWithLayout() {
     if (collageImages.length === 0 || !selectedLayout) {
-        showToast('Please upload photos and select a layout', 'warning');
+        showToast('Chọn ảnh và bố cục trước', 'warning');
         return;
     }
     

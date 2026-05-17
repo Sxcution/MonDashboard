@@ -11,8 +11,8 @@
 # Simple LaMa depends on PyTorch. Install a PyTorch build that matches your machine
 # from https://pytorch.org/get-started/locally/ before or after this file.
 #
-# Upscale/Enhance uses the Real-ESRGAN NCNN Vulkan executable, not a pip package.
-# Put realesrgan-ncnn-vulkan.exe in:
-#   tools/realesrgan-ncnn-vulkan/realesrgan-ncnn-vulkan.exe
-# or set:
-#   REAL_ESRGAN_NCNN_EXE=C:\path\to\realesrgan-ncnn-vulkan.exe
+# Upscale/Enhance first uses the installed Upscayl app:
+#   C:\Program Files\Upscayl\resources\bin\upscayl-bin.exe
+#   C:\Program Files\Upscayl\resources\models\upscayl-standard-4x.*
+# Override paths with UPSCAYL_BIN and UPSCAYL_MODELS_DIR if needed.
+# OpenCV DNN Super Resolution remains a CPU fallback.

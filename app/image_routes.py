@@ -2,17 +2,25 @@ from flask import Blueprint, render_template, request, jsonify, send_file
 import os
 import json
 import logging
-import shutil
 import subprocess
 import tempfile
 from datetime import datetime
 import uuid
-from PIL import Image
+from PIL import Image, ImageFilter, ImageStat
 import io
 
 image_bp = Blueprint('image', __name__, url_prefix='/image')
 logger = logging.getLogger(__name__)
 _simple_lama_model = None
+UPSCAYL_MODELS = {
+    'upscayl-standard-4x': 'Upscayl Standard',
+    'upscayl-lite-4x': 'Upscayl Lite',
+    'high-fidelity-4x': 'High Fidelity',
+    'remacri-4x': 'Remacri',
+    'ultramix-balanced-4x': 'Ultramix Balanced',
+    'ultrasharp-4x': 'Ultrasharp',
+    'digital-art-4x': 'Digital Art',
+}
 
 
 def _load_simple_lama():
@@ -32,22 +40,37 @@ def _ai_missing_response(feature, details, install_hint):
     }), 501
 
 
-def _find_realesrgan_executable():
+def _send_pil_png(image):
+    output = io.BytesIO()
+    image.save(output, format='PNG')
+    output.seek(0)
+    return send_file(output, mimetype='image/png')
+
+
+def _is_nearly_black(image):
+    sample = image.convert('RGB')
+    sample.thumbnail((256, 256))
+    stat = ImageStat.Stat(sample)
+    return max(stat.mean) < 3
+
+
+def _pil_upscale_fallback(image, scale):
+    width, height = image.size
+    result = image.resize((width * scale, height * scale), Image.Resampling.LANCZOS)
+    return result.filter(ImageFilter.UnsharpMask(radius=1.2, percent=125, threshold=3))
+
+
+def _find_upscayl_bin():
     candidates = []
-    env_path = os.environ.get('REAL_ESRGAN_NCNN_EXE')
+    env_path = os.environ.get('UPSCAYL_BIN')
     if env_path:
         candidates.append(env_path)
 
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     candidates.extend([
-        os.path.join(project_root, 'tools', 'realesrgan-ncnn-vulkan', 'realesrgan-ncnn-vulkan.exe'),
-        os.path.join(project_root, 'tools', 'upscayl-ncnn', 'realesrgan-ncnn-vulkan.exe'),
-        os.path.join(project_root, 'tools', 'realesrgan-ncnn-vulkan.exe'),
+        r'C:\Program Files\Upscayl\resources\bin\upscayl-bin.exe',
+        r'C:\Program Files (x86)\Upscayl\resources\bin\upscayl-bin.exe',
+        os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Upscayl', 'resources', 'bin', 'upscayl-bin.exe'),
     ])
-
-    shell_path = shutil.which('realesrgan-ncnn-vulkan') or shutil.which('realesrgan-ncnn-vulkan.exe')
-    if shell_path:
-        candidates.append(shell_path)
 
     for candidate in candidates:
         if candidate and os.path.exists(candidate):
@@ -55,11 +78,105 @@ def _find_realesrgan_executable():
     return None
 
 
-def _send_pil_png(image):
-    output = io.BytesIO()
-    image.save(output, format='PNG')
-    output.seek(0)
-    return send_file(output, mimetype='image/png')
+def _find_upscayl_models_dir():
+    candidates = []
+    env_path = os.environ.get('UPSCAYL_MODELS_DIR')
+    if env_path:
+        candidates.append(env_path)
+
+    candidates.extend([
+        r'C:\Program Files\Upscayl\resources\models',
+        r'C:\Program Files (x86)\Upscayl\resources\models',
+        os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Upscayl', 'resources', 'models'),
+    ])
+
+    for candidate in candidates:
+        if candidate and os.path.exists(os.path.join(candidate, 'upscayl-standard-4x.param')):
+            return os.path.abspath(candidate)
+    return None
+
+
+def _get_model_scale(model_name):
+    lowered = model_name.lower()
+    if 'x2' in lowered or '2x' in lowered:
+        return 2
+    if 'x3' in lowered or '3x' in lowered:
+        return 3
+    return 4
+
+
+def _upscayl_upscale(image, scale, model_name, compression='0', tile_size=None):
+    exe = _find_upscayl_bin()
+    models_dir = _find_upscayl_models_dir()
+    if not exe or not models_dir:
+        raise FileNotFoundError('Upscayl binary/models were not found')
+    if model_name not in UPSCAYL_MODELS:
+        model_name = 'upscayl-standard-4x'
+    if not os.path.exists(os.path.join(models_dir, f'{model_name}.param')):
+        raise FileNotFoundError(f'Upscayl model was not found: {model_name}')
+
+    with tempfile.TemporaryDirectory(prefix='mon_upscayl_') as tmp:
+        input_path = os.path.join(tmp, 'input.png')
+        output_path = os.path.join(tmp, 'output.png')
+        image.convert('RGB').save(input_path, format='PNG')
+
+        command = [
+            exe,
+            '-i', input_path,
+            '-o', output_path,
+        ]
+        if _get_model_scale(model_name) != scale:
+            command.extend(['-s', str(scale)])
+        command.extend([
+            '-m', models_dir,
+            '-n', model_name,
+            '-f', 'png',
+            '-c', str(compression or '0'),
+        ])
+        if tile_size:
+            command.extend(['-t', str(tile_size)])
+
+        subprocess.run(
+            command,
+            cwd=os.path.dirname(exe) or None,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            timeout=300
+        )
+
+        return Image.open(output_path).convert('RGB')
+
+
+def _find_opencv_superres_model(scale):
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    model_path = os.path.join(project_root, 'tools', 'opencv-superres', f'FSRCNN_x{scale}.pb')
+    return model_path if os.path.exists(model_path) else None
+
+
+def _opencv_superres_upscale(image, scale):
+    import cv2
+    import numpy as np
+
+    model_path = _find_opencv_superres_model(scale)
+    if not model_path:
+        raise FileNotFoundError(f'Missing OpenCV super-resolution model for {scale}x')
+    if not hasattr(cv2, 'dnn_superres'):
+        raise RuntimeError('opencv-contrib-python is required for dnn_superres')
+
+    sr = cv2.dnn_superres.DnnSuperResImpl_create()
+    sr.readModel(model_path)
+    sr.setModel('fsrcnn', scale)
+
+    rgb = np.array(image.convert('RGB'))
+    bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+    result_bgr = sr.upsample(bgr)
+    result_rgb = cv2.cvtColor(result_bgr, cv2.COLOR_BGR2RGB)
+    result = Image.fromarray(result_rgb)
+    return result.filter(ImageFilter.UnsharpMask(radius=0.8, percent=80, threshold=3))
 
 @image_bp.route('/')
 def index():
@@ -268,62 +385,49 @@ def object_remove():
 
 @image_bp.route('/api/upscale_image', methods=['POST'])
 def upscale_image():
-    """Upscale/enhance using Real-ESRGAN NCNN Vulkan."""
+    """Upscale/enhance with Upscayl's bundled models, with safe fallbacks."""
     try:
         f = request.files.get('image')
         if not f:
             return jsonify({'success': False, 'error': 'No image provided'}), 400
-
-        exe = _find_realesrgan_executable()
-        if not exe:
-            return _ai_missing_response(
-                'Upscale/Enhance',
-                'realesrgan-ncnn-vulkan executable was not found.',
-                'Download Real-ESRGAN NCNN Vulkan or Upscayl NCNN, then set REAL_ESRGAN_NCNN_EXE or place it in tools/realesrgan-ncnn-vulkan/.'
-            )
-
-        model = request.form.get('model', 'realesrgan-x4plus')
-        allowed_models = {'realesrgan-x4plus', 'realesrnet-x4plus', 'realesrgan-x4plus-anime'}
-        if model not in allowed_models:
-            model = 'realesrgan-x4plus'
 
         try:
             scale = int(request.form.get('scale', 2))
         except ValueError:
             scale = 2
         scale = max(2, min(4, scale))
+        model = request.form.get('model', 'upscayl-standard-4x')
+        if model not in UPSCAYL_MODELS:
+            model = 'upscayl-standard-4x'
+        compression = request.form.get('compression', '0')
+        try:
+            tile_size = int(request.form.get('tile_size', '') or 0)
+        except ValueError:
+            tile_size = 0
+        tile_size = tile_size if tile_size > 0 else None
+
+        original = Image.open(f.stream).convert('RGB')
+        try:
+            result = _upscayl_upscale(original, scale, model, compression=compression, tile_size=tile_size)
+            if not _is_nearly_black(result):
+                return _send_pil_png(result)
+            logger.warning("Upscayl returned a black image, using OpenCV fallback")
+        except Exception as exc:
+            logger.warning("Upscayl failed, using OpenCV fallback: %s", exc)
 
         try:
-            tile_size = int(request.form.get('tile_size', 2048))
-        except ValueError:
-            tile_size = 2048
-        tile_size = max(512, min(4096, tile_size))
+            result = _opencv_superres_upscale(original, scale)
+            if not _is_nearly_black(result):
+                return _send_pil_png(result)
+            logger.warning("OpenCV super-resolution returned a black image, using fallback")
+        except Exception as exc:
+            logger.warning("OpenCV super-resolution failed, using fallback: %s", exc)
 
-        with tempfile.TemporaryDirectory(prefix='mon_image_ai_') as tmp:
-            input_path = os.path.join(tmp, 'input.png')
-            output_path = os.path.join(tmp, 'output.png')
-            Image.open(f.stream).convert('RGB').save(input_path)
-
-            subprocess.run(
-                [
-                    exe,
-                    '-i', input_path,
-                    '-o', output_path,
-                    '-n', model,
-                    '-s', str(scale),
-                    '-t', str(tile_size),
-                    '-f', 'png'
-                ],
-                cwd=os.path.dirname(exe) or None,
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                timeout=300
-            )
-
-            result = Image.open(output_path).convert('RGB')
-            return _send_pil_png(result)
+        try:
+            return _send_pil_png(_pil_upscale_fallback(original, scale))
+        except Exception as exc:
+            logger.exception("Fallback upscale failed")
+            return jsonify({'success': False, 'error': str(exc)}), 500
     except Exception as e:
         logger.exception("Upscale failed")
         return jsonify({'success': False, 'error': str(e)}), 500

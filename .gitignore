@@ -38,6 +38,7 @@ static/temp/
 *.bmp
 *.webp
 *.svg
+!app/static/img/upscayl-models/**/*.webp
 
 # Node
 node_modules/

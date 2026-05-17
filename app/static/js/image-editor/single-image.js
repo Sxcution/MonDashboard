@@ -45,13 +45,13 @@ function saveCanvasState() {
 }
 function undoCanvas() {
     if (canvasHistory.length === 0) {
-        showToast('No more undo history', 'info');
+        showToast('Không còn lịch sử để hoàn tác', 'info');
         return;
     }
     // Remove current state
     canvasHistory.pop();
     if (canvasHistory.length === 0) {
-        showToast('Reached initial state', 'info');
+        showToast('Đã về trạng thái ban đầu', 'info');
         return;
     }
     // Restore previous state
@@ -62,7 +62,7 @@ function undoCanvas() {
         singleImageCanvas.width = img.width;
         singleImageCanvas.height = img.height;
         singleImageCtx.drawImage(img, 0, 0);
-        showToast('â†©ï¸ Undo successful', 'success');
+        showToast('Đã hoàn tác', 'success');
     };
     img.src = previousState;
 }

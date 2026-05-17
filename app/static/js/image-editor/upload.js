@@ -54,6 +54,10 @@ function handlePaste(e) {
     }
 }
 function processUploadedFiles(files) {
+    deactivateAllTools();
+    if (typeof resetObjectRemoveState === 'function') {
+        resetObjectRemoveState();
+    }
     collageImages = [];
     imageOffsets = [];
     imagePositions = [];
@@ -84,13 +88,13 @@ function processUploadedFiles(files) {
                     document.getElementById('collagePrompt').style.display = 'none';
                     if (files.length === 1) {
                         showSingleImageViewer(collageImages[0]);
-                        showToast('1 photo added - Single viewer mode', 'success');
+                        showToast('Đã thêm 1 ảnh', 'success');
                     }
                     else {
                         // Hide single image viewer when switching to collage
                         document.getElementById('singleImageViewer').style.display = 'none';
                         previewContainer.style.display = 'flex';
-                        showToast(`${files.length} photos added`, 'success');
+                        showToast(`Đã thêm ${files.length} ảnh`, 'success');
                         renderLayoutTemplates();
                         const matchingLayout = layoutTemplates.find(l => l.maxPhotos === files.length);
                         if (matchingLayout)
@@ -109,5 +113,5 @@ function processUploadedFiles(files) {
 function clearAllHistory() {
     localStorage.removeItem(STORAGE_KEY_COLLAGE_HISTORY);
     loadCollageHistoryFromStorage();
-    showToast('All history cleared', 'info');
+    showToast('Đã xoá toàn bộ lịch sử', 'info');
 }

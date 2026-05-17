@@ -11,12 +11,13 @@ let blemishMaskCanvas: HTMLCanvasElement | null = null;
 let blemishMaskCtx: CanvasRenderingContext2D | null = null;
 let originalImageForBlemish: ImageData | null = null;
 let blemishSettingsTimeout: number | null = null;
+let objectRemoveBrushCursor: HTMLDivElement | null = null;
 
 function imageCanvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
     return new Promise((resolve, reject) => {
         canvas.toBlob((blob) => {
             if (blob) resolve(blob);
-            else reject(new Error('Canvas export failed'));
+            else reject(new Error('Không xuất được ảnh từ canvas'));
         }, 'image/png');
     });
 }
@@ -49,6 +50,7 @@ function updateBlemishBrushSize(value: string | number): void {
     blemishBrushSize = parseInt(String(value), 10);
     const label = document.getElementById('blemishBrushValue');
     if (label) label.textContent = String(value);
+    updateObjectRemoveCursorSize();
 }
 
 function updateBlemishRadius(_value: string | number): void {
@@ -108,7 +110,46 @@ function ensureObjectRemoveMask(): void {
     }
 }
 
+function ensureObjectRemoveCursor(): HTMLDivElement {
+    if (!objectRemoveBrushCursor) {
+        objectRemoveBrushCursor = document.createElement('div');
+        objectRemoveBrushCursor.className = 'object-remove-brush-cursor';
+        document.body.appendChild(objectRemoveBrushCursor);
+    }
+    updateObjectRemoveCursorSize();
+    return objectRemoveBrushCursor;
+}
+
+function updateObjectRemoveCursorSize(): void {
+    if (!objectRemoveBrushCursor || !singleImageCanvas) return;
+    const rect = singleImageCanvas.getBoundingClientRect();
+    const scale = rect.width > 0 && singleImageCanvas.width > 0 ? rect.width / singleImageCanvas.width : 1;
+    const diameter = Math.max(4, blemishBrushSize * 2 * scale);
+    objectRemoveBrushCursor.style.width = `${diameter}px`;
+    objectRemoveBrushCursor.style.height = `${diameter}px`;
+}
+
+function moveObjectRemoveCursor(event: MouseEvent): void {
+    if (!blemishToolActive || isProcessingHeal) return;
+    const cursor = ensureObjectRemoveCursor();
+    updateObjectRemoveCursorSize();
+    cursor.style.left = `${event.clientX}px`;
+    cursor.style.top = `${event.clientY}px`;
+    cursor.style.display = 'block';
+}
+
+function hideObjectRemoveCursor(): void {
+    if (objectRemoveBrushCursor) objectRemoveBrushCursor.style.display = 'none';
+}
+
 function deactivateAllTools(): void {
+    if (typeof hideUpscaleCompare === 'function') {
+        hideUpscaleCompare();
+    }
+    if (typeof closeUpscaleModelDialog === 'function') {
+        closeUpscaleModelDialog();
+    }
+
     if (blemishToolActive) {
         blemishToolActive = false;
         const blemishBtn = document.getElementById('blemishToolBtn');
@@ -118,6 +159,7 @@ function deactivateAllTools(): void {
             blemishBtn.style.color = '';
         }
         if (singleImageCanvas) singleImageCanvas.style.cursor = 'grab';
+        hideObjectRemoveCursor();
         restoreObjectRemoveBaseImage();
         resetObjectRemoveMask();
         removeBlemishListeners();
@@ -161,7 +203,8 @@ function toggleBlemishTool(): void {
             btn.style.backgroundColor = '#198754';
             btn.style.color = 'white';
         }
-        singleImageCanvas.style.cursor = 'crosshair';
+        singleImageCanvas.style.cursor = 'none';
+        ensureObjectRemoveCursor();
         ensureObjectRemoveMask();
         originalImageForBlemish = singleImageCtx.getImageData(0, 0, singleImageCanvas.width, singleImageCanvas.height);
         setupBlemishListeners();
@@ -173,6 +216,7 @@ function toggleBlemishTool(): void {
             btn.style.color = '';
         }
         singleImageCanvas.style.cursor = 'grab';
+        hideObjectRemoveCursor();
         removeBlemishListeners();
         restoreObjectRemoveBaseImage();
         resetObjectRemoveMask();
@@ -181,20 +225,27 @@ function toggleBlemishTool(): void {
 }
 
 function setupBlemishListeners(): void {
+    singleImageCanvas.addEventListener('mouseenter', moveObjectRemoveCursor);
+    singleImageCanvas.addEventListener('mousemove', moveObjectRemoveCursor);
     singleImageCanvas.addEventListener('mousedown', startDrawingMask);
     singleImageCanvas.addEventListener('mousemove', continueDrawingMask);
     singleImageCanvas.addEventListener('mouseup', endDrawingMask);
     singleImageCanvas.addEventListener('mouseleave', endDrawingMask);
+    singleImageCanvas.addEventListener('mouseleave', hideObjectRemoveCursor);
     document.addEventListener('keydown', handleBlemishKeys);
 }
 
 function removeBlemishListeners(): void {
     if (!singleImageCanvas) return;
+    singleImageCanvas.removeEventListener('mouseenter', moveObjectRemoveCursor);
+    singleImageCanvas.removeEventListener('mousemove', moveObjectRemoveCursor);
     singleImageCanvas.removeEventListener('mousedown', startDrawingMask);
     singleImageCanvas.removeEventListener('mousemove', continueDrawingMask);
     singleImageCanvas.removeEventListener('mouseup', endDrawingMask);
     singleImageCanvas.removeEventListener('mouseleave', endDrawingMask);
+    singleImageCanvas.removeEventListener('mouseleave', hideObjectRemoveCursor);
     document.removeEventListener('keydown', handleBlemishKeys);
+    hideObjectRemoveCursor();
 }
 
 function startDrawingMask(event: MouseEvent): void {
@@ -284,7 +335,7 @@ async function processBlemishHealingAuto(): Promise<void> {
         const resultBlob = window.ImageApi
             ? await window.ImageApi.objectRemove(formData)
             : await fetch('/image/api/object_remove', { method: 'POST', body: formData }).then((response) => {
-                if (!response.ok) throw new Error('Object Remove failed');
+                if (!response.ok) throw new Error('Xoá Vật Thể lỗi');
                 return response.blob();
             });
 

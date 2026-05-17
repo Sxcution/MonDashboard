@@ -158,7 +158,7 @@ function clearCollage() {
     // Clear cache
     clearImageCache('collage');
     renderLayoutTemplates();
-    showToast('Collage cleared', 'info');
+    showToast('Đã xoá ảnh hiện tại', 'info');
 }
 function getCanvasFontFamily(fontFamily) {
     const fallback = (fontFamily || 'Georgia').replace(/"/g, '');
@@ -206,7 +206,7 @@ function drawCanvasTextLayer(ctx, layer, canvasSize) {
 async function saveCollage() {
     const tilesContainer = document.getElementById('collage-tiles');
     if (tilesContainer.style.display === 'none' || collageImages.length === 0) {
-        showToast('Please create a collage first', 'warning');
+        showToast('Tạo ảnh trước khi lưu', 'warning');
         return;
     }
     try {
@@ -330,7 +330,7 @@ async function saveCollage() {
         if (window.ImageApi) {
             await window.ImageApi.saveCollage(formData);
             // History is now managed via localStorage, no need to reload
-            showToast('Collage saved successfully!', 'success');
+            showToast('Đã lưu ảnh', 'success');
             return;
         }
         const response = await fetch('/image/api/save-collage', {
@@ -340,15 +340,15 @@ async function saveCollage() {
         if (response.ok) {
             await response.json();
             // History is now managed via localStorage, no need to reload
-            showToast('Collage saved successfully!', 'success');
+            showToast('Đã lưu ảnh', 'success');
         }
         else {
-            showToast('Collage downloaded, but failed to save to history', 'warning');
+            showToast('Đã tải ảnh, nhưng chưa lưu được vào lịch sử', 'warning');
         }
     }
     catch (error) {
         console.error('Save error:', error);
-        showToast('Failed to save collage: ' + (error instanceof Error ? error.message : String(error)), 'danger');
+        showToast('Lưu ảnh lỗi: ' + (error instanceof Error ? error.message : String(error)), 'danger');
     }
 }
 // OLD SERVER-BASED HISTORY FUNCTIONS (DEPRECATED - Now using localStorage)
@@ -503,19 +503,19 @@ async function viewHistoryCollage(collageId) {
                 canvasContainer.style.display = 'block';
                 canvasContainer.innerHTML =
                     '<div class="image-history-viewer">' +
-                        '<img src="' + url + '" class="image-history-viewer-img" alt="Saved Collage">' +
+                        '<img src="' + url + '" class="image-history-viewer-img" alt="Ảnh đã lưu">' +
                         '</div>';
             }
-            showToast('History collage loaded (view only)', 'info');
+            showToast('Đã mở ảnh trong lịch sử', 'info');
         };
         img.onerror = function () {
-            showToast('Failed to load collage from history', 'danger');
+            showToast('Không tải được ảnh trong lịch sử', 'danger');
         };
         img.src = url;
     }
     catch (error) {
-        console.error('Failed to view history:', error);
-        showToast('Error loading collage', 'danger');
+        console.error('Không mở được lịch sử:', error);
+        showToast('Lỗi khi tải ảnh', 'danger');
     }
 }
 async function loadCollageHistory() {
@@ -527,7 +527,7 @@ async function loadCollageHistory() {
         if (!container)
             return;
         if (!response.history || response.history.length === 0) {
-            container.innerHTML = '<small class="text-muted text-center py-3">No saved collages</small>';
+            container.innerHTML = '<small class="text-muted text-center py-3">Chưa có ảnh đã lưu</small>';
             return;
         }
         container.innerHTML = response.history.map((item) => `
@@ -535,14 +535,14 @@ async function loadCollageHistory() {
                  data-id="${item.id}"
                  data-image-collage-view="${item.id}"
                  data-image-collage-menu="${item.id}"
-                 title="${item.date || ''} - ${item.imageCount} photos">
-                <img src="/image/api/collage-thumbnail/${item.id}" alt="Collage">
-                <div class="history-item-date">${item.imageCount} photos</div>
+                 title="${item.date || ''} - ${item.imageCount} ảnh">
+                <img src="/image/api/collage-thumbnail/${item.id}" alt="Ảnh đã lưu">
+                <div class="history-item-date">${item.imageCount} ảnh</div>
             </div>
         `).join('');
     }
     catch (error) {
-        console.error('Failed to load history:', error);
+        console.error('Không tải được lịch sử:', error);
     }
 }
 function showCollageContextMenu(event, id) {
@@ -558,7 +558,7 @@ function showCollageContextMenu(event, id) {
     menu.style.top = event.pageY + 'px';
     menu.innerHTML = `
         <div class="context-menu-item" data-image-collage-delete="${id}">
-            <i class="bi bi-trash"></i>Delete
+            <i class="bi bi-trash"></i>Xoá
         </div>
     `;
     document.body.appendChild(menu);
@@ -587,15 +587,15 @@ async function deleteCollageFromHistory(id) {
         }
         if (responseOk) {
             loadCollageHistory();
-            showToast('Collage deleted', 'info');
+            showToast('Đã xoá ảnh', 'info');
         }
         else {
-            showToast('Failed to delete collage', 'danger');
+            showToast('Xoá ảnh lỗi', 'danger');
         }
     }
     catch (error) {
-        console.error('Failed to delete:', error);
-        showToast('Failed to delete collage', 'danger');
+        console.error('Không xoá được lịch sử:', error);
+        showToast('Xoá ảnh lỗi', 'danger');
     }
 }
 function getEventElement(event) {
@@ -605,7 +605,12 @@ function bindImageTemplateActions() {
     const clickActions = {
         toggleTextLayer,
         toggleBlemishTool,
-        enhanceImage,
+        toggleUpscaleMenu,
+        applyUpscale,
+        cancelUpscaleMenu,
+        openUpscaleModelDialog,
+        closeUpscaleModelDialog,
+        hideUpscaleCompare,
         saveCollage,
         clearCollage,
         clearAllHistory,
@@ -633,6 +638,11 @@ function bindImageTemplateActions() {
                 clickActions[action]();
                 return;
             }
+        }
+        const upscaleModelEl = target.closest('[data-upscale-model]');
+        if (upscaleModelEl) {
+            selectUpscaleModel(upscaleModelEl.dataset.upscaleModel);
+            return;
         }
         const historyEditEl = target.closest('[data-image-history-edit]');
         if (historyEditEl) {

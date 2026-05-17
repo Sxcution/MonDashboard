@@ -19,13 +19,13 @@ function toggleCropTool() {
     }
     
     if (collageImages.length === 0) {
-        showToast('Upload a photo first!', 'warning');
+        showToast('Chọn ảnh trước', 'warning');
         return;
     }
     
     // Only works in single image mode
     if (collageImages.length > 1) {
-        showToast('Crop tool only works with single images', 'info');
+        showToast('Cắt ảnh chỉ dùng cho 1 ảnh', 'info');
         return;
     }
     
@@ -37,7 +37,7 @@ function toggleCropTool() {
         btn.style.backgroundColor = '#0dcaf0';
         btn.style.color = 'white';
         showCropOverlay();
-        showToast('âœ‚ï¸ Adjust crop area and press Enter to apply, ESC to cancel', 'info');
+        showToast('Chỉnh vùng cắt rồi nhấn Enter để áp dụng, ESC để huỷ', 'info');
     } else {
         btn.classList.remove('active');
         btn.style.backgroundColor = '';
@@ -351,7 +351,7 @@ function applyCrop() {
     const cropH = Math.min(singleImageCanvas.height - cropY, Math.floor(cropRect.height * scaleY));
     
     if (cropW <= 0 || cropH <= 0) {
-        showToast('Invalid crop area', 'error');
+        showToast('Vùng cắt không hợp lệ', 'error');
         return;
     }
     
@@ -378,14 +378,198 @@ function applyCrop() {
         canvasHistory = [];
         saveCanvasState();
         
-        showToast('âœ‚ï¸ Image cropped successfully!', 'success');
+        showToast('Đã cắt ảnh', 'success');
         toggleCropTool();
     };
     croppedImage.src = singleImageCanvas.toDataURL('image/png');
 }
 
-// ===== REAL-ESRGAN UPSCALE / ENHANCE =====
-async function enhanceImage() {
+// ===== UPSCAYL UPSCALE / ENHANCE =====
+type UpscaleModelId =
+    'upscayl-standard-4x' |
+    'upscayl-lite-4x' |
+    'high-fidelity-4x' |
+    'remacri-4x' |
+    'ultramix-balanced-4x' |
+    'ultrasharp-4x' |
+    'digital-art-4x';
+
+interface UpscaleModelInfo {
+    id: UpscaleModelId;
+    name: string;
+    description: string;
+}
+
+const UPSCALE_MODELS: UpscaleModelInfo[] = [
+    {
+        id: 'upscayl-standard-4x',
+        name: 'Upscayl Standard',
+        description: 'Phù hợp với hầu hết các hình ảnh.'
+    },
+    {
+        id: 'upscayl-lite-4x',
+        name: 'Upscayl Lite',
+        description: 'Phù hợp với hầu hết ảnh, xử lý nhanh hơn với hao hụt chất lượng tối thiểu.'
+    },
+    {
+        id: 'high-fidelity-4x',
+        name: 'High Fidelity',
+        description: 'Dành cho mọi loại ảnh, tập trung chi tiết thực tế và bề mặt mượt.'
+    },
+    {
+        id: 'remacri-4x',
+        name: 'Remacri (Không thương mại)',
+        description: 'Dành cho ảnh tự nhiên, tăng thêm độ sắc nét và chi tiết.'
+    },
+    {
+        id: 'ultramix-balanced-4x',
+        name: 'Ultramix (Không thương mại)',
+        description: 'Dành cho ảnh tự nhiên với cân bằng giữa độ sắc nét và chi tiết.'
+    },
+    {
+        id: 'ultrasharp-4x',
+        name: 'Ultrasharp (Không thương mại)',
+        description: 'Dành cho ảnh tự nhiên tập trung vào độ sắc nét.'
+    },
+    {
+        id: 'digital-art-4x',
+        name: 'Nghệ thuật Kỹ thuật số',
+        description: 'Dành cho digital art và minh hoạ, không ưu tiên ảnh người thật.'
+    }
+];
+
+let upscaleCompareOverlay: HTMLDivElement | null = null;
+let upscaleCompareResizeHandler: (() => void) | null = null;
+
+function getUpscaleModel(modelId?: string | null): UpscaleModelInfo {
+    return UPSCALE_MODELS.find(model => model.id === modelId) || UPSCALE_MODELS[0];
+}
+
+function syncUpscaleModelSelection(modelId?: string | null): void {
+    const model = getUpscaleModel(modelId);
+    const input = document.getElementById('upscaleModel') as HTMLInputElement | null;
+    const name = document.getElementById('upscaleSelectedModelName');
+    const desc = document.getElementById('upscaleSelectedModelDesc');
+
+    if (input) input.value = model.id;
+    if (name) name.textContent = model.name;
+    if (desc) desc.textContent = model.description;
+
+    document.querySelectorAll<HTMLElement>('[data-upscale-model]').forEach(card => {
+        card.classList.toggle('is-selected', card.dataset.upscaleModel === model.id);
+    });
+}
+
+function openUpscaleModelDialog(): void {
+    syncUpscaleModelSelection((document.getElementById('upscaleModel') as HTMLInputElement | null)?.value);
+    document.getElementById('upscaleModelDialog')?.classList.add('show');
+}
+
+function closeUpscaleModelDialog(): void {
+    document.getElementById('upscaleModelDialog')?.classList.remove('show');
+}
+
+function selectUpscaleModel(modelId?: string | null): void {
+    syncUpscaleModelSelection(modelId);
+    closeUpscaleModelDialog();
+}
+
+function setUpscaleComparePosition(value: number | string): void {
+    const overlay = upscaleCompareOverlay;
+    if (!overlay) return;
+
+    const numeric = typeof value === 'number' ? value : Number(value);
+    const percent = Math.max(0, Math.min(100, Number.isFinite(numeric) ? numeric : 50));
+    const after = overlay.querySelector<HTMLElement>('.upscale-compare-after');
+    const divider = overlay.querySelector<HTMLElement>('.upscale-compare-divider');
+    const handle = overlay.querySelector<HTMLElement>('.upscale-compare-handle');
+
+    if (after) after.style.clipPath = `inset(0 0 0 ${percent}%)`;
+    if (divider) divider.style.left = `${percent}%`;
+    if (handle) handle.style.left = `${percent}%`;
+}
+
+function positionUpscaleCompareOverlay(): void {
+    if (!upscaleCompareOverlay || !singleImageCanvas) return;
+
+    const viewer = document.getElementById('singleImageViewer') as HTMLElement | null;
+    if (!viewer) return;
+
+    const viewerRect = viewer.getBoundingClientRect();
+    const canvasRect = singleImageCanvas.getBoundingClientRect();
+    upscaleCompareOverlay.style.left = `${canvasRect.left - viewerRect.left}px`;
+    upscaleCompareOverlay.style.top = `${canvasRect.top - viewerRect.top}px`;
+    upscaleCompareOverlay.style.width = `${canvasRect.width}px`;
+    upscaleCompareOverlay.style.height = `${canvasRect.height}px`;
+}
+
+function hideUpscaleCompare(): void {
+    if (upscaleCompareOverlay) {
+        upscaleCompareOverlay.remove();
+        upscaleCompareOverlay = null;
+    }
+    if (upscaleCompareResizeHandler) {
+        window.removeEventListener('resize', upscaleCompareResizeHandler);
+        upscaleCompareResizeHandler = null;
+    }
+}
+
+function showUpscaleCompare(beforeDataUrl: string, afterDataUrl: string): void {
+    const viewer = document.getElementById('singleImageViewer') as HTMLElement | null;
+    if (!viewer || !singleImageCanvas) return;
+
+    hideUpscaleCompare();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'upscaleCompareOverlay';
+    overlay.className = 'upscale-compare-overlay';
+    overlay.innerHTML = `
+        <img src="${beforeDataUrl}" alt="Ảnh gốc">
+        <div class="upscale-compare-after">
+            <img src="${afterDataUrl}" alt="Ảnh đã làm nét">
+        </div>
+        <div class="upscale-compare-divider"></div>
+        <div class="upscale-compare-handle"><i class="bi bi-caret-left-fill"></i><i class="bi bi-caret-right-fill"></i></div>
+        <span class="upscale-compare-label before">Trước</span>
+        <span class="upscale-compare-label after">Sau</span>
+        <button type="button" class="upscale-compare-close" data-image-action="hideUpscaleCompare" title="Tắt so sánh">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <input type="range" class="upscale-compare-range" min="0" max="100" value="50" aria-label="So sánh ảnh trước và sau">
+    `;
+    viewer.appendChild(overlay);
+    upscaleCompareOverlay = overlay;
+
+    const slider = overlay.querySelector<HTMLInputElement>('.upscale-compare-range');
+    slider?.addEventListener('input', () => setUpscaleComparePosition(slider.value));
+    upscaleCompareResizeHandler = () => positionUpscaleCompareOverlay();
+    window.addEventListener('resize', upscaleCompareResizeHandler);
+    requestAnimationFrame(() => {
+        positionUpscaleCompareOverlay();
+        setUpscaleComparePosition(50);
+    });
+}
+
+function toggleUpscaleMenu(): void {
+    if (collageImages.length === 0) {
+        showToast('Chọn ảnh trước', 'warning');
+        return;
+    }
+
+    if (collageImages.length > 1) {
+        showToast('Làm Nét chỉ dùng cho 1 ảnh', 'info');
+        return;
+    }
+
+    deactivateAllTools();
+    document.getElementById('upscaleMenu')?.classList.toggle('show');
+}
+
+function cancelUpscaleMenu(): void {
+    document.getElementById('upscaleMenu')?.classList.remove('show');
+}
+
+async function applyUpscale(): Promise<void> {
     if (collageImages.length === 0) {
         showToast('Chọn ảnh trước', 'warning');
         return;
@@ -398,6 +582,7 @@ async function enhanceImage() {
     }
 
     deactivateAllTools();
+    cancelUpscaleMenu();
     
     const btn = document.getElementById('enhanceBtn');
     btn.disabled = true;
@@ -406,6 +591,7 @@ async function enhanceImage() {
     try {
         // Save state before upscaling
         saveCanvasState();
+        const originalDataUrl = singleImageCanvas.toDataURL('image/png');
         
         // Convert canvas to blob
         const blob = await imageCanvasToBlob(singleImageCanvas);
@@ -414,15 +600,15 @@ async function enhanceImage() {
         const formData = new FormData();
         formData.append('image', blob, 'image.png');
         formData.append('scale', (document.getElementById('upscaleScale') as HTMLSelectElement | null)?.value || '2');
-        formData.append('model', (document.getElementById('upscaleModel') as HTMLSelectElement | null)?.value || 'realesrgan-x4plus');
-        formData.append('tile_size', '2048');
-        
-        // Call Real-ESRGAN NCNN API
+        formData.append('model', (document.getElementById('upscaleModel') as HTMLInputElement | null)?.value || 'upscayl-standard-4x');
+        formData.append('compression', '0');
+
+        // Call Upscayl-backed API
         const enhancedBlob = window.ImageApi
             ? await window.ImageApi.upscaleImage(formData)
             : await fetch('/image/api/upscale_image', { method: 'POST', body: formData })
                 .then(response => {
-                    if (!response.ok) throw new Error('Upscale failed');
+                    if (!response.ok) throw new Error('Làm Nét lỗi');
                     return response.blob();
                 });
         const enhancedURL = URL.createObjectURL(enhancedBlob);
@@ -448,6 +634,7 @@ async function enhanceImage() {
             
             // Save new state for undo
             saveCanvasState();
+            showUpscaleCompare(originalDataUrl, imageDataURLs[0]);
             
             // Clean up
             URL.revokeObjectURL(enhancedURL);
