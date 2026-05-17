@@ -1,20 +1,16 @@
-// Typed Image editor module: blemish/heal tool.
-// Keeps behavior compatible while the monolith is split into smaller files.
+// Typed Image editor module: AI object removal brush.
+// Uses a white mask + Simple LaMa backend instead of legacy OpenCV inpainting.
 
-// ===== BLEMISH REMOVAL TOOL (HEALING BRUSH - Backend OpenCV Inpainting) =====
 let blemishToolActive = false;
-let blemishBrushSize = 15; // Optimal size for drawing mask
-let blemishInpaintRadius = 5; // Inpainting radius (3-10)
-let blemishMaskOpacity = 0.3; // Mask opacity (10-80%)
-let isProcessingHeal = false; // Prevent double API calls  
-let hasDrawnMask = false; // Track if user drew anything
-let blemishMethod = 'ns'; // 'ns' or 'telea'
+let blemishBrushSize = 15;
+let blemishMaskOpacity = 0.3;
+let isProcessingHeal = false;
+let hasDrawnMask = false;
 let isHealing = false;
-let blemishMaskCanvas = null; // Separate canvas for drawing mask
-let blemishMaskCtx = null;
-let originalImageForBlemish = null; // Store original before healing
-let originalImageForBlemishDirty = false;
-let blemishSettingsTimeout = null; // For hover delay
+let blemishMaskCanvas: HTMLCanvasElement | null = null;
+let blemishMaskCtx: CanvasRenderingContext2D | null = null;
+let originalImageForBlemish: ImageData | null = null;
+let blemishSettingsTimeout: number | null = null;
 
 function imageCanvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
     return new Promise((resolve, reject) => {
@@ -25,42 +21,94 @@ function imageCanvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
     });
 }
 
-// Settings UI functions
-function showBlemishSettings() {
-    clearTimeout(blemishSettingsTimeout);
-    document.getElementById('blemishSettingsMenu').style.display = 'block';
+function getImageErrorMessage(error: unknown): string {
+    if (!(error instanceof Error)) return String(error);
+
+    try {
+        const parsed = JSON.parse(error.message);
+        return parsed.install_hint || parsed.error || parsed.details || error.message;
+    } catch {
+        return error.message;
+    }
 }
 
-function hideBlemishSettings() {
-    blemishSettingsTimeout = setTimeout(() => {
-        document.getElementById('blemishSettingsMenu').style.display = 'none';
-    }, 300); // 300ms delay before hiding
+function showBlemishSettings(): void {
+    if (blemishSettingsTimeout) clearTimeout(blemishSettingsTimeout);
+    const menu = document.getElementById('blemishSettingsMenu');
+    if (menu) menu.style.display = 'block';
 }
 
-function updateBlemishBrushSize(value) {
-    blemishBrushSize = parseInt(value);
-    document.getElementById('blemishBrushValue').textContent = value;
+function hideBlemishSettings(): void {
+    blemishSettingsTimeout = window.setTimeout(() => {
+        const menu = document.getElementById('blemishSettingsMenu');
+        if (menu) menu.style.display = 'none';
+    }, 300);
 }
 
-function updateBlemishRadius(value) {
-    blemishInpaintRadius = parseInt(value);
-    document.getElementById('blemishRadiusValue').textContent = value;
+function updateBlemishBrushSize(value: string | number): void {
+    blemishBrushSize = parseInt(String(value), 10);
+    const label = document.getElementById('blemishBrushValue');
+    if (label) label.textContent = String(value);
 }
 
-function updateBlemishOpacity(value) {
-    blemishMaskOpacity = parseInt(value) / 100;
-    document.getElementById('blemishOpacityValue').textContent = value;
+function updateBlemishRadius(_value: string | number): void {
+    // Kept for compatibility with older generated bundles/templates.
 }
 
-// Get selected method
-function getBlemishMethod() {
-    const nsRadio = document.getElementById('methodNS');
-    const teleaRadio = document.getElementById('methodTelea');
-    return nsRadio.checked ? 'ns' : 'telea';
+function updateBlemishOpacity(value: string | number): void {
+    blemishMaskOpacity = parseInt(String(value), 10) / 100;
+    const label = document.getElementById('blemishOpacityValue');
+    if (label) label.textContent = String(value);
 }
-// ===== DEACTIVATE ALL TOOLS (Helper function) =====
-function deactivateAllTools() {
-    // Deactivate Blemish Tool
+
+function resetObjectRemoveMask(): void {
+    if (!blemishMaskCanvas || !blemishMaskCtx) return;
+    blemishMaskCtx.fillStyle = 'black';
+    blemishMaskCtx.fillRect(0, 0, blemishMaskCanvas.width, blemishMaskCanvas.height);
+    hasDrawnMask = false;
+}
+
+function resetObjectRemoveState(): void {
+    originalImageForBlemish = null;
+    isHealing = false;
+    isProcessingHeal = false;
+    hasDrawnMask = false;
+    if (blemishMaskCanvas && blemishMaskCtx && singleImageCanvas) {
+        blemishMaskCanvas.width = singleImageCanvas.width;
+        blemishMaskCanvas.height = singleImageCanvas.height;
+        resetObjectRemoveMask();
+    }
+}
+
+function restoreObjectRemoveBaseImage(): void {
+    if (!originalImageForBlemish || !singleImageCtx || !singleImageCanvas) return;
+    if (
+        originalImageForBlemish.width !== singleImageCanvas.width ||
+        originalImageForBlemish.height !== singleImageCanvas.height
+    ) {
+        resetObjectRemoveState();
+        return;
+    }
+    singleImageCtx.putImageData(originalImageForBlemish, 0, 0);
+}
+
+function ensureObjectRemoveMask(): void {
+    if (!singleImageCanvas) return;
+
+    if (!blemishMaskCanvas) {
+        blemishMaskCanvas = document.createElement('canvas');
+        blemishMaskCtx = blemishMaskCanvas.getContext('2d');
+    }
+
+    if (!blemishMaskCtx) return;
+    if (blemishMaskCanvas.width !== singleImageCanvas.width || blemishMaskCanvas.height !== singleImageCanvas.height) {
+        blemishMaskCanvas.width = singleImageCanvas.width;
+        blemishMaskCanvas.height = singleImageCanvas.height;
+        resetObjectRemoveMask();
+    }
+}
+
+function deactivateAllTools(): void {
     if (blemishToolActive) {
         blemishToolActive = false;
         const blemishBtn = document.getElementById('blemishToolBtn');
@@ -69,19 +117,14 @@ function deactivateAllTools() {
             blemishBtn.style.backgroundColor = '';
             blemishBtn.style.color = '';
         }
-        if (singleImageCanvas) singleImageCanvas.style.cursor = 'default';
-        if (originalImageForBlemish && !originalImageForBlemishDirty && singleImageCtx) {
-            singleImageCtx.putImageData(originalImageForBlemish, 0, 0);
-        }
-        if (blemishMaskCanvas && blemishMaskCtx) {
-            blemishMaskCtx.fillStyle = 'black';
-            blemishMaskCtx.fillRect(0, 0, blemishMaskCanvas.width, blemishMaskCanvas.height);
-        }
-        hasDrawnMask = false;
+        if (singleImageCanvas) singleImageCanvas.style.cursor = 'grab';
+        restoreObjectRemoveBaseImage();
+        resetObjectRemoveMask();
+        removeBlemishListeners();
         isProcessingHeal = false;
+        isHealing = false;
     }
-    
-    // Deactivate Crop Tool
+
     if (cropToolActive) {
         cropToolActive = false;
         const cropBtn = document.getElementById('cropToolBtn');
@@ -94,266 +137,183 @@ function deactivateAllTools() {
     }
 }
 
-
-function toggleBlemishTool() {
-    // Deactivate other tools first
+function toggleBlemishTool(): void {
     if (!blemishToolActive) {
         deactivateAllTools();
     }
-    
+
     if (collageImages.length === 0) {
-        showToast('Upload a photo first!', 'warning');
+        showToast('Chọn ảnh trước', 'warning');
         return;
     }
-    
-    // Only works in single image mode
+
     if (collageImages.length > 1) {
-        showToast('Blemish tool only works with single images', 'info');
+        showToast('Xoá Vật Thể chỉ dùng cho 1 ảnh', 'info');
         return;
     }
-    
+
     blemishToolActive = !blemishToolActive;
     const btn = document.getElementById('blemishToolBtn');
-    
+
     if (blemishToolActive) {
-        btn.classList.add('active');
-        btn.style.backgroundColor = '#198754';
-        btn.style.color = 'white';
-        singleImageCanvas.style.cursor = 'url(data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30"><circle cx="15" cy="15" r="12" fill="none" stroke="lime" stroke-width="2"/></svg>) 15 15, crosshair'
-        
-        // Create mask canvas
-        if (!blemishMaskCanvas) {
-            blemishMaskCanvas = document.createElement('canvas');
-            blemishMaskCanvas.width = singleImageCanvas.width;
-            blemishMaskCanvas.height = singleImageCanvas.height;
-            blemishMaskCtx = blemishMaskCanvas.getContext('2d');
-            blemishMaskCtx.fillStyle = 'black';
-            blemishMaskCtx.fillRect(0, 0, blemishMaskCanvas.width, blemishMaskCanvas.height);
+        btn?.classList.add('active');
+        if (btn) {
+            btn.style.backgroundColor = '#198754';
+            btn.style.color = 'white';
         }
-        
-        // Store original image
+        singleImageCanvas.style.cursor = 'crosshair';
+        ensureObjectRemoveMask();
         originalImageForBlemish = singleImageCtx.getImageData(0, 0, singleImageCanvas.width, singleImageCanvas.height);
-        originalImageForBlemishDirty = false;
-        
         setupBlemishListeners();
-        showToast('ðŸ©¹ Paint & release to heal (auto)', 'success');
+        showToast('Tô vùng cần xoá rồi thả chuột', 'success');
     } else {
-        btn.classList.remove('active');
-        btn.style.backgroundColor = '';
-        btn.style.color = '';
+        btn?.classList.remove('active');
+        if (btn) {
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+        }
         singleImageCanvas.style.cursor = 'grab';
         removeBlemishListeners();
-        showToast('Healing tool disabled', 'info');
+        restoreObjectRemoveBaseImage();
+        resetObjectRemoveMask();
+        showToast('Đã tắt Xoá Vật Thể', 'info');
     }
 }
 
-function setupBlemishListeners() {
+function setupBlemishListeners(): void {
     singleImageCanvas.addEventListener('mousedown', startDrawingMask);
     singleImageCanvas.addEventListener('mousemove', continueDrawingMask);
     singleImageCanvas.addEventListener('mouseup', endDrawingMask);
     singleImageCanvas.addEventListener('mouseleave', endDrawingMask);
-    
-    // Listen for Enter key to process healing
-    document.addEventListener('keydown', processBlemishHealing);
+    document.addEventListener('keydown', handleBlemishKeys);
 }
 
-function removeBlemishListeners() {
+function removeBlemishListeners(): void {
+    if (!singleImageCanvas) return;
     singleImageCanvas.removeEventListener('mousedown', startDrawingMask);
     singleImageCanvas.removeEventListener('mousemove', continueDrawingMask);
     singleImageCanvas.removeEventListener('mouseup', endDrawingMask);
     singleImageCanvas.removeEventListener('mouseleave', endDrawingMask);
-    document.removeEventListener('keydown', processBlemishHealing);
+    document.removeEventListener('keydown', handleBlemishKeys);
 }
 
-function startDrawingMask(e) {
-    if (!blemishToolActive) return;
+function startDrawingMask(event: MouseEvent): void {
+    if (!blemishToolActive || isProcessingHeal) return;
+    if (!originalImageForBlemish) {
+        originalImageForBlemish = singleImageCtx.getImageData(0, 0, singleImageCanvas.width, singleImageCanvas.height);
+    }
     isHealing = true;
     hasDrawnMask = true;
-    drawMaskPoint(e);
+    drawMaskPoint(event);
 }
 
-function continueDrawingMask(e) {
-    if (!isHealing || !blemishToolActive) return;
-    drawMaskPoint(e);
+function continueDrawingMask(event: MouseEvent): void {
+    if (!isHealing || !blemishToolActive || isProcessingHeal) return;
+    drawMaskPoint(event);
 }
 
-async function endDrawingMask() {
+async function endDrawingMask(): Promise<void> {
+    if (!isHealing) return;
     isHealing = false;
     if (hasDrawnMask && !isProcessingHeal) {
         await processBlemishHealingAuto();
     }
 }
 
+function drawMaskPoint(event: MouseEvent): void {
+    if (!blemishMaskCtx || !singleImageCanvas) return;
 
-
-function drawMaskPoint(e) {
     const rect = singleImageCanvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (singleImageCanvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (singleImageCanvas.height / rect.height);
-    
-    // Draw on mask canvas (white = heal this area)
+    const x = (event.clientX - rect.left) * (singleImageCanvas.width / rect.width);
+    const y = (event.clientY - rect.top) * (singleImageCanvas.height / rect.height);
+
     blemishMaskCtx.fillStyle = 'white';
     blemishMaskCtx.beginPath();
     blemishMaskCtx.arc(x, y, blemishBrushSize, 0, Math.PI * 2);
     blemishMaskCtx.fill();
-    
-    // Show visual feedback on main canvas (semi-transparent red overlay)
+
     singleImageCtx.save();
     singleImageCtx.globalAlpha = blemishMaskOpacity;
-    singleImageCtx.fillStyle = '#ff3b30';
+    singleImageCtx.fillStyle = '#19d27f';
     singleImageCtx.beginPath();
     singleImageCtx.arc(x, y, blemishBrushSize, 0, Math.PI * 2);
     singleImageCtx.fill();
     singleImageCtx.restore();
 }
 
-async function processBlemishHealing(e) {
-    if (!blemishToolActive || e.key !== 'Enter') return;
-    
-    try {
-        // Save state before processing (for Undo)
-        saveCanvasState();
-        
-        // Get current settings
-        const method = getBlemishMethod();
-        const radius = blemishInpaintRadius;
-        
-        const methodName = method === 'ns' ? 'Navier-Stokes' : 'Telea';
-        showToast(`â³ Processing with ${methodName} (radius: ${radius})...`, 'info');
-        
-        // Convert canvases to blobs
-        const imageBlob = await imageCanvasToBlob(singleImageCanvas);
-        const maskBlob = await imageCanvasToBlob(blemishMaskCanvas);
-        
-        // Send to backend with parameters
-        const formData = new FormData();
-        formData.append('image', imageBlob, 'image.png');
-        formData.append('mask', maskBlob, 'mask.png');
-        formData.append('method', method);
-        formData.append('radius', radius.toString());
-        
-        const healedBlob = window.ImageApi
-            ? await window.ImageApi.removeBlemish(formData)
-            : await fetch('/image/api/remove_blemish', { method: 'POST', body: formData })
-                .then(response => {
-                    if (!response.ok) throw new Error('Healing failed');
-                    return response.blob();
-                });
-        const healedUrl = URL.createObjectURL(healedBlob);
-        
-        // Load healed image back to canvas
-        const healedImg = new Image();
-        healedImg.onload = () => {
-            singleImageCtx.drawImage(healedImg, 0, 0);
-            URL.revokeObjectURL(healedUrl);
-            
-            // Reset mask
-            blemishMaskCtx.fillStyle = 'black';
-            blemishMaskCtx.fillRect(0, 0, blemishMaskCanvas.width, blemishMaskCanvas.height);
-            hasDrawnMask = false;
-            originalImageForBlemishDirty = true;
-            
-            showToast('âœ¨ Blemish removed successfully!', 'success');
-        };
-        healedImg.src = healedUrl;
-        
-    } catch (error) {
-        console.error('Healing error:', error);
-        showToast('âŒ Healing failed', 'danger');
-    }
-}
-
-// Keyboard handler for blemish tool (adjust brush/radius with keyboard shortcuts)
-function handleBlemishKeys(e) {
+function handleBlemishKeys(event: KeyboardEvent): void {
     if (!blemishToolActive) return;
-    
-    // [ and ] to change brush size
-    if (e.key === '[') {
+
+    if (event.key === '[') {
         const newSize = Math.max(1, blemishBrushSize - 1);
         updateBlemishBrushSize(newSize);
-        document.getElementById('blemishBrushSlider').value = String(newSize);
+        const slider = document.getElementById('blemishBrushSlider') as HTMLInputElement | null;
+        if (slider) slider.value = String(newSize);
     }
-    if (e.key === ']') {
-        const newSize = Math.min(50, blemishBrushSize + 1);
+    if (event.key === ']') {
+        const newSize = Math.min(80, blemishBrushSize + 1);
         updateBlemishBrushSize(newSize);
-        document.getElementById('blemishBrushSlider').value = String(newSize);
+        const slider = document.getElementById('blemishBrushSlider') as HTMLInputElement | null;
+        if (slider) slider.value = String(newSize);
     }
-    
-    // - and + to change heal radius
-    if (e.key === '-') {
-        const newRadius = Math.max(1, blemishInpaintRadius - 1);
-        updateBlemishRadius(newRadius);
-        document.getElementById('blemishRadiusSlider').value = String(newRadius);
-    }
-    if (e.key === '=' || e.key === '+') {
-        const newRadius = Math.min(15, blemishInpaintRadius + 1);
-        updateBlemishRadius(newRadius);
-        document.getElementById('blemishRadiusSlider').value = String(newRadius);
-    }
-    
-    // ESC to deactivate tool
-    if (e.key === 'Escape') {
+    if (event.key === 'Escape') {
         deactivateAllTools();
-    }
-    
-    // Enter to manually trigger healing if needed
-    if (e.key === 'Enter') {
-        if (typeof processBlemishHealing === 'function') {
-            processBlemishHealing(e);
-        }
     }
 }
 
-// Auto-healing function (triggered on mouse release)
-async function processBlemishHealingAuto() {
-    if (!blemishToolActive || isProcessingHeal || !hasDrawnMask) return;
-    
+async function processBlemishHealing(_event?: KeyboardEvent): Promise<void> {
+    await processBlemishHealingAuto();
+}
+
+async function processBlemishHealingAuto(): Promise<void> {
+    if (!blemishToolActive || isProcessingHeal || !hasDrawnMask || !blemishMaskCanvas || !originalImageForBlemish) return;
+
     try {
         isProcessingHeal = true;
-        saveCanvasState(); // Save for Undo
-        
-        const method = getBlemishMethod();
-        const radius = blemishInpaintRadius;
-        const methodName = method === 'ns' ? 'Navier-Stokes' : 'Telea';
-        showToast(`â³ Healing (${methodName}, r=${radius})...`, 'info');
-        
+        saveCanvasState();
+
+        restoreObjectRemoveBaseImage();
+        showToast('Đang xoá vật thể...', 'info');
+
         const imageBlob = await imageCanvasToBlob(singleImageCanvas);
         const maskBlob = await imageCanvasToBlob(blemishMaskCanvas);
-        
         const formData = new FormData();
         formData.append('image', imageBlob, 'image.png');
         formData.append('mask', maskBlob, 'mask.png');
-        formData.append('method', method);
-        formData.append('radius', String(radius));
-        
-        const healedBlob = window.ImageApi
-            ? await window.ImageApi.removeBlemish(formData)
-            : await fetch('/image/api/remove_blemish', { method: 'POST', body: formData })
-                .then(response => {
-                    if (!response.ok) throw new Error('Healing failed');
-                    return response.blob();
-                });
-        const healedUrl = URL.createObjectURL(healedBlob);
-        await new Promise<void>((resolve) => {
+
+        const resultBlob = window.ImageApi
+            ? await window.ImageApi.objectRemove(formData)
+            : await fetch('/image/api/object_remove', { method: 'POST', body: formData }).then((response) => {
+                if (!response.ok) throw new Error('Object Remove failed');
+                return response.blob();
+            });
+
+        const resultUrl = URL.createObjectURL(resultBlob);
+        await new Promise<void>((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
+                singleImageCanvas.width = img.width;
+                singleImageCanvas.height = img.height;
                 singleImageCtx.drawImage(img, 0, 0);
-                URL.revokeObjectURL(healedUrl);
+                collageImages[0] = img;
+                originalImageForBlemish = singleImageCtx.getImageData(0, 0, singleImageCanvas.width, singleImageCanvas.height);
+                ensureObjectRemoveMask();
+                resetObjectRemoveMask();
+                saveImageToCache([singleImageCanvas.toDataURL('image/png')], 'collage');
+                saveCanvasState();
+                URL.revokeObjectURL(resultUrl);
                 resolve();
             };
-            img.src = healedUrl;
+            img.onerror = reject;
+            img.src = resultUrl;
         });
-        
-        // Reset mask
-        blemishMaskCtx.fillStyle = 'black';
-        blemishMaskCtx.fillRect(0, 0, blemishMaskCanvas.width, blemishMaskCanvas.height);
-        hasDrawnMask = false;
-        originalImageForBlemishDirty = true;
-        
-        showToast('âœ¨ Healed!', 'success');
-    } catch (err) {
-        console.error(err);
-        showToast('âŒ Healing failed', 'danger');
+
+        showToast('Đã xoá vật thể', 'success');
+    } catch (error) {
+        restoreObjectRemoveBaseImage();
+        resetObjectRemoveMask();
+        console.error(error);
+        showToast(getImageErrorMessage(error), 'danger');
     } finally {
         isProcessingHeal = false;
     }

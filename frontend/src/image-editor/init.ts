@@ -189,6 +189,56 @@ function clearCollage() {
     showToast('Collage cleared', 'info');
 }
 
+function getCanvasFontFamily(fontFamily?: string): string {
+    const fallback = (fontFamily || 'Georgia').replace(/"/g, '');
+    return `"${fallback}", Georgia, serif`;
+}
+
+function drawCanvasTextLayer(ctx: CanvasRenderingContext2D, layer: ImageTextLayer, canvasSize: number): void {
+    const x = (layer.x / 100) * canvasSize;
+    const y = (layer.y / 100) * canvasSize;
+    const fontSize = layer.fontSize * (canvasSize / 720);
+    const lineHeight = fontSize * 1.25;
+    const lines = layer.text.split(/\r?\n/);
+    const startY = y - ((lines.length - 1) * lineHeight) / 2;
+
+    ctx.font = `bold ${fontSize}px ${getCanvasFontFamily(layer.fontFamily)}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetX = 3;
+    ctx.shadowOffsetY = 3;
+
+    if (layer.rainbow) {
+        const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+        let colorIndex = 0;
+
+        lines.forEach((line, lineIndex) => {
+            const lineY = startY + lineIndex * lineHeight;
+            let offsetX = -ctx.measureText(line).width / 2;
+
+            for (const char of line) {
+                ctx.fillStyle = colors[colorIndex % colors.length];
+                ctx.fillText(char, x + offsetX, lineY);
+                offsetX += ctx.measureText(char).width;
+                colorIndex++;
+            }
+        });
+    } else {
+        ctx.fillStyle = layer.color;
+        lines.forEach((line, lineIndex) => {
+            ctx.fillText(line, x, startY + lineIndex * lineHeight);
+        });
+    }
+
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+}
+
 async function saveCollage() {
     const tilesContainer = document.getElementById('collage-tiles');
     
@@ -309,39 +359,7 @@ async function saveCollage() {
         
         // Draw text layers
         for (const layer of textLayers) {
-            const x = (layer.x / 100) * 1080;
-            const y = (layer.y / 100) * 1080;
-            
-            ctx.font = `bold ${layer.fontSize * 1.5}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // Text shadow
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-            ctx.shadowBlur = 6;
-            ctx.shadowOffsetX = 3;
-            ctx.shadowOffsetY = 3;
-            
-            if (layer.rainbow) {
-                // Rainbow text
-                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
-                let offsetX = -ctx.measureText(layer.text).width / 2;
-                
-                for (let i = 0; i < layer.text.length; i++) {
-                    ctx.fillStyle = colors[i % colors.length];
-                    ctx.fillText(layer.text[i], x + offsetX, y);
-                    offsetX += ctx.measureText(layer.text[i]).width;
-                }
-            } else {
-                ctx.fillStyle = layer.color;
-                ctx.fillText(layer.text, x, y);
-            }
-            
-            // Reset shadow
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
+            drawCanvasTextLayer(ctx, layer, 1080);
         }
         
         const blob = await imageCanvasToBlob(canvas);

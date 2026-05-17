@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Image Editor{% endblock %}
+{% block title %}Chỉnh Ảnh{% endblock %}
 
 
 {% block styles %}
@@ -19,7 +19,7 @@
                         <div class="col-auto">
                             <label for="collageUpload" class="image-inline-3">
                                 <button type="button" class="btn btn-info btn-sm" data-image-action="click-target" data-image-target="collageUpload">
-                                    <i class="bi bi-card-image me-1"></i>Select photo(s)
+                                    <i class="bi bi-card-image me-1"></i>Chọn ảnh
                                 </button>
                             </label>
                             <input type="file" class="d-none" id="collageUpload" accept="image/*" multiple>
@@ -30,7 +30,7 @@
                         <!-- Ratio -->
                         <div class="col-auto">
                             <div class="d-flex align-items-center gap-2">
-                                <label class="form-label mb-0 image-inline-5">Ratio</label>
+                                <label class="form-label mb-0 image-inline-5">Tỷ lệ</label>
                                 <select class="form-select form-select-sm image-inline-6" id="collageAspect">
                                     <option value="1:1" selected>1:1</option>
                                     <option value="3:4">3:4</option>
@@ -54,7 +54,7 @@
                                 <!-- Gutter -->
                                 <div class="image-inline-10">
                                     <div class="d-flex align-items-center justify-content-between mb-1">
-                                        <label class="form-label mb-0 image-inline-11">Gutter</label>
+                                        <label class="form-label mb-0 image-inline-11">Khoảng cách</label>
                                         <small class="text-muted"><span id="gutterValue2">8</span>px</small>
                                     </div>
                                     <input type="range" class="form-range image-inline-12" id="collageGutter" min="0" max="40" value="8">
@@ -63,7 +63,7 @@
                                 <!-- Radius -->
                                 <div class="image-inline-10">
                                     <div class="d-flex align-items-center justify-content-between mb-1">
-                                        <label class="form-label mb-0 image-inline-11">Radius</label>
+                                        <label class="form-label mb-0 image-inline-11">Bo góc</label>
                                         <small class="text-muted"><span id="radiusValue2">0</span>px</small>
                                     </div>
                                     <input type="range" class="form-range image-inline-12" id="collageRadius" min="0" max="40" value="0">
@@ -72,7 +72,7 @@
                                 <!-- Border -->
                                 <div class="image-inline-10">
                                     <div class="d-flex align-items-center justify-content-between mb-1">
-                                        <label class="form-label mb-0 image-inline-11">Border</label>
+                                        <label class="form-label mb-0 image-inline-11">Viền</label>
                                         <small class="text-muted"><span id="borderValue2">0</span>px</small>
                                     </div>
                                     <input type="range" class="form-range image-inline-12" id="collageBorder" min="0" max="20" value="0">
@@ -81,11 +81,11 @@
                                 <!-- Colors -->
                                 <div class="image-inline-13">
                                     <div class="image-inline-14">
-                                        <label class="form-label mb-1 image-inline-15">Border Color</label>
+                                        <label class="form-label mb-1 image-inline-15">Màu viền</label>
                                         <input type="color" class="form-control form-control-color image-inline-16" id="collageBorderColor" value="#ff3b30">
                                     </div>
                                     <div class="image-inline-14">
-                                        <label class="form-label mb-1 image-inline-15">Background</label>
+                                        <label class="form-label mb-1 image-inline-15">Nền</label>
                                         <input type="color" class="form-control form-control-color image-inline-16" id="collageBackground" value="#111111">
                                     </div>
                                 </div>
@@ -96,81 +96,64 @@
 
                         <!-- Text Button -->
                         <div class="col-auto">
-                            <button class="btn btn-outline-warning btn-sm" data-image-action="toggleTextLayer" title="Add Text: Click to add, Double-click to edit, Right-click for options">
-                                <i class="bi bi-fonts me-1"></i>Text
+                            <button class="btn btn-outline-warning btn-sm" data-image-action="toggleTextLayer" title="Thêm chữ: bấm để thêm, bấm đúp để sửa, chuột phải để đổi màu/font">
+                                <i class="bi bi-fonts me-1"></i>Chữ
                             </button>
                         </div>
 
-                        <!-- Blemish Removal Button with Settings -->
+                        <!-- AI Object Remove Button with Settings -->
                         <div class="col-auto position-relative">
                             <button class="btn btn-outline-success btn-sm" data-image-action="toggleBlemishTool" id="blemishToolBtn"
                                     data-image-hover-in="showBlemishSettings" data-image-hover-out="hideBlemishSettings"
-                                    title="Remove blemishes, moles, tattoos">
-                                <i class="bi bi-bandaid me-1"></i>Heal
+                                    title="Tô lên vật thể, nốt ruồi, dây chuyền hoặc chi tiết muốn xoá rồi thả chuột">
+                                <i class="bi bi-eraser me-1"></i>Xoá Vật Thể
                             </button>
 
-                            <!-- Blemish Settings Dropdown -->
+                            <!-- Object Remove Settings Dropdown -->
                             <div id="blemishSettingsMenu"
                                  data-image-hover-in="showBlemishSettings" data-image-hover-out="hideBlemishSettings" class="image-inline-17">
 
                                 <!-- Brush Size -->
                                 <div class="image-inline-10">
                                     <div class="d-flex align-items-center justify-content-between mb-1">
-                                        <label class="form-label mb-0 image-inline-11">Brush Size</label>
+                                        <label class="form-label mb-0 image-inline-11">Cỡ cọ</label>
                                         <small class="text-muted"><span id="blemishBrushValue">15</span>px</small>
                                     </div>
                                     <input type="range" class="form-range image-inline-12" id="blemishBrushSlider" min="1" max="50" value="15"
                                            data-image-input-action="updateBlemishBrushSize">
                                 </div>
 
-                                <!-- Inpaint Radius -->
-                                <div class="image-inline-10">
-                                    <div class="d-flex align-items-center justify-content-between mb-1">
-                                        <label class="form-label mb-0 image-inline-11">Heal Radius</label>
-                                        <small class="text-muted"><span id="blemishRadiusValue">5</span>px</small>
-                                    </div>
-                                    <input type="range" class="form-range image-inline-12" id="blemishRadiusSlider" min="1" max="15" value="5"
-                                           data-image-input-action="updateBlemishRadius">
-                                    <small class="text-muted image-inline-18">Larger = smoother but slower</small>
-                                </div>
-
-
                                 <!-- Mask Opacity -->
                                 <div class="image-inline-10">
                                     <div class="d-flex align-items-center justify-content-between mb-1">
-                                        <label class="form-label mb-0 image-inline-11">Mask Opacity</label>
+                                        <label class="form-label mb-0 image-inline-11">Độ hiện vùng tô</label>
                                         <small class="text-muted"><span id="blemishOpacityValue">30</span>%</small>
                                     </div>
                                     <input type="range" class="form-range image-inline-12" id="blemishOpacitySlider" min="10" max="80" value="30"
                                            data-image-input-action="updateBlemishOpacity">
                                 </div>
-                                <!-- Algorithm Selection -->
-                                <div class="image-inline-19">
-                                    <label class="form-label mb-2 image-inline-11">Algorithm</label>
-                                    <div class="btn-group w-100" role="group">
-                                        <input type="radio" class="btn-check" name="blemishMethod" id="methodNS" value="ns" checked>
-                                        <label class="btn btn-outline-success btn-sm image-inline-20" for="methodNS">
-                                            Navier-Stokes
-                                            <br><small class="image-inline-21">Natural</small>
-                                        </label>
-
-                                        <input type="radio" class="btn-check" name="blemishMethod" id="methodTelea" value="telea">
-                                        <label class="btn btn-outline-success btn-sm image-inline-20" for="methodTelea">
-                                            Telea
-                                            <br><small class="image-inline-21">Fast</small>
-                                        </label>
-                                    </div>
-                                </div>
+                                <small class="text-muted image-inline-18">Tô phủ vật thể và mép xung quanh một chút. Thả chuột để AI xoá.</small>
 
                             </div>
                         </div>
 
                         <div class="col-auto"><div class="vr image-inline-4"></div></div>
 
-                        <div class="col-auto">
-                            <button class="btn btn-outline-primary btn-sm" data-image-action="enhanceImage" id="enhanceBtn" title="Enhance image quality - CLAHE, sharpen, denoise">
-                                <i class="bi bi-stars me-1"></i>Enhance
+                        <div class="col-auto position-relative">
+                            <button class="btn btn-outline-primary btn-sm" data-image-action="enhanceImage" id="enhanceBtn" title="Phóng to/làm nét bằng Real-ESRGAN">
+                                <i class="bi bi-stars me-1"></i>Làm Nét
                             </button>
+                            <div class="image-ai-upscale-controls">
+                                <select class="form-select form-select-sm" id="upscaleScale" title="Mức phóng to">
+                                    <option value="2" selected>2x</option>
+                                    <option value="3">3x</option>
+                                    <option value="4">4x</option>
+                                </select>
+                                <select class="form-select form-select-sm" id="upscaleModel" title="Model Real-ESRGAN">
+                                    <option value="realesrgan-x4plus" selected>Ảnh thật</option>
+                                    <option value="realesrgan-x4plus-anime">Anime</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="col-auto"><div class="vr image-inline-4"></div></div>
@@ -178,10 +161,10 @@
                         <!-- Save & Clear Buttons -->
                         <div class="col-auto ms-auto">
                             <button class="btn btn-info btn-sm me-2" data-image-action="saveCollage">
-                                <i class="bi bi-save me-1"></i>Save
+                                <i class="bi bi-save me-1"></i>Lưu
                             </button>
                             <button class="btn btn-secondary btn-sm" data-image-action="clearCollage">
-                                <i class="bi bi-x-circle me-1"></i>Clear
+                                <i class="bi bi-x-circle me-1"></i>Xoá hết
                             </button>
                         </div>
                     </div>
@@ -197,15 +180,15 @@
                         <div class="image-inline-25">
                             <div class="image-inline-26">
                                 <i class="bi bi-clock-history"></i>
-                                <span>History</span>
+                                <span>Lịch sử</span>
                             </div>
-                            <button data-image-action="clearAllHistory" title="Clear all history" class="image-inline-27">
+                            <button data-image-action="clearAllHistory" title="Xoá toàn bộ lịch sử" class="image-inline-27">
                                 <i class="bi bi-trash-fill"></i>
                             </button>
                         </div>
                         <div id="collageHistory" class="d-flex flex-column gap-2">
                             <!-- History items will be generated here -->
-                            <small class="text-muted text-center py-3 image-inline-28">No saved collages</small>
+                            <small class="text-muted text-center py-3 image-inline-28">Chưa có ảnh đã lưu</small>
                         </div>
                     </div>
 
@@ -239,7 +222,7 @@
                     <!-- COLLAGE END -->
                     <div id="collagePrompt">
                         <i class="bi bi-images image-inline-37"></i>
-                        <p class="mt-3 text-muted">Upload photos to create a collage</p>
+                        <p class="mt-3 text-muted">Chọn ảnh để bắt đầu</p>
                     </div>
                 </div>
             </div>
@@ -253,7 +236,7 @@
     <!-- Color Menu Item -->
     <div class="context-menu-item image-inline-39" id="colorMenuItem">
         <span class="image-inline-40">
-            <i class="bi bi-palette image-inline-41"></i>Color
+            <i class="bi bi-palette image-inline-41"></i>Màu
         </span>
         <i class="bi bi-chevron-right image-inline-42"></i>
     </div>
@@ -261,20 +244,20 @@
     <!-- Font Menu Item -->
     <div class="context-menu-item image-inline-39" id="fontMenuItem">
         <span class="image-inline-40">
-            <i class="bi bi-fonts image-inline-41"></i>Font
+            <i class="bi bi-fonts image-inline-41"></i>Font chữ
         </span>
         <i class="bi bi-chevron-right image-inline-42"></i>
     </div>
 
     <!-- Delete Menu Item -->
     <div class="context-menu-item image-inline-43" data-image-action="deleteCurrentTextLayer">
-        <i class="bi bi-trash image-inline-41"></i>Delete
+        <i class="bi bi-trash image-inline-41"></i>Xoá chữ
     </div>
 </div>
 
 <!-- Color Submenu (Appears on hover) -->
 <div id="colorSubmenu" class="image-inline-44">
-    <div class="image-inline-45">Color Picker</div>
+    <div class="image-inline-45">Chọn màu</div>
 
     <!-- Preset Colors Grid -->
     <div id="presetColors" class="image-inline-46">
@@ -293,14 +276,14 @@
         <input type="checkbox" id="rainbowCheckbox"
                data-image-change-action="applyRainbowMode" class="image-inline-50">
         <label for="rainbowCheckbox" class="image-inline-51">
-            🌈 Rainbow (7 colors)
+            Cầu vồng 7 màu
         </label>
     </div>
 </div>
 
 <!-- Font Submenu (Appears on hover) -->
 <div id="fontSubmenu" class="image-inline-52">
-    <div class="image-inline-53">Select Font</div>
+    <div class="image-inline-53">Chọn font chữ</div>
     <div id="fontList">
         <!-- Will be populated by JS -->
     </div>

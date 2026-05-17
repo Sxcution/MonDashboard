@@ -2,15 +2,64 @@ from flask import Blueprint, render_template, request, jsonify, send_file
 import os
 import json
 import logging
+import shutil
+import subprocess
+import tempfile
 from datetime import datetime
 import uuid
-import cv2
-import numpy as np
 from PIL import Image
 import io
 
 image_bp = Blueprint('image', __name__, url_prefix='/image')
 logger = logging.getLogger(__name__)
+_simple_lama_model = None
+
+
+def _load_simple_lama():
+    global _simple_lama_model
+    if _simple_lama_model is None:
+        from simple_lama_inpainting import SimpleLama
+        _simple_lama_model = SimpleLama()
+    return _simple_lama_model
+
+
+def _ai_missing_response(feature, details, install_hint):
+    return jsonify({
+        'success': False,
+        'error': f'{feature} is not installed/configured',
+        'details': details,
+        'install_hint': install_hint
+    }), 501
+
+
+def _find_realesrgan_executable():
+    candidates = []
+    env_path = os.environ.get('REAL_ESRGAN_NCNN_EXE')
+    if env_path:
+        candidates.append(env_path)
+
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    candidates.extend([
+        os.path.join(project_root, 'tools', 'realesrgan-ncnn-vulkan', 'realesrgan-ncnn-vulkan.exe'),
+        os.path.join(project_root, 'tools', 'upscayl-ncnn', 'realesrgan-ncnn-vulkan.exe'),
+        os.path.join(project_root, 'tools', 'realesrgan-ncnn-vulkan.exe'),
+    ])
+
+    shell_path = shutil.which('realesrgan-ncnn-vulkan') or shutil.which('realesrgan-ncnn-vulkan.exe')
+    if shell_path:
+        candidates.append(shell_path)
+
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate):
+            return os.path.abspath(candidate)
+    return None
+
+
+def _send_pil_png(image):
+    output = io.BytesIO()
+    image.save(output, format='PNG')
+    output.seek(0)
+    return send_file(output, mimetype='image/png')
 
 @image_bp.route('/')
 def index():
@@ -187,114 +236,94 @@ def delete_collage(collage_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@image_bp.route('/api/enhance_web_image', methods=['POST'])
-def enhance_web_image():
-    """
-    Enhance image quality using OpenCV:
-    - CLAHE for local contrast
-    - Sharpen + denoise
-    - Detail enhancement
-    """
+@image_bp.route('/api/object_remove', methods=['POST'])
+def object_remove():
+    """Remove painted objects using Simple LaMa inpainting."""
+    try:
+        if 'image' not in request.files or 'mask' not in request.files:
+            return jsonify({'success': False, 'error': 'Image and mask required'}), 400
+
+        try:
+            lama = _load_simple_lama()
+        except Exception as exc:
+            logger.exception("Simple LaMa is not available")
+            return _ai_missing_response(
+                'Object Remove',
+                str(exc),
+                'Install PyTorch and simple-lama, then restart the dashboard.'
+            )
+
+        image = Image.open(request.files['image'].stream).convert('RGB')
+        mask = Image.open(request.files['mask'].stream).convert('L')
+        if mask.size != image.size:
+            mask = mask.resize(image.size, Image.Resampling.NEAREST)
+
+        mask = mask.point(lambda px: 255 if px > 10 else 0)
+        result = lama(image, mask)
+        return _send_pil_png(result.convert('RGB'))
+    except Exception as e:
+        logger.exception("Object remove failed")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@image_bp.route('/api/upscale_image', methods=['POST'])
+def upscale_image():
+    """Upscale/enhance using Real-ESRGAN NCNN Vulkan."""
     try:
         f = request.files.get('image')
         if not f:
             return jsonify({'success': False, 'error': 'No image provided'}), 400
-        
-        # Load image
-        img = Image.open(f.stream).convert('RGB')
-        bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
 
-        # Tăng local contrast (CLAHE) - giảm clipLimit để tránh "nổ" contrast
-        lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
-        l, a, b = cv2.split(lab)
-        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
-        l2 = clahe.apply(l)
-        lab = cv2.merge([l2, a, b])
-        bgr_clahe = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+        exe = _find_realesrgan_executable()
+        if not exe:
+            return _ai_missing_response(
+                'Upscale/Enhance',
+                'realesrgan-ncnn-vulkan executable was not found.',
+                'Download Real-ESRGAN NCNN Vulkan or Upscayl NCNN, then set REAL_ESRGAN_NCNN_EXE or place it in tools/realesrgan-ncnn-vulkan/.'
+            )
 
-        # Sharpen nhẹ nhàng hơn - tránh halo và "cháy" ảnh
-        blur = cv2.GaussianBlur(bgr_clahe, (0, 0), 1.0)
-        sharp = cv2.addWeighted(bgr_clahe, 1.2, blur, -0.2, 0)
-        
-        # Blend mềm với ảnh gốc để giữ tự nhiên
-        blended = cv2.addWeighted(bgr_clahe, 0.6, sharp, 0.4, 0)
-        
-        # Khử noise JPEG
-        denoise = cv2.fastNlMeansDenoisingColored(blended, None, 7, 7, 7, 21)
+        model = request.form.get('model', 'realesrgan-x4plus')
+        allowed_models = {'realesrgan-x4plus', 'realesrnet-x4plus', 'realesrgan-x4plus-anime'}
+        if model not in allowed_models:
+            model = 'realesrgan-x4plus'
 
-        # Tăng chi tiết nhẹ nhàng - giảm sigma để tránh quá sắc nét
-        enhanced = cv2.detailEnhance(denoise, sigma_s=10, sigma_r=0.2)
-        
-        # Bilateral filter cuối để ảnh mượt tự nhiên như Pixlr
-        out = cv2.bilateralFilter(enhanced, d=5, sigmaColor=30, sigmaSpace=20)
-        
-        # Encode to PNG
-        _, buf = cv2.imencode('.png', out)
-        
-        return (buf.tobytes(), 200, {'Content-Type': 'image/png'})
+        try:
+            scale = int(request.form.get('scale', 2))
+        except ValueError:
+            scale = 2
+        scale = max(2, min(4, scale))
+
+        try:
+            tile_size = int(request.form.get('tile_size', 2048))
+        except ValueError:
+            tile_size = 2048
+        tile_size = max(512, min(4096, tile_size))
+
+        with tempfile.TemporaryDirectory(prefix='mon_image_ai_') as tmp:
+            input_path = os.path.join(tmp, 'input.png')
+            output_path = os.path.join(tmp, 'output.png')
+            Image.open(f.stream).convert('RGB').save(input_path)
+
+            subprocess.run(
+                [
+                    exe,
+                    '-i', input_path,
+                    '-o', output_path,
+                    '-n', model,
+                    '-s', str(scale),
+                    '-t', str(tile_size),
+                    '-f', 'png'
+                ],
+                cwd=os.path.dirname(exe) or None,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=300
+            )
+
+            result = Image.open(output_path).convert('RGB')
+            return _send_pil_png(result)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@image_bp.route('/api/remove_blemish', methods=['POST'])
-def remove_blemish():
-    """
-    Remove blemishes using OpenCV inpainting (professional healing)
-    - Support both Navier-Stokes (NS) and Telea algorithms
-    - Adjustable inpaint radius
-    - Pre/post processing for better results
-    """
-    try:
-        # Get image and mask
-        if 'image' not in request.files or 'mask' not in request.files:
-            return jsonify({'success': False, 'error': 'Image and mask required'}), 400
-        
-        image_file = request.files['image']
-        mask_file = request.files['mask']
-        
-        # Get parameters
-        method = request.form.get('method', 'ns')  # 'ns' or 'telea'
-        radius = int(request.form.get('radius', 5))  # 3-10 range
-        
-        # Load image
-        img = Image.open(image_file.stream).convert('RGB')
-        bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        
-        # Load mask (white = area to heal, black = keep)
-        mask_img = Image.open(mask_file.stream).convert('L')
-        mask = np.array(mask_img)
-        
-        # Pre-process: Bilateral filter for better edge preservation
-        bgr_smooth = cv2.bilateralFilter(bgr, d=5, sigmaColor=50, sigmaSpace=50)
-        
-        # Dilate mask slightly for better blending
-        kernel = np.ones((3,3), np.uint8)
-        mask_dilated = cv2.dilate(mask, kernel, iterations=2)
-        
-        # Choose inpainting method
-        if method == 'telea':
-            # Telea: Fast Marching Method (faster, good for small areas)
-            healed = cv2.inpaint(bgr_smooth, mask_dilated, inpaintRadius=radius, flags=cv2.INPAINT_TELEA)
-        else:
-            # Navier-Stokes: Fluid dynamics (slower, more natural for large areas)
-            healed = cv2.inpaint(bgr_smooth, mask_dilated, inpaintRadius=radius, flags=cv2.INPAINT_NS)
-        
-        # Post-process: Edge-preserving smoothing on healed areas only
-        # Create soft mask for blending
-        mask_float = mask_dilated.astype(float) / 255.0
-        mask_blur = cv2.GaussianBlur(mask_float, (7, 7), 0)
-        mask_3ch = np.stack([mask_blur] * 3, axis=2)
-        
-        # Blend original with healed using soft mask
-        result = (bgr * (1 - mask_3ch) + healed * mask_3ch).astype(np.uint8)
-        
-        # Final touch: Subtle bilateral filter on result for seamless blending
-        result = cv2.bilateralFilter(result, d=3, sigmaColor=20, sigmaSpace=20)
-        
-        # Encode to PNG
-        _, buf = cv2.imencode('.png', result)
-        
-        return (buf.tobytes(), 200, {'Content-Type': 'image/png'})
-        
-    except Exception as e:
+        logger.exception("Upscale failed")
         return jsonify({'success': False, 'error': str(e)}), 500
