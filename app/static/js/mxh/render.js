@@ -277,7 +277,7 @@
         const elCards = doc.getElementById('mxh-stats-cards');
         if (!elAcc || !elCards)
             return;
-        const { activeFilter, getAccountCreatedDateForStats, calculateTimeDifferenceInHours, isAccountDisabledForStats, canScanWeChat, canScanWeChatHK, ensureNoticeParsed, needsHongKongNumber, isNearbyPeopleActive, applyQuickFilter } = ctx;
+        const { activeFilter, getAccountCreatedDateForStats, calculateTimeDifferenceInHours, isAccountDisabledForStats, canScanWeChat, canScanWeChatHK, ensureNoticeParsed, needsHongKongNumber, hasIncompleteProfileInfo, isNearbyPeopleActive, applyQuickFilter } = ctx;
         const now = new Date();
         const total = tabAccounts.length;
         let oneYear = 0;
@@ -312,6 +312,10 @@
             <span class="text-muted mx-1">|</span>
             <span class="stats-clickable d-inline-flex align-items-center ${activeFilter === 'unverified' ? 'active-stat-filter' : ''}" data-quick-filter="unverified">
                 <span class="fw-semibold text-nowrap">UnVerify:</span> <span class="ms-1 fw-bold text-warning">${tabAccounts.filter(a => a.wechat_status === 'unverified').length}</span>
+            </span>
+            <span class="text-muted mx-1">|</span>
+            <span class="stats-clickable d-inline-flex align-items-center ${activeFilter === 'incomplete_info' ? 'active-stat-filter' : ''}" data-quick-filter="incomplete_info">
+                <span class="fw-semibold text-nowrap">Thiếu Info:</span> <span class="ms-1 fw-bold text-info">${tabAccounts.filter(a => hasIncompleteProfileInfo(a)).length}</span>
             </span>
         `;
         const cardMap = {};

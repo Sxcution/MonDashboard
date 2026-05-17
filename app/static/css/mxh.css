@@ -902,8 +902,19 @@
     max-width: 100%;
 }
 
+.mxh-editable-email:focus {
+    overflow-x: auto;
+    overflow-y: hidden;
+    text-overflow: clip;
+    scrollbar-width: none;
+}
+
+.mxh-editable-email:focus::-webkit-scrollbar {
+    display: none;
+}
+
 .editable-field:focus {
-    border-bottom-color: #007bff !important;
+    border-bottom: 1px solid #007bff !important;
     outline: none;
 }
 

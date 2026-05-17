@@ -1,10 +1,12 @@
 import sqlite3
 import json
+import logging
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
 from app.database import get_db_connection
 
 mxh_api_bp = Blueprint("mxh_api", __name__, url_prefix="/mxh/api")
+logger = logging.getLogger(__name__)
 
 
 @mxh_api_bp.route("/accounts", methods=["GET"])
@@ -408,7 +410,7 @@ def update_account(account_id):
             if field in data:
                 account_fields[field] = data[field]
         
-        print(f"🔍 Account fields to update: {account_fields}")
+        logger.debug("MXH API account fields to update account_id=%s fields=%s", account_id, list(account_fields.keys()))
         
         if account_fields:
             # --- Auto-log phone history if phone is changing ---
@@ -428,8 +430,7 @@ def update_account(account_id):
             set_clause = ", ".join([f"{key} = ?" for key in account_fields.keys()])
             params = list(account_fields.values()) + [account_id]
             sql = f"UPDATE mxh_accounts SET {set_clause} WHERE id = ?"
-            print(f"🔍 SQL: {sql}")
-            print(f"🔍 Params: {params}")
+            logger.debug("MXH API account update SQL account_id=%s sql=%s", account_id, sql)
             conn.execute(sql, params)
 
         # --- Update mxh_cards table (for card_name) ---
@@ -443,8 +444,7 @@ def update_account(account_id):
         
         updated_account = conn.execute("SELECT a.*, c.card_name, c.platform, c.group_id FROM mxh_accounts a JOIN mxh_cards c ON a.card_id = c.id WHERE a.id = ?", (account_id,)).fetchone()
         result = dict(updated_account)
-        print(f"🔍 Returning updated account: {result}")
-        print(f"🔍 Email in result: {result.get('email', 'NOT FOUND')}")
+        logger.debug("MXH API returning updated account account_id=%s", account_id)
         return jsonify(result)
 
     except Exception as e:

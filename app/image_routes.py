@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, send_file
 import os
 import json
+import logging
 from datetime import datetime
 import uuid
 import cv2
@@ -9,6 +10,7 @@ from PIL import Image
 import io
 
 image_bp = Blueprint('image', __name__, url_prefix='/image')
+logger = logging.getLogger(__name__)
 
 @image_bp.route('/')
 def index():
@@ -134,10 +136,13 @@ def get_collage_thumbnail(collage_id):
         image_path = os.path.join(COLLAGE_HISTORY_DIR, f'{collage_id}.png')
         abs_path = os.path.abspath(image_path)
         
-        print(f"[DEBUG] Thumbnail request for ID: {collage_id}")
-        print(f"[DEBUG] Relative path: {image_path}")
-        print(f"[DEBUG] Absolute path: {abs_path}")
-        print(f"[DEBUG] File exists: {os.path.exists(abs_path)}")
+        logger.debug(
+            "Collage thumbnail request id=%s relative=%s absolute=%s exists=%s",
+            collage_id,
+            image_path,
+            abs_path,
+            os.path.exists(abs_path)
+        )
         
         if not os.path.exists(abs_path):
             return jsonify({'error': 'Not found', 'path': abs_path}), 404
@@ -145,9 +150,7 @@ def get_collage_thumbnail(collage_id):
         return send_file(abs_path, mimetype='image/png')
         
     except Exception as e:
-        print(f"[ERROR] Thumbnail error: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.exception("Collage thumbnail error")
         return jsonify({'error': str(e)}), 500
 
 @image_bp.route('/api/collage-data/<collage_id>', methods=['GET'])

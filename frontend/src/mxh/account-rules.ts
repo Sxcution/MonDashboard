@@ -106,8 +106,7 @@
         const totalDays = Math.floor(totalHours / 24);
 
         if (totalDays < 180) {
-            const remainingDays = 180 - totalDays;
-            return `Còn ${remainingDays} ngày`;
+            return '';
         }
         return `<i class="bi bi-qr-code me-1 mxh-countdown-icon mxh-color-success"></i>${currentScanCount}/${maxScans}`;
     }
@@ -222,6 +221,24 @@
         return (st === 'disabled' || st === 'die' || st === 'inactive') || !!acc.die_date;
     }
 
+    function hasIncompleteProfileInfo(account) {
+        if (!account || account.platform !== 'wechat') return false;
+
+        const hasValue = (value) => {
+            const normalized = String(value || '').trim();
+            return normalized !== '' && normalized !== '.';
+        };
+
+        const verification = String(account.wechat_status || '').trim().toLowerCase();
+        const isUnverified = verification === 'unverified';
+
+        return !hasValue(account.username) ||
+            !hasValue(account.phone) ||
+            !hasValue(account.email) ||
+            !hasValue(account.wechat_nickname) ||
+            isUnverified;
+    }
+
     function getAccountBorderClass(account) {
         const status = String(account.status || '').toLowerCase();
         if (status === 'disabled') return '';
@@ -268,6 +285,7 @@
         isNearbyPeopleActive,
         getAccountCreatedDateForStats,
         isAccountDisabledForStats,
+        hasIncompleteProfileInfo,
         getAccountBorderClass
     };
 })();

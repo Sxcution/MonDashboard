@@ -141,6 +141,7 @@ const isEligibleNearbyPeople = MXHAccountRules.isEligibleNearbyPeople;
 const isNearbyPeopleActive = MXHAccountRules.isNearbyPeopleActive;
 const getAccountCreatedDateForStats = MXHAccountRules.getAccountCreatedDateForStats;
 const isAccountDisabledForStats = MXHAccountRules.isAccountDisabledForStats;
+const hasIncompleteProfileInfo = MXHAccountRules.hasIncompleteProfileInfo;
 const getAccountBorderClass = MXHAccountRules.getAccountBorderClass;
 
 // Gom render về idle để mượt
@@ -209,6 +210,7 @@ function getRenderContext() {
         getAccountCreatedDateForStats,
         calculateTimeDifferenceInHours,
         isAccountDisabledForStats,
+        hasIncompleteProfileInfo,
         canScanWeChat,
         canScanWeChatHK,
         ensureNoticeParsed,

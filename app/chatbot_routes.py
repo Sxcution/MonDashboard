@@ -3,11 +3,13 @@ import sqlite3
 import json
 import os
 import uuid
+import logging
 from datetime import datetime
 from .database import get_db_connection
 from app.chatbot_tools import AVAILABLE_TOOLS
 
 chatbot_bp = Blueprint('chatbot', __name__, url_prefix='/api/chat')
+logger = logging.getLogger(__name__)
 
 # --- Helper Functions ---
 
@@ -241,8 +243,7 @@ QUAN TRỌNG:
             
             # Execute search if keyword found
             if search_kw:
-                with open('debug_log.txt', 'a', encoding='utf-8') as f:
-                    f.write(f"\n[SEARCH] Smart Keyword: '{search_kw}'\n")
+                logger.debug("Smart note search keyword: %r", search_kw)
                 
                 result = AVAILABLE_TOOLS['search_notes']['function'](search_kw)
                 
@@ -289,9 +290,7 @@ QUAN TRỌNG:
         # Detect MXH intent 
         elif any(kw in user_message.lower() for kw in ['mxh', 'facebook', 'tiktok', 'social']):
             result = AVAILABLE_TOOLS['get_all_mxh_cards']['function']()
-            with open('debug_log.txt', 'a', encoding='utf-8') as f:
-                f.write(f"\n[DEBUG] MXH Result Type: {type(result)}\n")
-                f.write(f"[DEBUG] MXH Result Value: {result}\n")
+            logger.debug("MXH tool result type=%s value=%r", type(result), result)
             
             if isinstance(result, dict) and result.get('success'):
                 cards = result.get('cards', [])
@@ -380,12 +379,9 @@ QUAN TRỌNG:
                     image_data = image_data.split('base64,')[1]
                 image_bytes = base64.b64decode(image_data)
                 pil_image = Image.open(io.BytesIO(image_bytes))
-                with open('debug_log.txt', 'a', encoding='utf-8') as f:
-                    f.write(f"\n[DEBUG] Image decoded successfully. Size: {pil_image.size}\n")
+                logger.debug("Chat image decoded successfully. size=%s", pil_image.size)
             except Exception as e:
-                with open('debug_log.txt', 'a', encoding='utf-8') as f:
-                    f.write(f"\n[ERROR] Image decoding failed: {e}\n")
-                print(f"Error decoding image: {e}")
+                logger.exception("Chat image decoding failed")
 
         # Initial messages list
         current_messages = [{'role': 'system', 'content': full_system_prompt}] + history
@@ -484,8 +480,7 @@ QUAN TRỌNG:
                         import google.generativeai as genai
                         from google.protobuf import struct_pb2
                         
-                        with open('debug_log.txt', 'a', encoding='utf-8') as f:
-                            f.write(f"\n[DEBUG] Attempting Gemini with Key #{key_index + 1}...\n")
+                        logger.debug("Attempting Gemini with key #%s", key_index + 1)
 
                         genai.configure(api_key=current_api_key)
                         
@@ -584,8 +579,7 @@ QUAN TRỌNG:
 
                     except Exception as e:
                         error_msg = str(e)
-                        with open('debug_log.txt', 'a', encoding='utf-8') as f:
-                            f.write(f"[ERROR] Key #{key_index + 1} Failed: {error_msg}\n")
+                        logger.warning("Gemini key #%s failed: %s", key_index + 1, error_msg)
                         
                         # Check if it's a quota error (429) or similar
                         if "429" in error_msg or "quota" in error_msg.lower() or "resource exhausted" in error_msg.lower():

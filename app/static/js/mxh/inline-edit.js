@@ -192,6 +192,15 @@
             el.dataset.originalValue = normalizeValue(value);
         });
     }
+    function refreshStatsAndFilters(ctx) {
+        const visibleAccounts = ctx.activeGroupId
+            ? ctx.mxhAccounts.filter(acc => String(acc.group_id) === String(ctx.activeGroupId))
+            : ctx.mxhAccounts;
+        const searchInput = ctx.document.getElementById('mxh-search-input');
+        const searchQuery = (searchInput?.value || ctx.mxhSearchQuery || '').trim().toLowerCase();
+        ctx.updateStatsPanels(visibleAccounts);
+        ctx.updateCardVisibility(searchQuery);
+    }
     async function saveInlineEdit(ctx, element, accountId, field) {
         if (ctx.shouldHoldMXHInlineEditOnBlur()) {
             ctx.captureMXHInlineEditSelection(element);
@@ -250,6 +259,10 @@
             const cardId = Number(ctx.mxhAccounts[accountIndex].card_id);
             ctx.mxhAccounts[accountIndex][field] = value;
             ctx.setCardState(cardId, { activeAccountId: accountId }, true);
+            const liveFilterFields = new Set(['username', 'phone', 'email', 'wechat_nickname']);
+            if (liveFilterFields.has(field)) {
+                refreshStatsAndFilters(ctx);
+            }
             console.log(`🔧 Inline Edit (before API): Set card ${cardId} to show account ${accountId}`);
             const response = await ctx.MXHApi.updateAccount(accountId, { [field]: value });
             if (response.ok) {
@@ -281,6 +294,9 @@
                         else {
                             ctx.scheduleRender();
                         }
+                    }
+                    else if (liveFilterFields.has(field)) {
+                        refreshStatsAndFilters(ctx);
                     }
                 }
                 const label = (field === 'username') ? 'tên' : (field === 'phone') ? 'SĐT' : (field === 'email') ? 'email' : (field === 'wechat_nickname') ? 'nickname' : (field === 'card_name') ? 'vị trí card' : field;

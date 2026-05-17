@@ -5,6 +5,7 @@ Quản lý cài đặt dashboard với real-time updates
 from flask import Blueprint, render_template, request, jsonify
 import os
 import json
+import logging
 import platform  # New Import
 import subprocess  # New Import
 import sys # New Import
@@ -17,6 +18,7 @@ except ImportError:
     pass  # winreg is not available on non-Windows systems
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
+logger = logging.getLogger(__name__)
 
 # Path to dashboard settings file
 DASHBOARD_SETTINGS_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'dashboard_settings.json')
@@ -48,7 +50,7 @@ def save_dashboard_settings(settings):
 def handle_auto_start_os_config(enabled):
     """Creates or removes shortcut in Windows Startup folder (simple and effective)."""
     if platform.system() != 'Windows':
-        print("Auto-start feature is only implemented for Windows.")
+        logger.info("Auto-start feature is only implemented for Windows.")
         return
 
     try:
@@ -84,20 +86,20 @@ def handle_auto_start_os_config(enabled):
             ], capture_output=True, text=True, shell=True)
             
             if result.returncode == 0:
-                print(f"[SUCCESS] Created startup shortcut: {shortcut_path}")
+                logger.info("Created startup shortcut: %s", shortcut_path)
             else:
                 raise Exception(f"PowerShell error: {result.stderr}")
         else:
             # Remove shortcut if it exists
             if os.path.exists(shortcut_path):
                 os.remove(shortcut_path)
-                print(f"[SUCCESS] Removed startup shortcut: {shortcut_path}")
+                logger.info("Removed startup shortcut: %s", shortcut_path)
             else:
-                print("[INFO] Startup shortcut not found (already removed)")
+                logger.info("Startup shortcut not found; already removed")
                 
-    except Exception as e:
-        print(f"[ERROR] Error configuring Windows startup: {e}")
-        raise e
+    except Exception:
+        logger.exception("Error configuring Windows startup")
+        raise
 
 # ===== PAGE ROUTES =====
 @settings_bp.route('/')
