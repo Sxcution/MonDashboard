@@ -1,8 +1,61 @@
-// @ts-nocheck
 // 🔍 DEBUG: Telegram script loading
       console.log('🔍 Loading Telegram script...');
 
       // --- TELEGRAM MANAGER SCRIPT ---
+      interface TelegramTaskConfig {
+            task?: string;
+            session_filenames?: string[];
+            links?: string[];
+            group_links?: string[];
+            messages?: string[];
+            admin_messages?: string[];
+            admin_session_file?: string;
+            send_silent?: boolean;
+            [key: string]: any;
+      }
+
+      interface TelegramGroup {
+            id: string;
+            name: string;
+            [key: string]: any;
+      }
+
+      interface TelegramSession {
+            filename: string;
+            phone?: string;
+            full_name?: string;
+            username?: string;
+            is_live?: boolean | null;
+            status_text?: string;
+            [key: string]: any;
+      }
+
+      interface TelegramTaskResult {
+            filename: string;
+            full_name?: string;
+            username?: string;
+            is_live?: boolean;
+            status_text?: string;
+            [key: string]: any;
+      }
+
+      interface TelegramTaskStatus {
+            processed: number;
+            total: number;
+            success: number;
+            failed: number;
+            status?: string;
+            results: TelegramTaskResult[];
+            messages?: string[];
+            [key: string]: any;
+      }
+
+      interface Window {
+            tg_openConfigModal?: (taskId: string, event?: Event) => Promise<void>;
+            tg_deleteDeadSessions?: () => Promise<void>;
+            confirm(message?: string, title?: string): boolean;
+      }
+
       (async () => {
             const telegramPane = document.getElementById('telegram-tool-pane');
             if (!telegramPane) {
@@ -95,8 +148,12 @@
 
             // --- END: REFACTORED SCRIPT BLOCK FOR AUTO-SAVING UI STATE ---
 
-            let tg_pollingInterval = null, tg_currentTaskId = null, tg_lastCheckedCheckbox = null,
-                  tg_currentTaskConfig = {}, tg_completedInTask = new Set(), tg_allGroups = [];
+            let tg_pollingInterval: ReturnType<typeof setInterval> | null = null;
+            let tg_currentTaskId: string | null = null;
+            let tg_lastCheckedCheckbox: HTMLInputElement | null = null;
+            let tg_currentTaskConfig: TelegramTaskConfig = {};
+            let tg_completedInTask = new Set<string>();
+            let tg_allGroups: TelegramGroup[] = [];
 
             async function tg_handleRunStopClick(event) {
                   const button = event.currentTarget;
@@ -258,14 +315,14 @@
                         } catch (error) { clearInterval(tg_pollingInterval); console.error('Lỗi khi polling:', error); tg_setRunStopButtonState('idle'); }
                   }, 1500);
             }
-            function tg_updateUiWithTaskProgress(task) {
+            function tg_updateUiWithTaskProgress(task: TelegramTaskStatus) {
                   document.getElementById('tg-status-progress-text').textContent = `${task.processed}/${task.total}`;
-                  document.getElementById('tg-status-success-count').textContent = task.success;
-                  document.getElementById('tg-status-failed-count').textContent = task.failed;
+                  document.getElementById('tg-status-success-count').textContent = String(task.success);
+                  document.getElementById('tg-status-failed-count').textContent = String(task.failed);
 
                   // Update status for completed sessions in this poll
                   task.results.forEach(result => {
-                        const row = telegramPane.querySelector(`tr[data-filename="${result.filename}"]`);
+                        const row = telegramPane.querySelector<HTMLTableRowElement>(`tr[data-filename="${result.filename}"]`);
                         if (!row) return;
 
                         tg_completedInTask.add(result.filename); // Mark this session as processed
@@ -294,7 +351,7 @@
                   try {
                         const r = await fetch('/telegram/api/groups');
                         tg_allGroups = await r.json();
-                        const s = document.getElementById('tg-group-session-select');
+                        const s = document.getElementById('tg-group-session-select') as HTMLSelectElement;
                         s.innerHTML = '<option selected disabled>-- Chọn nhóm --</option>';
                         tg_allGroups.forEach(g => {
                               if (g.name !== 'Adminsession') s.add(new Option(g.name, g.id));
@@ -311,9 +368,9 @@
                   } catch (e) { showToast('Không thể tải nhóm Telegram.', 'error'); }
             }
 
-            async function tg_handleGroupSelect(e) {
+            async function tg_handleGroupSelect(e: Event) {
                   tg_lastCheckedCheckbox = null;
-                  const groupId = e.target.value;
+                  const groupId = (e.target as HTMLSelectElement).value;
                   console.log('🔍 Group selected:', groupId);
                   localStorage.setItem('tg_selectedGroupId', groupId);
                   const tableBody = document.getElementById('tg-sessions-table-body');
@@ -326,11 +383,11 @@
                   }
             }
 
-            function tg_renderSessions(sessions) {
-                  const tableBody = document.getElementById('tg-sessions-table-body');
+            function tg_renderSessions(sessions: TelegramSession[]) {
+                  const tableBody = document.getElementById('tg-sessions-table-body') as HTMLElement;
                   tableBody.innerHTML = ''; // Clear the single body
-                  document.getElementById('tg-total-sessions-count').textContent = sessions.length;
-                  const rowHtml = (s, i) => {
+                  document.getElementById('tg-total-sessions-count').textContent = String(sessions.length);
+                  const rowHtml = (s: TelegramSession, i: number) => {
                         // Live/Die icons
                         const liveIcon = s.is_live === null
                               ? '<i class="bi bi-question-circle-fill text-secondary"></i>'
@@ -342,8 +399,8 @@
                         <td><input class="form-check-input tg-session-checkbox" type="checkbox"></td>
                         <td>${i + 1}</td>
                         <td>${s.phone}</td>
-                        <td class="d-none d-md-table-cell" style="cursor: text;">${s.full_name || 'N/A'}</td>
-                        <td class="d-none d-md-table-cell" style="cursor: text;">${s.username || ''}</td>
+                        <td class="d-none d-md-table-cell dashboard-cell-editable">${s.full_name || 'N/A'}</td>
+                        <td class="d-none d-md-table-cell dashboard-cell-editable">${s.username || ''}</td>
                         <td class="text-center">${liveIcon}</td>
                         <td><span class="text-info">${s.status_text || 'Sẵn sàng'}</span></td>
                   </tr>`;
@@ -396,7 +453,7 @@
                   document.getElementById('tg-seedingAdminMessages').value = (admin_messages || []).join('\n');
 
                   document.getElementById('tg-seedingSilentSwitch').checked = tg_currentTaskConfig?.send_silent || false;
-                  const adminSelect = document.getElementById('tg-seedingAdminSessionSelect');
+                  const adminSelect = document.getElementById('tg-seedingAdminSessionSelect') as HTMLSelectElement;
                   adminSelect.innerHTML = '<option value="">-- Đang tải... --</option>';
                   const adminGroup = tg_allGroups.find(g => g.name === 'Adminsession');
                   if (!adminGroup) { adminSelect.innerHTML = '<option value="">-- Không có nhóm Adminsession --</option>'; return; }
@@ -437,11 +494,11 @@
                   } catch (error) { showToast(`Lỗi: ${error.message}`, 'error'); }
             }
 
-            async function tg_handleSaveGroup(event) {
+            async function tg_handleSaveGroup(event: Event) {
                   event.preventDefault();
-                  const form = document.getElementById('tg-addSessionForm');
-                  const nameInput = document.getElementById('tg-groupName');
-                  const filesInput = document.getElementById('tg-sessionFiles');
+                  const form = document.getElementById('tg-addSessionForm') as HTMLFormElement;
+                  const nameInput = document.getElementById('tg-groupName') as HTMLInputElement;
+                  const filesInput = document.getElementById('tg-sessionFiles') as HTMLInputElement;
                   if (!nameInput.value.trim() || !filesInput.files.length) return showToast('Vui lòng nhập tên nhóm và chọn file.', 'error');
                   const formData = new FormData(form);
                   try {
@@ -455,9 +512,9 @@
                   } catch (e) { showToast(`Lỗi: ${e.message}`, 'error'); }
             }
 
-            async function tg_handleUploadAdminSession() {
+            async function tg_handleUploadAdminSession(this: HTMLInputElement) {
                   const files = this.files;
-                  if (!files.length) return;
+                  if (!files?.length) return;
                   const formData = new FormData();
                   for (const file of files) formData.append('admin_session_files', file);
                   try {
@@ -514,7 +571,7 @@
 
                   // Collect all "dead" sessions from the table
                   const rows = [
-                        ...document.querySelectorAll('#tg-sessions-table-body tr[data-live="false"]')
+                        ...document.querySelectorAll<HTMLTableRowElement>('#tg-sessions-table-body tr[data-live="false"]')
                   ];
                   const filenames = rows.map(r => r.dataset.filename).filter(Boolean);
 
@@ -573,7 +630,7 @@
             document.getElementById('tg-context-delete-session')?.addEventListener('click', async () => {
                   if (typeof hideAllContextMenus === 'function') hideAllContextMenus();
                   try {
-                        await tg_deleteDeadSessions();
+                        await window.tg_deleteDeadSessions?.();
                   } catch (e) {
                         alert(`Lỗi xóa session: ${e.message}`);
                   }
@@ -602,17 +659,18 @@
             });
 
             document.getElementById('tg-group-task-cards').addEventListener('click', e => {
-                  const card = e.target.closest('.card[data-task-id]');
-                  if (card && !e.target.closest('button')) {
+                  const target = e.target as Element;
+                  const card = target.closest<HTMLElement>('.card[data-task-id]');
+                  if (card && !target.closest('button')) {
                         tg_selectCardAndLoadConfig(card.dataset.taskId);
                   }
             });
             document.getElementById('tg-session-tables-container').addEventListener('click', e => {
-                  const checkbox = e.target;
+                  const checkbox = e.target as HTMLInputElement;
 
                   // First, handle the specific "Select All" case
                   if (checkbox.id === 'tg-selectAllCheckbox') {
-                        const allSessionCheckboxes = telegramPane.querySelectorAll('.tg-session-checkbox:not(#tg-selectAllCheckbox)');
+                        const allSessionCheckboxes = telegramPane.querySelectorAll<HTMLInputElement>('.tg-session-checkbox:not(#tg-selectAllCheckbox)');
                         allSessionCheckboxes.forEach(cb => {
                               if (!cb.disabled) {
                                     cb.checked = checkbox.checked;
@@ -623,7 +681,7 @@
                         // THEN, handle clicks on individual session checkboxes
                   } else if (checkbox.classList.contains('tg-session-checkbox')) {
                         if (e.shiftKey && tg_lastCheckedCheckbox) {
-                              const allCheckboxes = Array.from(telegramPane.querySelectorAll('.tg-session-checkbox:not(#tg-selectAllCheckbox)'));
+                              const allCheckboxes = Array.from(telegramPane.querySelectorAll<HTMLInputElement>('.tg-session-checkbox:not(#tg-selectAllCheckbox)'));
                               const start = allCheckboxes.indexOf(tg_lastCheckedCheckbox);
                               const end = allCheckboxes.indexOf(checkbox);
 
@@ -650,7 +708,7 @@
                   } catch (e) { listEl.innerHTML = `<div class="text-danger text-center">Lỗi tải nhóm.</div>`; }
             });
             document.getElementById('tg-existing-groups-list').addEventListener('click', async e => {
-                  const deleteBtn = e.target.closest('.tg-delete-group-btn');
+                  const deleteBtn = (e.target as Element).closest<HTMLElement>('.tg-delete-group-btn');
                   if (deleteBtn) {
                         const groupId = deleteBtn.dataset.groupId;
                         if (await window.confirm('Bạn có chắc muốn xóa nhóm này?', 'Xác nhận xóa nhóm')) {
@@ -703,7 +761,7 @@
                   });
             }
             // --- START: NEW FUNCTION TO ADD ---
-            function tg_makeCellEditable(cell, field, filename) {
+            function tg_makeCellEditable(cell: HTMLTableCellElement, field: string, filename: string) {
                   const originalText = cell.textContent.trim();
                   const input = document.createElement('input');
                   input.type = 'text';
@@ -723,7 +781,7 @@
                               return;
                         }
 
-                        const statusCell = cell.closest('tr').cells[6];
+                        const statusCell = cell.closest('tr')!.cells[6];
                         const oldStatusHTML = statusCell.innerHTML;
                         statusCell.innerHTML = `<span class="text-info">Updating...</span>`;
                         showToast(`Updating ${field}...`, 'info');
@@ -746,7 +804,7 @@
 
                               cell.textContent = result.updated_value;
                               if (field === 'username' && result.updated_full_name) {
-                                    cell.closest('tr').cells[3].textContent = result.updated_full_name;
+                                    cell.closest('tr')!.cells[3].textContent = result.updated_full_name;
                               }
                               statusCell.innerHTML = `<span class="text-success">Success!</span>`;
                               showToast(result.message, 'success');
@@ -773,7 +831,7 @@
 
             // --- START: NEW EVENT LISTENER TO ADD ---
             document.getElementById('tg-session-tables-container').addEventListener('dblclick', (e) => {
-                  const cell = e.target.closest('td');
+                  const cell = (e.target as Element).closest<HTMLTableCellElement>('td');
                   if (!cell) return;
 
                   const tr = cell.closest('tr');
@@ -781,7 +839,7 @@
                   if (!filename) return;
 
                   const cellIndex = cell.cellIndex;
-                  let field = null;
+                  let field: string | null = null;
 
                   if (cellIndex === 3) { // Full Name column
                         field = 'full_name';
@@ -813,7 +871,7 @@
 
                   telegramMenu.addEventListener('contextmenu', e => e.preventDefault());
                   telegramMenu.addEventListener('click', (e) => {
-                        const actionItem = e.target.closest('[data-tg-context-action]');
+                        const actionItem = (e.target as Element).closest<HTMLElement>('[data-tg-context-action]');
                         if (!actionItem) return;
                         e.preventDefault();
                         console.log(actionItem.dataset.tgContextAction || 'telegram-context-action');
@@ -823,7 +881,7 @@
 
             telegramPane.querySelectorAll('[data-tg-config-task]').forEach((button) => {
                   button.addEventListener('click', (event) => {
-                        const taskId = event.currentTarget.dataset.tgConfigTask;
+                        const taskId = (event.currentTarget as HTMLElement).dataset.tgConfigTask;
                         if (!taskId || typeof window.tg_openConfigModal !== 'function') return;
                         window.tg_openConfigModal(taskId, event);
                   });

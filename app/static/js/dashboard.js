@@ -1,5 +1,4 @@
 "use strict";
-// @ts-nocheck
 // Dashboard-wide behavior extracted from base.html and partials/navbar.html.
 function showAlert(message, title = 'Thong Bao') {
     const textEl = document.getElementById('globalAlertText');
@@ -27,8 +26,8 @@ function showConfirm(message, title = 'Xac Nhan') {
         const modal = new bootstrap.Modal(modalEl);
         const newConfirmBtn = confirmBtn.cloneNode(true);
         const newCancelBtn = cancelBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        confirmBtn.parentNode?.replaceChild(newConfirmBtn, confirmBtn);
+        cancelBtn.parentNode?.replaceChild(newCancelBtn, cancelBtn);
         newConfirmBtn.onclick = () => {
             modal.hide();
             resolve(true);
@@ -86,7 +85,7 @@ function openThemeColorPrompt() {
     document.documentElement.style.setProperty('--dashboard-bg', normalized);
     showToast(`Da doi mau theme: ${normalized}`, 'success');
 }
-function handleImageNavClick(event) {
+function handleDashboardImageNavClick(event) {
     if (window.location.pathname.startsWith('/image')) {
         event.preventDefault();
         return false;
@@ -108,7 +107,7 @@ function initDashboardContextMenu() {
     if (!dashboardMenu)
         return;
     dashboardMenu.addEventListener('click', (event) => {
-        const action = event.target.closest('[data-dashboard-action]')?.dataset.dashboardAction;
+        const action = event.target?.closest('[data-dashboard-action]')?.dataset.dashboardAction;
         if (!action)
             return;
         event.preventDefault();
@@ -121,7 +120,8 @@ function initDashboardContextMenu() {
         hideAllContextMenus();
     });
     document.addEventListener('contextmenu', (event) => {
-        if (!event.target.closest('.tab-pane') && !event.target.closest('.custom-context-menu')) {
+        const target = event.target;
+        if (!target?.closest('.tab-pane') && !target?.closest('.custom-context-menu')) {
             event.preventDefault();
             hideAllContextMenus();
             showContextMenu(dashboardMenu, event.clientX, event.clientY);
@@ -140,6 +140,8 @@ function initDashboardNavbar() {
     const menuLink = hamburgerMenu.querySelector('.nav-link');
     const dropdownMenu = hamburgerMenu.querySelector('.dropdown-menu');
     const dropdownContentUl = document.getElementById('hamburger-dropdown-content');
+    if (!menuLink || !dropdownMenu || !dropdownContentUl)
+        return;
     let bsDropdownInstance = null;
     let autoHideTimeout;
     let mouseLeaveTimeout;
@@ -233,14 +235,15 @@ function initDashboardNavbar() {
         }, 100);
     });
     dropdownMenu.addEventListener('click', (event) => {
-        const themeBtn = event.target.closest('[data-dashboard-action="change-theme"]');
+        const target = event.target;
+        const themeBtn = target?.closest('[data-dashboard-action="change-theme"]');
         if (themeBtn) {
             event.preventDefault();
             openThemeColorPrompt();
             hideDropdown();
             return;
         }
-        if (event.target.closest('.dropdown-item'))
+        if (target?.closest('.dropdown-item'))
             hideDropdown();
     });
     hamburgerMenu.addEventListener('hidden.bs.dropdown', () => {
@@ -270,13 +273,13 @@ window.showConfirm = showConfirm;
 window.requestNotificationPermission = requestNotificationPermission;
 window.showPlatformNotification = showPlatformNotification;
 window.openThemeColorPrompt = openThemeColorPrompt;
-window.handleImageNavClick = handleImageNavClick;
+window.handleImageNavClick = handleDashboardImageNavClick;
 window.hideAllContextMenus = hideAllContextMenus;
 applySavedDashboardTheme();
 document.addEventListener('DOMContentLoaded', () => {
     initDashboardContextMenu();
     initDashboardNavbar();
     document.querySelectorAll('[data-dashboard-nav="image"]').forEach(link => {
-        link.addEventListener('click', handleImageNavClick);
+        link.addEventListener('click', handleDashboardImageNavClick);
     });
 });

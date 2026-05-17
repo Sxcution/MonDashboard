@@ -1,8 +1,6 @@
 "use strict";
-// @ts-nocheck
 // 🔍 DEBUG: Telegram script loading
 console.log('🔍 Loading Telegram script...');
-// --- TELEGRAM MANAGER SCRIPT ---
 (async () => {
     const telegramPane = document.getElementById('telegram-tool-pane');
     if (!telegramPane) {
@@ -87,7 +85,12 @@ console.log('🔍 Loading Telegram script...');
     // Load settings on page load
     loadTelegramGlobalSettings();
     // --- END: REFACTORED SCRIPT BLOCK FOR AUTO-SAVING UI STATE ---
-    let tg_pollingInterval = null, tg_currentTaskId = null, tg_lastCheckedCheckbox = null, tg_currentTaskConfig = {}, tg_completedInTask = new Set(), tg_allGroups = [];
+    let tg_pollingInterval = null;
+    let tg_currentTaskId = null;
+    let tg_lastCheckedCheckbox = null;
+    let tg_currentTaskConfig = {};
+    let tg_completedInTask = new Set();
+    let tg_allGroups = [];
     async function tg_handleRunStopClick(event) {
         const button = event.currentTarget;
         if (button.dataset.taskRunning === 'true') {
@@ -264,8 +267,8 @@ console.log('🔍 Loading Telegram script...');
     }
     function tg_updateUiWithTaskProgress(task) {
         document.getElementById('tg-status-progress-text').textContent = `${task.processed}/${task.total}`;
-        document.getElementById('tg-status-success-count').textContent = task.success;
-        document.getElementById('tg-status-failed-count').textContent = task.failed;
+        document.getElementById('tg-status-success-count').textContent = String(task.success);
+        document.getElementById('tg-status-failed-count').textContent = String(task.failed);
         // Update status for completed sessions in this poll
         task.results.forEach(result => {
             const row = telegramPane.querySelector(`tr[data-filename="${result.filename}"]`);
@@ -332,7 +335,7 @@ console.log('🔍 Loading Telegram script...');
     function tg_renderSessions(sessions) {
         const tableBody = document.getElementById('tg-sessions-table-body');
         tableBody.innerHTML = ''; // Clear the single body
-        document.getElementById('tg-total-sessions-count').textContent = sessions.length;
+        document.getElementById('tg-total-sessions-count').textContent = String(sessions.length);
         const rowHtml = (s, i) => {
             // Live/Die icons
             const liveIcon = s.is_live === null
@@ -344,8 +347,8 @@ console.log('🔍 Loading Telegram script...');
                         <td><input class="form-check-input tg-session-checkbox" type="checkbox"></td>
                         <td>${i + 1}</td>
                         <td>${s.phone}</td>
-                        <td class="d-none d-md-table-cell" style="cursor: text;">${s.full_name || 'N/A'}</td>
-                        <td class="d-none d-md-table-cell" style="cursor: text;">${s.username || ''}</td>
+                        <td class="d-none d-md-table-cell dashboard-cell-editable">${s.full_name || 'N/A'}</td>
+                        <td class="d-none d-md-table-cell dashboard-cell-editable">${s.username || ''}</td>
                         <td class="text-center">${liveIcon}</td>
                         <td><span class="text-info">${s.status_text || 'Sẵn sàng'}</span></td>
                   </tr>`;
@@ -474,7 +477,7 @@ console.log('🔍 Loading Telegram script...');
     }
     async function tg_handleUploadAdminSession() {
         const files = this.files;
-        if (!files.length)
+        if (!files?.length)
             return;
         const formData = new FormData();
         for (const file of files)
@@ -590,7 +593,7 @@ console.log('🔍 Loading Telegram script...');
         if (typeof hideAllContextMenus === 'function')
             hideAllContextMenus();
         try {
-            await tg_deleteDeadSessions();
+            await window.tg_deleteDeadSessions?.();
         }
         catch (e) {
             alert(`Lỗi xóa session: ${e.message}`);
@@ -617,8 +620,9 @@ console.log('🔍 Loading Telegram script...');
         showToast('Đã xáo trộn tin nhắn!', 'success');
     });
     document.getElementById('tg-group-task-cards').addEventListener('click', e => {
-        const card = e.target.closest('.card[data-task-id]');
-        if (card && !e.target.closest('button')) {
+        const target = e.target;
+        const card = target.closest('.card[data-task-id]');
+        if (card && !target.closest('button')) {
             tg_selectCardAndLoadConfig(card.dataset.taskId);
         }
     });

@@ -310,5 +310,17 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/api/http.js') }}"></script>
+<script src="{{ url_for('static', filename='js/api/imageApi.js') }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/storage.js') }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/navigation.js') }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/history.js') }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/single-image.js') }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/upload.js') }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/heal-tool.js') }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/crop-tool.js') }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/collage.js') }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/text-layer.js') }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/init.js') }}"></script>
 <script src="{{ url_for('static', filename='js/image.js') }}"></script>
 {% endblock %}

@@ -1,1 +1,13 @@
+import "../src/api/http";
+import "../src/api/imageApi";
+import "../src/image-editor/storage";
+import "../src/image-editor/navigation";
+import "../src/image-editor/history";
+import "../src/image-editor/single-image";
+import "../src/image-editor/upload";
+import "../src/image-editor/heal-tool";
+import "../src/image-editor/crop-tool";
+import "../src/image-editor/collage";
+import "../src/image-editor/text-layer";
+import "../src/image-editor/init";
 import "../src/image";

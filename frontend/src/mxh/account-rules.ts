@@ -70,9 +70,9 @@
         const remainingHours = Math.floor(hoursUntil % 24);
         const countdownClass = hoursUntil < 72 ? 'mxh-color-warning' : 'mxh-color-white';
         if (remainingDays > 0) {
-            return `<i class="bi bi-geo-alt me-1 mxh-countdown-icon ${countdownClass}"></i><span class="${countdownClass}">${remainingDays} ngÃ y</span>`;
+            return `<i class="bi bi-geo-alt me-1 mxh-countdown-icon ${countdownClass}"></i><span class="${countdownClass}">${remainingDays} ngày</span>`;
         }
-        return `<i class="bi bi-geo-alt me-1 mxh-countdown-icon ${countdownClass}"></i><span class="${countdownClass}">${remainingHours} giá»</span>`;
+        return `<i class="bi bi-geo-alt me-1 mxh-countdown-icon ${countdownClass}"></i><span class="${countdownClass}">${remainingHours} giờ</span>`;
     }
 
     function calculateScanCountdown(account, now) {
@@ -107,7 +107,7 @@
 
         if (totalDays < 180) {
             const remainingDays = 180 - totalDays;
-            return `CÃ²n ${remainingDays} ngÃ y`;
+            return `Còn ${remainingDays} ngày`;
         }
         return `<i class="bi bi-qr-code me-1 mxh-countdown-icon mxh-color-success"></i>${currentScanCount}/${maxScans}`;
     }

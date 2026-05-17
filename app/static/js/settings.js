@@ -1,5 +1,4 @@
 "use strict";
-// @ts-nocheck
 // ===== SETTINGS REAL-TIME SYSTEM =====
 const SETTINGS_CONFIG = {
     AUTO_REFRESH_INTERVAL: 3000,
@@ -164,7 +163,7 @@ async function applyShutdownTimer() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ enabled: true, hours, minutes })
         });
-        localStorage.setItem('shutdownDeadline', Date.now() + totalMs);
+        localStorage.setItem('shutdownDeadline', String(Date.now() + totalMs));
         startShutdownCountdown();
         showToast(`Đã hẹn tắt máy sau ${hours}h ${minutes}p`, 'success');
     }
@@ -181,7 +180,7 @@ function startShutdownCountdown() {
             clearInterval(shutdownCountdownInterval);
             return;
         }
-        const remaining = deadline - Date.now();
+        const remaining = Number(deadline) - Date.now();
         if (remaining <= 0) {
             clearInterval(shutdownCountdownInterval);
             localStorage.removeItem('shutdownDeadline');
@@ -236,7 +235,7 @@ async function applyNotificationTimer() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ enabled: true, hours, minutes, message })
         });
-        localStorage.setItem('notificationDeadline', Date.now() + totalMs);
+        localStorage.setItem('notificationDeadline', String(Date.now() + totalMs));
         localStorage.setItem('notificationMessage', message);
         startNotificationCountdown();
         showToast(`Đã hẹn thông báo sau ${hours}h ${minutes}p`, 'success');
@@ -254,7 +253,7 @@ function startNotificationCountdown() {
             clearInterval(notificationCountdownInterval);
             return;
         }
-        const remaining = deadline - Date.now();
+        const remaining = Number(deadline) - Date.now();
         if (remaining <= 0) {
             clearInterval(notificationCountdownInterval);
             const message = localStorage.getItem('notificationMessage') || 'Hết giờ!';
@@ -279,12 +278,12 @@ function startNotificationCountdown() {
 function checkTimers() {
     // Check shutdown timer
     const shutdownDeadline = localStorage.getItem('shutdownDeadline');
-    if (shutdownDeadline && Date.now() < shutdownDeadline) {
+    if (shutdownDeadline && Date.now() < Number(shutdownDeadline)) {
         startShutdownCountdown();
     }
     // Check notification timer
     const notificationDeadline = localStorage.getItem('notificationDeadline');
-    if (notificationDeadline && Date.now() < notificationDeadline) {
+    if (notificationDeadline && Date.now() < Number(notificationDeadline)) {
         startNotificationCountdown();
     }
 }

@@ -1,0 +1,75 @@
+.home-clean-dashboard {
+    height: calc(100dvh - 51px);
+    max-height: calc(100dvh - 51px);
+    min-height: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 18px 24px 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: var(--dashboard-bg);
+}
+
+.home-smart-search {
+    position: relative;
+    width: min(300px, 100%);
+    height: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    border: 1px solid #444a59;
+    border-radius: 8px;
+    background-color: #2c303a;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-smart-search:focus-within {
+    border-color: #0dcaf0;
+    box-shadow: 0 0 0 1px rgba(13, 202, 240, 0.25);
+}
+
+.home-smart-search-icon {
+    position: absolute;
+    left: 10px;
+    color: #9ca3af;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.home-smart-search:focus-within .home-smart-search-icon {
+    color: #0dcaf0;
+}
+
+.home-smart-search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #e5e7eb;
+    padding: 7px 35px;
+    font-size: 0.875rem;
+    box-shadow: none;
+}
+
+.home-smart-search input::placeholder {
+    color: #6b7280;
+}
+
+body:has(.home-clean-dashboard),
+body:has(.home-clean-dashboard) #main-tab-content,
+body:has(.home-clean-dashboard) main,
+body:has(.home-clean-dashboard) .container-fluid {
+    overflow: hidden;
+}
+
+@media (max-width: 640px) {
+    .home-clean-dashboard {
+        height: calc(100dvh - 49px);
+        max-height: calc(100dvh - 49px);
+        padding: 14px 16px 0;
+    }
+}

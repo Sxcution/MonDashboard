@@ -1,3 +1,5 @@
+import "../src/api/http";
+import "../src/api/mxhApi";
 import "../src/mxh/utils";
 import "../src/mxh/state";
 import "../src/mxh/api";
