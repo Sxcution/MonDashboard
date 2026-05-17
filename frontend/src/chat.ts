@@ -1,6 +1,37 @@
-// @ts-nocheck
-let currentSessionId = null;
-let providerSettings = {}; // Store settings for all providers
+(function () {
+interface ChatProviderSettings {
+    provider?: string;
+    openai_api_key?: string;
+    openai_model?: string;
+    gemini_api_key?: string;
+    gemini_model?: string;
+    system_prompt_general?: string;
+    system_prompt_mxh?: string;
+    system_prompt_notes?: string;
+    system_prompt_telegram?: string;
+    system_prompt_image?: string;
+    [key: string]: unknown;
+}
+
+interface ChatSession {
+    id: string;
+    title?: string;
+}
+
+interface ChatHistoryMessage {
+    role: string;
+    content: string;
+}
+
+interface SelectedModel {
+    provider?: string;
+    model?: string;
+}
+
+type ChatSessionId = string | number | null;
+
+let currentSessionId: ChatSessionId = null;
+let providerSettings: ChatProviderSettings = {}; // Store settings for all providers
 
 document.addEventListener('DOMContentLoaded', function () {
     // Set default model if not already set
@@ -44,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
     sessionStorage.setItem('wasOnHomePage', 'true');
 
     // Auto-resize textarea
-    const textarea = document.getElementById('user-input');
+    const textarea = document.getElementById('user-input') as HTMLTextAreaElement;
     textarea.addEventListener('input', function () {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
@@ -67,10 +98,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Search filter
     document.getElementById('chatSearch').addEventListener('input', function (e) {
-        const term = e.target.value.toLowerCase();
-        const items = document.querySelectorAll('.chat-history-item');
+        const term = ((e.target as HTMLInputElement | null)?.value || '').toLowerCase();
+        const items = document.querySelectorAll<HTMLElement>('.chat-history-item');
         items.forEach(item => {
-            const text = item.textContent.toLowerCase();
+            const text = (item.textContent || '').toLowerCase();
             item.style.display = text.includes(term) ? 'block' : 'none';
         });
     });
@@ -87,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(() => {
         startNewChat();
         // Focus input is handled inside startNewChat, but let's ensure it
-        const chatInput = document.getElementById('user-input');
+        const chatInput = document.getElementById('user-input') as HTMLTextAreaElement | null;
         if (chatInput) chatInput.focus();
     }, 500);
 
@@ -105,15 +136,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // Show/Hide Bubble based on Active Tab
     if (chatTabLink) {
         chatTabLink.addEventListener('shown.bs.tab', function (e) {
-            miniChatBubble.style.display = 'none';
-            miniChatWindow.style.display = 'none'; // Close window if returning to main chat
+            if (miniChatBubble) miniChatBubble.style.display = 'none';
+            if (miniChatWindow) miniChatWindow.style.display = 'none'; // Close window if returning to main chat
         });
 
         // Listen for other tabs showing
         document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(tab => {
             if (tab !== chatTabLink) {
                 tab.addEventListener('shown.bs.tab', function (e) {
-                    miniChatBubble.style.display = 'flex';
+                    if (miniChatBubble) miniChatBubble.style.display = 'flex';
                 });
             }
         });
@@ -128,11 +159,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Global Paste Event Listener
     document.addEventListener('paste', function (e) {
         // Only handle if we are on the chat page (user-input exists)
-        const userInput = document.getElementById('user-input');
+        const userInput = document.getElementById('user-input') as HTMLTextAreaElement | null;
         if (!userInput) return;
 
         console.log('Global paste event detected');
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        const clipboardData = e.clipboardData || (e as any).originalEvent?.clipboardData;
+        if (!clipboardData) return;
+        const items = clipboardData.items;
 
         for (let index in items) {
             const item = items[index];
@@ -140,8 +173,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 const blob = item.getAsFile();
                 const reader = new FileReader();
                 reader.onload = function (event) {
-                    const base64 = event.target.result;
-                    showImagePreview(base64);
+                    const base64 = event.target?.result;
+                    if (typeof base64 === 'string') showImagePreview(base64);
                 };
                 reader.readAsDataURL(blob);
                 e.preventDefault(); // Prevent default paste behavior for images
@@ -152,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Provider Change Listener
     document.getElementById('ai-provider').addEventListener('change', function (e) {
-        updateSettingsUI(e.target.value);
+        updateSettingsUI((e.target as HTMLSelectElement).value);
     });
 
     // Setup context menu for chat history
@@ -160,22 +193,26 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // Image Preview Functions
-let currentImageBase64 = null;
+let currentImageBase64: string | null = null;
 
-function showImagePreview(base64) {
+function showImagePreview(base64: string) {
     currentImageBase64 = base64;
-    document.getElementById('image-preview').src = base64;
-    const container = document.getElementById('image-preview-container');
+    const preview = document.getElementById('image-preview') as HTMLImageElement | null;
+    if (preview) preview.src = base64;
+    const container = document.getElementById('image-preview-container') as HTMLElement | null;
+    if (!container) return;
     container.classList.remove('d-none');
     container.style.display = 'block'; // Force show (resetting inline style from clearImagePreview)
     // Focus back on input
-    document.getElementById('user-input').focus();
+    (document.getElementById('user-input') as HTMLTextAreaElement | null)?.focus();
 }
 
 function clearImagePreview() {
     currentImageBase64 = null;
-    document.getElementById('image-preview').src = '';
-    const container = document.getElementById('image-preview-container');
+    const preview = document.getElementById('image-preview') as HTMLImageElement | null;
+    if (preview) preview.src = '';
+    const container = document.getElementById('image-preview-container') as HTMLElement | null;
+    if (!container) return;
     container.classList.add('d-none');
     container.style.display = 'none'; // Force hide
 }
@@ -183,7 +220,7 @@ function clearImagePreview() {
 // Context Menu Functions
 function setupChatHistoryContextMenu() {
     document.addEventListener('contextmenu', function (e) {
-        const historyItem = e.target.closest('.chat-history-item');
+        const historyItem = (e.target as Element | null)?.closest<HTMLElement>('.chat-history-item');
         if (historyItem) {
             e.preventDefault();
             showContextMenu(e.clientX, e.clientY, historyItem.dataset.id);
@@ -194,7 +231,7 @@ function setupChatHistoryContextMenu() {
     document.addEventListener('click', hideContextMenu);
 }
 
-function showContextMenu(x, y, sessionId) {
+function showContextMenu(x: number, y: number, sessionId?: string) {
     hideContextMenu(); // Remove existing menu if any
 
     const menu = document.createElement('div');
@@ -208,7 +245,7 @@ function showContextMenu(x, y, sessionId) {
         </div>
     `;
     menu.addEventListener('click', (event) => {
-        const deleteItem = event.target.closest('[data-chat-delete-session]');
+        const deleteItem = (event.target as Element | null)?.closest<HTMLElement>('[data-chat-delete-session]');
         if (!deleteItem) return;
         deleteChat(deleteItem.dataset.chatDeleteSession);
     });
@@ -220,7 +257,8 @@ function hideContextMenu() {
     if (menu) menu.remove();
 }
 
-async function deleteChat(sessionId) {
+async function deleteChat(sessionId?: string) {
+    if (!sessionId) return;
     if (!confirm('Are you sure you want to delete this chat?')) return;
 
     try {
@@ -247,9 +285,9 @@ function toggleSidebar() {
     document.getElementById('chatSidebar').classList.toggle('show');
 }
 
-function selectModel(provider, model) {
+function selectModel(provider: string, model: string) {
     // Update display name
-    const displayNames = {
+    const displayNames: Record<string, string> = {
         'gpt-4o': 'GPT-4o',
         'gpt-3.5-turbo': 'GPT-3.5',
         'gemini-2.5-flash': 'Gemini 2.5 Flash',
@@ -260,8 +298,8 @@ function selectModel(provider, model) {
     document.getElementById('current-model-name').textContent = displayName;
 
     // Update settings
-    document.getElementById('ai-provider').value = provider;
-    document.getElementById('ai-model').value = model;
+    (document.getElementById('ai-provider') as HTMLSelectElement).value = provider;
+    (document.getElementById('ai-model') as HTMLInputElement).value = model;
 
     // Save to localStorage
     const settings = {
@@ -278,11 +316,11 @@ async function loadSessions() {
     try {
         const response = await fetch('/api/chat/sessions');
         const data = await response.json();
-        const list = document.getElementById('chatHistoryList');
+        const list = document.getElementById('chatHistoryList') as HTMLElement;
         list.innerHTML = '';
 
         if (data.success && data.sessions.length > 0) {
-            data.sessions.forEach(session => {
+            data.sessions.forEach((session: ChatSession) => {
                 const item = document.createElement('a');
                 item.href = '#';
                 item.className = 'chat-history-item';
@@ -304,7 +342,8 @@ async function loadSessions() {
 
 function startNewChat() {
     currentSessionId = null;
-    document.getElementById('chat-messages').innerHTML = `
+    const messages = document.getElementById('chat-messages') as HTMLElement;
+    messages.innerHTML = `
         <div class="h-100 d-flex flex-column justify-content-center align-items-center text-center p-4 empty-state">
             <div class="mb-4">
                 <div class="logo-circle">
@@ -317,18 +356,18 @@ function startNewChat() {
     // Center input when empty
     const container = document.querySelector('.chat-input-container');
     if (container) container.classList.add('centered');
-    document.querySelectorAll('.chat-history-item').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll<HTMLElement>('.chat-history-item').forEach(el => el.classList.remove('active'));
     clearImagePreview();
 }
 
-async function loadSession(sessionId) {
+async function loadSession(sessionId: string) {
     currentSessionId = sessionId;
     sessionStorage.setItem('currentSessionId', sessionId);  // Persist session in current tab
-    document.querySelectorAll('.chat-history-item').forEach(el => {
+    document.querySelectorAll<HTMLElement>('.chat-history-item').forEach(el => {
         el.classList.toggle('active', el.dataset.id === sessionId);
     });
 
-    const chatMessages = document.getElementById('chat-messages');
+    const chatMessages = document.getElementById('chat-messages') as HTMLElement;
     chatMessages.innerHTML = '<div class="text-center mt-5"><div class="spinner-border text-light" role="status"></div></div>';
 
     try {
@@ -336,7 +375,7 @@ async function loadSession(sessionId) {
         const data = await response.json();
         chatMessages.innerHTML = '';
         if (data.success) {
-            data.history.forEach(msg => appendMessage(msg.role, msg.content));
+            data.history.forEach((msg: ChatHistoryMessage) => appendMessage(msg.role, msg.content));
             chatMessages.scrollTop = chatMessages.scrollHeight;
             // Remove centered class when loading existing chat
             if (data.history && data.history.length > 0) {
@@ -349,8 +388,8 @@ async function loadSession(sessionId) {
     }
 }
 
-function appendMessage(role, content, modelName = null) {
-    const chatMessages = document.getElementById('chat-messages');
+function appendMessage(role: string, content: string, modelName: string | null = null) {
+    const chatMessages = document.getElementById('chat-messages') as HTMLElement;
     const emptyState = chatMessages.querySelector('.empty-state');
     if (emptyState) {
         emptyState.remove();
@@ -407,13 +446,13 @@ function appendMessage(role, content, modelName = null) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function sendSuggestion(text) {
-    document.getElementById('user-input').value = text;
+function sendSuggestion(text: string) {
+    (document.getElementById('user-input') as HTMLTextAreaElement).value = text;
     sendMessage();
 }
 
 async function sendMessage() {
-    const input = document.getElementById('user-input');
+    const input = document.getElementById('user-input') as HTMLTextAreaElement;
     const message = input.value.trim();
 
     // Allow sending if there is an image, even if text is empty
@@ -433,7 +472,7 @@ async function sendMessage() {
     const imageToSend = currentImageBase64; // Store for payload
     clearImagePreview();
 
-    const chatMessages = document.getElementById('chat-messages');
+    const chatMessages = document.getElementById('chat-messages') as HTMLElement;
     const loadingId = 'loading-' + Date.now();
     const loadingRow = document.createElement('div');
     loadingRow.className = 'message-row ai'; // Add ai class
@@ -459,9 +498,9 @@ async function sendMessage() {
 
     try {
         // Get selected model from localStorage
-        const selectedModel = JSON.parse(localStorage.getItem('selectedModel') || '{}');
+        const selectedModel = JSON.parse(localStorage.getItem('selectedModel') || '{}') as SelectedModel;
 
-        const payload = {
+        const payload: Record<string, unknown> = {
             message: message,
             session_id: currentSessionId,
             provider: selectedModel.provider,
@@ -478,12 +517,12 @@ async function sendMessage() {
             body: JSON.stringify(payload)
         });
         const data = await response.json();
-        document.getElementById(loadingId).remove();
+        document.getElementById(loadingId)?.remove();
 
         if (data.success) {
             if (!currentSessionId || currentSessionId !== data.session_id) {
                 currentSessionId = data.session_id;
-                sessionStorage.setItem('currentSessionId', currentSessionId);  // Persist session in current tab
+                sessionStorage.setItem('currentSessionId', String(currentSessionId));  // Persist session in current tab
                 loadSessions();
             }
             // Pass the model name used (we assume it's the same as what we sent)
@@ -492,7 +531,7 @@ async function sendMessage() {
             appendMessage('assistant', 'Error: ' + data.error, currentModelName);
         }
     } catch (error) {
-        document.getElementById(loadingId).remove();
+        document.getElementById(loadingId)?.remove();
         appendMessage('assistant', 'Network Error: ' + error.message, currentModelName);
     } finally {
         // Image already cleared
@@ -515,14 +554,14 @@ async function loadAISettings() {
 
             // Set current provider
             const currentProvider = providerSettings.provider || 'openai';
-            document.getElementById('ai-provider').value = currentProvider;
+            (document.getElementById('ai-provider') as HTMLSelectElement).value = currentProvider;
 
             // Load System Prompts
-            document.getElementById('system-prompt-general').value = providerSettings.system_prompt_general || '';
-            document.getElementById('system-prompt-mxh').value = providerSettings.system_prompt_mxh || '';
-            document.getElementById('system-prompt-notes').value = providerSettings.system_prompt_notes || '';
-            document.getElementById('system-prompt-telegram').value = providerSettings.system_prompt_telegram || '';
-            document.getElementById('system-prompt-image').value = providerSettings.system_prompt_image || '';
+            (document.getElementById('system-prompt-general') as HTMLTextAreaElement).value = providerSettings.system_prompt_general || '';
+            (document.getElementById('system-prompt-mxh') as HTMLTextAreaElement).value = providerSettings.system_prompt_mxh || '';
+            (document.getElementById('system-prompt-notes') as HTMLTextAreaElement).value = providerSettings.system_prompt_notes || '';
+            (document.getElementById('system-prompt-telegram') as HTMLTextAreaElement).value = providerSettings.system_prompt_telegram || '';
+            (document.getElementById('system-prompt-image') as HTMLTextAreaElement).value = providerSettings.system_prompt_image || '';
 
             updateSettingsUI(currentProvider);
             updateHeaderModelName(currentProvider);
@@ -530,10 +569,10 @@ async function loadAISettings() {
     } catch (error) { console.error(error); }
 }
 
-function updateSettingsUI(provider) {
+function updateSettingsUI(provider: string) {
     // Load Key/Model based on provider
-    const apiKeyInput = document.getElementById('ai-api-key');
-    const modelInput = document.getElementById('ai-model');
+    const apiKeyInput = document.getElementById('ai-api-key') as HTMLInputElement;
+    const modelInput = document.getElementById('ai-model') as HTMLInputElement;
 
     if (provider === 'openai') {
         apiKeyInput.value = providerSettings.openai_api_key || '';
@@ -546,7 +585,7 @@ function updateSettingsUI(provider) {
     }
 }
 
-function updateHeaderModelName(provider) {
+function updateHeaderModelName(provider: string) {
     const modelNameEl = document.getElementById('current-model-name');
     let modelName = '';
 
@@ -561,16 +600,16 @@ function updateHeaderModelName(provider) {
 }
 
 async function saveAISettings() {
-    const provider = document.getElementById('ai-provider').value;
-    const apiKey = document.getElementById('ai-api-key').value;
-    const model = document.getElementById('ai-model').value;
+    const provider = (document.getElementById('ai-provider') as HTMLSelectElement).value;
+    const apiKey = (document.getElementById('ai-api-key') as HTMLInputElement).value;
+    const model = (document.getElementById('ai-model') as HTMLInputElement).value;
 
     // Get System Prompts
-    const promptGeneral = document.getElementById('system-prompt-general').value;
-    const promptMxh = document.getElementById('system-prompt-mxh').value;
-    const promptNotes = document.getElementById('system-prompt-notes').value;
-    const promptTelegram = document.getElementById('system-prompt-telegram').value;
-    const promptImage = document.getElementById('system-prompt-image').value;
+    const promptGeneral = (document.getElementById('system-prompt-general') as HTMLTextAreaElement).value;
+    const promptMxh = (document.getElementById('system-prompt-mxh') as HTMLTextAreaElement).value;
+    const promptNotes = (document.getElementById('system-prompt-notes') as HTMLTextAreaElement).value;
+    const promptTelegram = (document.getElementById('system-prompt-telegram') as HTMLTextAreaElement).value;
+    const promptImage = (document.getElementById('system-prompt-image') as HTMLTextAreaElement).value;
 
     // Update local state
     providerSettings.provider = provider;
@@ -599,7 +638,7 @@ async function saveAISettings() {
             alert('Settings saved!');
             updateHeaderModelName(provider);
             const modal = bootstrap.Modal.getInstance(document.getElementById('aiSettingsModal'));
-            modal.hide();
+            modal?.hide();
         } else { alert('Error: ' + data.error); }
     } catch (error) { alert('Error: ' + error.message); }
 }
@@ -611,7 +650,7 @@ function clearDashboardCache() {
         // localStorage.clear();
 
         // Force hard reload to clear cache
-        window.location.reload(true);
+        window.location.reload();
 
         // Alternative: Use Cache API if available
         if ('caches' in window) {
@@ -622,3 +661,14 @@ function clearDashboardCache() {
     }
 }
 
+(window as any).showImagePreview = showImagePreview;
+(window as any).clearImagePreview = clearImagePreview;
+(window as any).toggleSidebar = toggleSidebar;
+(window as any).selectModel = selectModel;
+(window as any).startNewChat = startNewChat;
+(window as any).sendSuggestion = sendSuggestion;
+(window as any).sendMessage = sendMessage;
+(window as any).clearAllChats = clearAllChats;
+(window as any).saveAISettings = saveAISettings;
+(window as any).clearDashboardCache = clearDashboardCache;
+})();

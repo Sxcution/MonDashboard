@@ -71,6 +71,8 @@ interface Window {
   MXHAccountActions: any;
   MXHContextActions: any;
   MXHInit: any;
+  openWeChatModal: any;
+  loadPhoneHistory: any;
   handleCardContextMenu: any;
   toggleAccountStatus: any;
   copyPhoneHistory: any;

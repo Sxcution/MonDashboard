@@ -1,8 +1,9 @@
-// @ts-nocheck
+// Typed Notes rich-editor island. Kept as one closure for behavior compatibility.
 document.addEventListener('DOMContentLoaded', function () {
         const notesPane = document.getElementById('notes-tool-pane');
         if (!notesPane) return;
 
+        const asElement = (target: EventTarget | null): Element | null => target instanceof Element ? target : null;
 
         const notesConfigEl = document.getElementById('notes-config');
         const notesApi = {
@@ -12,30 +13,77 @@ document.addEventListener('DOMContentLoaded', function () {
             deleteNoteBase: notesConfigEl?.dataset.deleteNoteBase || '/notes/api/delete/',
             toggleMarkBase: notesConfigEl?.dataset.toggleMarkBase || '/notes/api/mark/'
         };
-        document.querySelectorAll('[data-color]').forEach((el) => {
+        const notesClient = window.NotesApiFactory?.fromConfig(notesApi);
+
+        async function loadNotesFromApi() {
+            if (notesClient) return notesClient.getNotes();
+            const response = await fetch(notesApi.getNotesUrl);
+            if (!response.ok) throw new Error(`Server error: ${response.status}`);
+            return response.json();
+        }
+
+        async function updateNoteOnServer(noteId, payload) {
+            if (notesClient) return notesClient.updateNote(noteId, payload);
+            const response = await fetch(`${notesApi.updateNoteBase}${noteId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error('Save failed');
+            return response.json();
+        }
+
+        async function saveModalNote(id, payload) {
+            if (notesClient) {
+                return id ? notesClient.updateNote(id, payload) : notesClient.addNote(payload);
+            }
+            const url = id ? `${notesApi.updateNoteBase}${id}` : notesApi.addNoteUrl;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error('Save failed');
+            return response.json();
+        }
+
+        async function deleteNoteOnServer(noteId, method: 'POST' | 'DELETE' = 'POST') {
+            if (notesClient) return notesClient.deleteNote(noteId, method);
+            const response = await fetch(`${notesApi.deleteNoteBase}${noteId}`, { method });
+            if (!response.ok) throw new Error('Delete failed');
+            return response.json().catch(() => ({}));
+        }
+
+        async function toggleNoteMarkOnServer(noteId) {
+            if (notesClient) return notesClient.toggleMark(noteId);
+            const response = await fetch(`${notesApi.toggleMarkBase}${noteId}`, { method: 'POST' });
+            if (!response.ok) throw new Error('Server error');
+            return response.json().catch(() => ({}));
+        }
+        document.querySelectorAll<HTMLElement>('[data-color]').forEach((el) => {
             const color = el.dataset?.color;
             if (color) el.style.setProperty('--notes-swatch-color', color);
         });
 
         // --- DOM Elements ---
-        const container = document.getElementById('notes-container');
-        const searchInput = document.getElementById('notes-search-input');
-        const listWrapper = document.getElementById('notes-list-wrapper');
-        const detailWrapper = document.getElementById('notes-detail-wrapper');
+        const container = document.getElementById('notes-container') as HTMLElement;
+        const searchInput = document.getElementById('notes-search-input') as HTMLInputElement;
+        const listWrapper = document.getElementById('notes-list-wrapper') as HTMLElement;
+        const detailWrapper = document.getElementById('notes-detail-wrapper') as HTMLElement;
 
         // Modal Elements
-        const modalEl = document.getElementById('notes-addEditModal');
+        const modalEl = document.getElementById('notes-addEditModal') as HTMLElement;
         const notesModal = new bootstrap.Modal(modalEl);
-        const form = document.getElementById('notes-addEditForm');
-        const modalTitle = document.getElementById('notes-modalTitle');
-        const editIdInput = document.getElementById('notes-editId');
-        const titleInput = document.getElementById('notes-title-input');
-        const contentEditor = document.getElementById('notes-content-editor');
+        const form = document.getElementById('notes-addEditForm') as HTMLFormElement;
+        const modalTitle = document.getElementById('notes-modalTitle') as HTMLElement;
+        const editIdInput = document.getElementById('notes-editId') as HTMLInputElement;
+        const titleInput = document.getElementById('notes-title-input') as HTMLElement;
+        const contentEditor = document.getElementById('notes-content-editor') as HTMLElement;
 
         // Context Menu Elements
-        const noteCardMenu = document.getElementById('note-card-context-menu');
-        const editorContextMenu = document.getElementById('notes-context-menu');
-        const notesTabMenu = document.getElementById('notes-tab-context-menu');
+        const noteCardMenu = document.getElementById('note-card-context-menu') as HTMLElement;
+        const editorContextMenu = document.getElementById('notes-context-menu') as HTMLElement;
+        const notesTabMenu = document.getElementById('notes-tab-context-menu') as HTMLElement;
 
         // === SMART CONTEXT MENU (port từ MXH sang Notes) ===
         // Note: positionContextMenuSmart & positionAllSubmenusForMenu đã được di chuyển sang script.js (global)
@@ -90,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Ẩn tất cả context menu (tab/card/editor/profile-span + menu thumbnail ảnh)
         // Gọi mỗi lần click ra ngoài, scroll, resize.
         function hideAllContextMenus(preserveSelection = false) {
-            document.querySelectorAll('.custom-context-menu').forEach(menu => {
+            document.querySelectorAll<HTMLElement>('.custom-context-menu').forEach(menu => {
                 menu.classList.remove('show');
                 // xoá mọi inline có thể giữ trạng thái "ẩn" sau lần trước
                 menu.style.removeProperty('display');
@@ -106,16 +154,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Đảm bảo toàn bộ menu tự ẩn khi click ngoài, scroll, resize
-        document.addEventListener('click', hideAllContextMenus);
-        window.addEventListener('scroll', hideAllContextMenus, { passive: true });
-        window.addEventListener('resize', hideAllContextMenus);
+        document.addEventListener('click', () => hideAllContextMenus());
+        window.addEventListener('scroll', () => hideAllContextMenus(), { passive: true });
+        window.addEventListener('resize', () => hideAllContextMenus());
 
 
         // ===== SMART CONTEXT MENU POSITIONING =====
 
-        const addLinkModal = new bootstrap.Modal(document.getElementById('notes-addLinkModal'));
-        const linkUrlInput = document.getElementById('notes-link-url');
-        const saveLinkBtn = document.getElementById('notes-save-link-btn');
+        const addLinkModal = new bootstrap.Modal(document.getElementById('notes-addLinkModal') as HTMLElement);
+        const linkUrlInput = document.getElementById('notes-link-url') as HTMLInputElement;
+        const saveLinkBtn = document.getElementById('notes-save-link-btn') as HTMLElement;
 
         // --- State Variables ---
         let activeNoteId = null;
@@ -128,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // --- Core Functions ---
         function formatTimeAgo(isoString) {
             if (!isoString) return '';
-            const seconds = Math.round((new Date() - new Date(isoString)) / 1000);
+            const seconds = Math.round((Date.now() - new Date(isoString).getTime()) / 1000);
             if (seconds < 60) return "vài giây trước";
             const intervals = { 'năm': 31536000, 'tháng': 2592000, 'ngày': 86400, 'giờ': 3600, 'phút': 60 };
             for (const [unit, secondsInUnit] of Object.entries(intervals)) {
@@ -142,11 +190,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         async function fetchAndRenderNotes(searchTerm = '') {
             try {
-                const response = await fetch(notesApi.getNotesUrl);
-                if (!response.ok) throw new Error(`Lỗi Server: ${response.status}`);
-
-                const notes = await response.json();
-                window.notesData = notes.sort((a, b) => new Date(b.modified_at) - new Date(a.modified_at));
+                const notes = await loadNotesFromApi();
+                window.notesData = notes.sort((a, b) => new Date(b.modified_at || 0).getTime() - new Date(a.modified_at || 0).getTime());
 
                 window.filteredNotes = searchTerm
                     ? window.notesData.filter(note =>
@@ -235,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const cardElement = col.querySelector('.card');
             cardElement.addEventListener('click', (e) => {
-                if (e.target.closest('button')) return;
+                if (asElement(e.target)?.closest('button')) return;
                 showNoteDetail(note);
             });
 
@@ -531,7 +576,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Click handler for links - open in new tab
             editorEl.addEventListener('click', (e) => {
-                const link = e.target.closest('a');
+                const link = asElement(e.target)?.closest<HTMLAnchorElement>('a');
                 if (link && link.href) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -547,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('🔍 Paste event triggered');
 
                 // Get the pasted content as plain text from the clipboard
-                let plainText = (e.clipboardData || window.clipboardData).getData('text');
+                let plainText = e.clipboardData?.getData('text') || '';
                 if (!plainText) {
                     console.log('🔍 No text data in clipboard');
                     return;
@@ -651,15 +696,7 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             try {
-                const response = await fetch(`${notesApi.updateNoteBase}${activeNoteId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) throw new Error('Lỗi khi lưu trên server');
-
-                const updatedNote = await response.json();
+                const updatedNote = await updateNoteOnServer(activeNoteId, payload);
                 const index = window.notesData.findIndex(n => n.id === activeNoteId);
                 if (index !== -1) window.notesData[index] = updatedNote;
             } catch (error) {
@@ -698,15 +735,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     showToast('Đang lưu...', 'info');
                 }
 
-                const response = await fetch(`${notesApi.updateNoteBase}${noteId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) throw new Error('Lỗi khi lưu trên server');
-
-                const updatedNote = await response.json();
+                const updatedNote = await updateNoteOnServer(noteId, payload);
 
                 // Update local data immediately
                 const index = window.notesData.findIndex(n => n.id === noteId);
@@ -775,8 +804,8 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         // Confirm Delete Modal
-        const confirmDeleteModal = new bootstrap.Modal(document.getElementById('notes-confirmDeleteModal'));
-        const confirmDeleteBtn = document.getElementById('notes-confirm-delete-btn');
+        const confirmDeleteModal = new bootstrap.Modal(document.getElementById('notes-confirmDeleteModal') as HTMLElement);
+        const confirmDeleteBtn = document.getElementById('notes-confirm-delete-btn') as HTMLElement;
         let pendingDeleteNoteId = null;
 
         window.deleteNoteWrapper = async (id, event) => {
@@ -786,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         document.addEventListener('click', (event) => {
-            const target = event.target.closest('[data-notes-action], [data-notes-split-mode]');
+            const target = asElement(event.target)?.closest<HTMLElement>('[data-notes-action], [data-notes-split-mode]');
             if (!target) return;
 
             const splitMode = target.dataset.notesSplitMode;
@@ -813,8 +842,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!pendingDeleteNoteId) return;
 
             try {
-                const response = await fetch(`${notesApi.deleteNoteBase}${pendingDeleteNoteId}`, { method: 'POST' });
-                if (!response.ok) throw new Error('Lỗi khi xóa trên server');
+                await deleteNoteOnServer(pendingDeleteNoteId, 'POST');
 
                 if (pendingDeleteNoteId === activeNoteId) window.closeDetailPanel();
 
@@ -849,7 +877,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? range.commonAncestorContainer
                 : range.commonAncestorContainer.parentElement;
 
-            const editableRoot = anchorNode ? anchorNode.closest('[contenteditable="true"]') : null;
+            const editableRoot = anchorNode instanceof Element ? anchorNode.closest('[contenteditable="true"]') : null;
             if (!editableRoot) return;
 
             const selectedText = selection.toString();
@@ -914,7 +942,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
 
-        function handleEditorContextMenu(e) {
+        function handleEditorContextMenu(e: MouseEvent) {
             e.preventDefault();
             e.stopPropagation();
             hideAllContextMenus();
@@ -926,8 +954,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        function handleTabContextMenu(e) {
-            const noteCard = e.target.closest('.card[data-note-id]');
+        function handleTabContextMenu(e: MouseEvent) {
+            const noteCard = asElement(e.target)?.closest('.card[data-note-id]');
             if (!noteCard) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -942,7 +970,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Prevent default behavior on mousedown for context menu items to avoid losing selection
         editorContextMenu.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.menu-item')) {
+            if (asElement(e.target)?.closest('.menu-item')) {
                 e.preventDefault();
             }
         });
@@ -951,9 +979,6 @@ document.addEventListener('DOMContentLoaded', function () {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = editIdInput.value;
-            const url = id
-                ? `${notesApi.updateNoteBase}${id}`
-                : notesApi.addNoteUrl;
 
             const payload = {
                 title_html: titleInput.innerHTML,
@@ -966,9 +991,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             try {
-                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                if (!response.ok) throw new Error('Lỗi khi lưu trên server');
-                const savedNote = await response.json();
+                const savedNote = await saveModalNote(id, payload);
                 notesModal.hide();
                 await fetchAndRenderNotes(searchInput.value.toLowerCase().trim());
                 showToast(id ? 'Đã cập nhật ghi chú!' : 'Đã tạo ghi chú mới!', 'success');
@@ -980,7 +1003,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Search input - Enhanced search like original version
         searchInput.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase().trim();
+            const searchTerm = (e.target as HTMLInputElement).value.toLowerCase().trim();
             const notesToShow = searchTerm
                 ? window.notesData.filter(note => {
                     const titleLower = (note.title_html || '').toLowerCase();
@@ -1010,8 +1033,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Context menu actions for note card
         noteCardMenu.addEventListener('click', async (e) => {
-            const markItem = e.target.closest('#context-mark-note');
-            const deleteItem = e.target.closest('#context-delete-note');
+            const target = asElement(e.target);
+            const markItem = target?.closest('#context-mark-note');
+            const deleteItem = target?.closest('#context-delete-note');
 
             e.stopPropagation();
             const noteId = noteCardMenu.dataset.noteId;
@@ -1020,8 +1044,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (markItem) {
                 // Handle mark/unmark
                 try {
-                    const response = await fetch(`${notesApi.toggleMarkBase}${noteId}`, { method: 'POST' });
-                    if (!response.ok) throw new Error('Server error');
+                    await toggleNoteMarkOnServer(noteId);
                     await fetchAndRenderNotes(searchInput.value.toLowerCase().trim());
                     showToast('Đã cập nhật đánh dấu!', 'success');
                 } catch (error) {
@@ -1053,9 +1076,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         document.querySelector('#context-color .color-palette').addEventListener('click', (e) => {
-            if (e.target.matches('span[data-color]')) {
+            const colorTarget = asElement(e.target);
+            if (colorTarget?.matches('span[data-color]')) {
                 restoreSelection();
-                const color = e.target.dataset.color;
+                const color = (colorTarget as HTMLElement).dataset.color;
 
                 // Get current selection before execCommand
                 const selection = window.getSelection();
@@ -1091,22 +1115,22 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // Profile Modal Elements
-        const profileModal = new bootstrap.Modal(document.getElementById('notes-addProfileModal'));
-        const profileIdInput = document.getElementById('notes-profile-id');
-        const profilePasswordInput = document.getElementById('notes-profile-password');
-        const profileContentInput = document.getElementById('notes-profile-content-editor');
-        const saveProfileBtn = document.getElementById('notes-save-profile-btn');
-        const deleteProfileBtn = document.getElementById('notes-delete-profile-btn');
-        const copyProfileIdBtn = document.getElementById('notes-copy-profile-id-btn');
-        const copyProfilePasswordBtn = document.getElementById('notes-copy-profile-password-btn');
-        const profileSpanMenu = document.getElementById('profile-span-context-menu');
-        let currentProfileSpan = null;
+        const profileModal = new bootstrap.Modal(document.getElementById('notes-addProfileModal') as HTMLElement);
+        const profileIdInput = document.getElementById('notes-profile-id') as HTMLInputElement;
+        const profilePasswordInput = document.getElementById('notes-profile-password') as HTMLInputElement;
+        const profileContentInput = document.getElementById('notes-profile-content-editor') as HTMLElement;
+        const saveProfileBtn = document.getElementById('notes-save-profile-btn') as HTMLElement;
+        const deleteProfileBtn = document.getElementById('notes-delete-profile-btn') as HTMLElement;
+        const copyProfileIdBtn = document.getElementById('notes-copy-profile-id-btn') as HTMLElement;
+        const copyProfilePasswordBtn = document.getElementById('notes-copy-profile-password-btn') as HTMLElement;
+        const profileSpanMenu = document.getElementById('profile-span-context-menu') as HTMLElement;
+        let currentProfileSpan: HTMLElement | null = null;
 
         // Image Modal Context Menu
-        const imageModal = document.getElementById('np-imagePreviewModal');
-        const imagePreview = document.getElementById('np-imagePreview');
-        const imageModalContextMenu = document.getElementById('image-modal-context-menu');
-        let currentImageData = null;
+        const imageModal = document.getElementById('np-imagePreviewModal') as HTMLElement;
+        const imagePreview = document.getElementById('np-imagePreview') as HTMLImageElement | null;
+        const imageModalContextMenu = document.getElementById('image-modal-context-menu') as HTMLElement;
+        let currentImageData: string | null = null;
 
         // Function để copy ảnh
         async function copyImageToClipboard() {
@@ -1153,14 +1177,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Code block copy button handler (event delegation)
         document.addEventListener('click', async (e) => {
-            const btn = e.target.closest('.copy-btn');
+            const btn = asElement(e.target)?.closest<HTMLElement>('.copy-btn');
             if (!btn) return;
 
             e.preventDefault();
             e.stopPropagation();
 
             const wrapper = btn.closest('.code-block-wrapper');
-            const codeEl = wrapper ? wrapper.querySelector('pre code') : null;
+            const codeEl = wrapper ? wrapper.querySelector<HTMLElement>('pre code') : null;
             const textToCopy = codeEl ? codeEl.innerText : '';
 
             try {
@@ -1174,7 +1198,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Prevent title click from affecting editor parent
         document.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.code-block-title')) {
+            if (asElement(e.target)?.closest('.code-block-title')) {
                 e.stopPropagation();
             }
         });
@@ -1187,7 +1211,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let pendingDeleteEditorEl = null;
 
         document.addEventListener('click', (e) => {
-            const delBtn = e.target.closest('.delete-btn');
+            const delBtn = asElement(e.target)?.closest<HTMLElement>('.delete-btn');
             if (!delBtn) return;
 
             e.preventDefault();
@@ -1237,37 +1261,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Image compression and paste functionality
         async function compressImageFile(file, { maxW = 900, maxH = 900, quality = 0.76 } = {}) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                const url = URL.createObjectURL(file);
-                img.onload = () => {
-                    const scale = Math.min(maxW / img.width, maxH / img.height, 1);
-                    const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
-                    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
-                    canvas.toBlob((blob) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(reader.result); // dataURL JPEG
-                        reader.onerror = reject; reader.readAsDataURL(blob);
-                    }, 'image/jpeg', quality);
-                    URL.revokeObjectURL(url);
-                };
-                img.onerror = reject; img.src = url;
-            });
+            return window.NotesMedia.compressImageFile(file, { maxW, maxH, quality });
         }
 
         async function makeThumb(dataURL, maxSide = 200, quality = 0.82) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => {
-                    const r = Math.min(maxSide / img.width, maxSide / img.height, 1);
-                    const w = Math.round(img.width * r), h = Math.round(img.height * r);
-                    const c = document.createElement('canvas'); c.width = w; c.height = h;
-                    c.getContext('2d').drawImage(img, 0, 0, w, h);
-                    resolve(c.toDataURL('image/jpeg', quality));
-                };
-                img.onerror = reject; img.src = dataURL;
-            });
+            return window.NotesMedia.makeThumb(dataURL, maxSide, quality);
         }
 
         function enablePasteImagesInto(el) {
@@ -1327,9 +1325,9 @@ document.addEventListener('DOMContentLoaded', function () {
             thumbElement.style.cssText = 'width: 80px; height: 80px; cursor: pointer;';
 
             thumbElement.innerHTML = `
-                <img src="${thumbData}" alt="thumbnail" 
+                <img src="${thumbData}" alt="thumbnail"
                      class="notes-profile-thumb-img">
-                <button class="btn btn-sm btn-danger position-absolute" 
+                <button class="btn btn-sm btn-danger position-absolute"
                         class="notes-profile-thumb-delete"
                         type="button">
                     ×
@@ -1359,11 +1357,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Thêm event click để xem ảnh full
             thumbElement.addEventListener('click', (e) => {
-                if (e.target.tagName !== 'BUTTON') {
-                    const img = document.getElementById('np-imagePreview');
+                if ((asElement(e.target) as HTMLElement | null)?.tagName !== 'BUTTON') {
+                    const img = document.getElementById('np-imagePreview') as HTMLImageElement | null;
                     if (img) {
                         img.src = fullData;
-                        new bootstrap.Modal(document.getElementById('np-imagePreviewModal')).show();
+                        new bootstrap.Modal(document.getElementById('np-imagePreviewModal') as HTMLElement).show();
                     }
                 }
             });
@@ -1443,10 +1441,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // click thumb để xem full
         document.getElementById('notes-addProfileModal')
             ?.addEventListener('click', (e) => {
-                const thumb = e.target.closest('.tg-thumb');
+                const thumb = asElement(e.target)?.closest<HTMLElement>('.tg-thumb');
                 if (!thumb) return;
                 const full = thumb.getAttribute('data-full') || thumb.querySelector('img')?.src;
-                const img = document.getElementById('np-imagePreview');
+                const img = document.getElementById('np-imagePreview') as HTMLImageElement | null;
                 if (full && img) {
                     img.src = full;
                     new bootstrap.Modal('#np-imagePreviewModal').show();
@@ -1503,7 +1501,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (hasLegacyImages) {
                     // Gỡ ảnh cũ khỏi content và lưu lại
-                    const cleanContent = tempDiv.cloneNode(true);
+                    const cleanContent = tempDiv.cloneNode(true) as HTMLElement;
                     cleanContent.querySelectorAll('.tg-thumb, img').forEach(n => n.remove());
                     currentProfileSpan.dataset.profileContent = cleanContent.innerHTML;
                 }
@@ -1622,7 +1620,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Profile Span Context Menu
         document.addEventListener('contextmenu', (e) => {
-            const profileSpan = e.target.closest('.has-profile');
+                const profileSpan = asElement(e.target)?.closest<HTMLElement>('.has-profile');
             if (profileSpan) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1634,8 +1632,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Profile Span: Click to edit
         document.addEventListener('click', (e) => {
-            const profileSpan = e.target.closest('.has-profile');
-            if (profileSpan && e.target.classList.contains('has-profile')) {
+                const target = asElement(e.target);
+                const profileSpan = target?.closest<HTMLElement>('.has-profile');
+            if (profileSpan && target?.classList.contains('has-profile')) {
                 e.preventDefault();
                 e.stopPropagation();
                 currentProfileSpan = profileSpan;
@@ -1710,10 +1709,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Profile Span: Change color
         profileSpanMenu.addEventListener('click', (e) => {
-            const colorOption = e.target.closest('.color-option');
+            const colorOption = asElement(e.target)?.closest<HTMLElement>('.color-option');
             if (colorOption && currentProfileSpan) {
-                const newColor = colorOption.dataset.color;
-                const profileId = currentProfileSpan.dataset.profileId;
+                const newColor = colorOption.dataset.color || '';
+                const profileId = currentProfileSpan.dataset.profileId || '';
 
                 // Update the span color
                 currentProfileSpan.style.color = newColor;
@@ -1785,16 +1784,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const sizeModifierMenu = document.getElementById('notes-tab-context-menu');
         if (sizeModifierMenu) {
             sizeModifierMenu.addEventListener('click', (e) => {
-                const addItem = e.target.closest('.menu-item[data-action="add-note"]');
+                const target = asElement(e.target);
+                const addItem = target?.closest('.menu-item[data-action="add-note"]');
                 if (addItem) {
                     e.preventDefault();
                     window.addNewNoteFromContextMenu();
                     return;
                 }
 
-                const sizeItem = e.target.closest('.submenu .menu-item[data-size-modifier]');
+                const sizeItem = target?.closest<HTMLElement>('.submenu .menu-item[data-size-modifier]');
                 if (sizeItem) {
-                    const modifier = sizeItem.dataset.sizeModifier;
+                    const modifier = sizeItem.dataset.sizeModifier || 'default';
                     localStorage.setItem('notesCardSizeModifier', modifier);
                     applySavedCardSize();
                     hideAllContextMenus();
@@ -1822,7 +1822,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (window.profileColors) {
                 Object.keys(window.profileColors).forEach(profileId => {
                     const color = window.profileColors[profileId];
-                    const spans = document.querySelectorAll(`.has-profile[data-profile-id="${profileId}"]`);
+                    const spans = document.querySelectorAll<HTMLElement>(`.has-profile[data-profile-id="${profileId}"]`);
                     spans.forEach(span => {
                         span.style.color = color;
                     });
@@ -1899,7 +1899,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 span.addEventListener('shown.bs.popover', () => {
                     const popId = span.getAttribute('aria-describedby');
                     const root = popId ? document.getElementById(popId) : null;
-                    const img = root?.querySelector('.preview-container > img');
+                    const img = root?.querySelector<HTMLImageElement>('.preview-container > img');
 
                     if (root) { root.style.width = '448px'; root.style.maxWidth = '448px'; }
 
@@ -1917,7 +1917,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!editor) return;
 
             // First, destroy any existing popovers to prevent duplicates
-            editor.querySelectorAll('.has-profile').forEach(span => {
+            editor.querySelectorAll<HTMLElement>('.has-profile').forEach(span => {
                 const popoverInstance = bootstrap.Popover.getInstance(span);
                 if (popoverInstance) {
                     popoverInstance.dispose();
@@ -1925,7 +1925,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             // Add popovers to all profile spans
-            editor.querySelectorAll('.has-profile').forEach(span => {
+            editor.querySelectorAll<HTMLElement>('.has-profile').forEach(span => {
                 const profileId = span.dataset.profileId || '';
                 const profilePassword = span.dataset.profilePassword || '';
                 const profileContent = span.dataset.profileContent || '';
@@ -1945,8 +1945,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!src && profileContent) {
                     const tmp = document.createElement('div');
                     tmp.innerHTML = profileContent;
-                    const firstThumb = tmp.querySelector('.tg-thumb');
-                    const firstImg = firstThumb ? null : tmp.querySelector('img');
+                    const firstThumb = tmp.querySelector<HTMLElement>('.tg-thumb');
+                    const firstImg = firstThumb ? null : tmp.querySelector<HTMLImageElement>('img');
                     src = firstThumb
                         ? (firstThumb.getAttribute('data-full') || firstThumb.querySelector('img')?.src)
                         : (firstImg ? firstImg.getAttribute('src') : null);
@@ -1992,8 +1992,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 span.addEventListener('shown.bs.popover', () => {
-                    const root = document.querySelector('.popover.profile-popover-500:last-of-type');
-                    const img = root?.querySelector('.preview-container > img');
+                    const root = document.querySelector<HTMLElement>('.popover.profile-popover-500:last-of-type');
+                    const img = root?.querySelector<HTMLImageElement>('.preview-container > img');
+                    if (!root) return;
 
                     // Siết lại lần nữa để thắng mọi CSS lạ
                     root.style.width = '448px'; root.style.maxWidth = '448px';
@@ -2019,8 +2020,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Chuột phải vào card
             notesRoot.addEventListener("contextmenu", function (ev) {
+                const mouseEvent = ev as MouseEvent;
                 // tìm card gần nhất
-                const noteCardEl = ev.target.closest(".card[data-note-id]");
+                const noteCardEl = asElement(ev.target)?.closest<HTMLElement>(".card[data-note-id]");
                 if (!noteCardEl) {
                     // click phải vùng trống -> ẩn menu
                     hideAllContextMenus();
@@ -2045,7 +2047,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 // Hiển thị menu với định vị thông minh kiểu MXH
-                showSmartMenu(cardMenuEl, ev.clientX, ev.clientY);
+                showSmartMenu(cardMenuEl, mouseEvent.clientX, mouseEvent.clientY);
             });
 
             // Ngăn chuột phải vào chính menu gây menu hệ thống
@@ -2056,7 +2058,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Click vào item trong menu card
             cardMenuEl.addEventListener("click", async function (ev) {
-                const item = ev.target.closest(".menu-item[data-action]");
+                const item = asElement(ev.target)?.closest<HTMLElement>(".menu-item[data-action]");
                 if (!item) return;
 
                 const action = item.getAttribute("data-action"); // open / mark / duplicate / copy-id / delete
@@ -2069,10 +2071,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         // Đánh dấu/bỏ đánh dấu
                         if (noteId) {
                             try {
-                                const response = await fetch(`${notesApi.toggleMarkBase}${noteId}`, { method: 'POST' });
-                                if (!response.ok) throw new Error('Server error when marking');
-
-                                const data = await response.json();
+                                const data = await toggleNoteMarkOnServer(noteId);
                                 if (data.success) {
                                     await fetchAndRenderNotes(searchInput.value.toLowerCase().trim());
                                     showToast('Đã cập nhật đánh dấu!', 'success');
@@ -2101,10 +2100,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (noteId) {
                             if (confirm('Bạn có chắc chắn muốn xóa ghi chú này?')) {
                                 try {
-                                    const response = await fetch(`${notesApi.deleteNoteBase}${noteId}`, { method: 'DELETE' });
-                                    if (!response.ok) throw new Error('Server error when deleting');
-
-                                    const data = await response.json();
+                                    const data = await deleteNoteOnServer(noteId, 'DELETE');
                                     if (data.success) {
                                         await fetchAndRenderNotes(searchInput.value.toLowerCase().trim());
                                         showToast('Đã xóa ghi chú!', 'success');

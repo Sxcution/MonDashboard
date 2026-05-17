@@ -1,110 +1,51 @@
-# MON DASHBOARD - FRONTEND REFACTOR SNAPSHOT
+# MonDashboard - Tien Do Refactor Frontend
 
-Cập nhật: 2026-05-17
+Cap nhat: 2026-05-18
 
-## Phạm vi đã làm
+## Nguyen Tac
 
-- Không rewrite Flask backend.
-- Không đổi API hiện có.
-- Không đổi SQLite schema.
-- Không đụng dữ liệu trong `data/`.
-- Giữ Bootstrap và layout/behavior hiện tại.
+- Khong rewrite Flask backend.
+- Khong doi API hien co: `/notes/api/*`, `/mxh/api/*`, `/image/api/*`.
+- Khong doi SQLite schema, khong dung thu muc `data/`.
+- Khong dung React; giu Bootstrap, Flask/Jinja routing va UI/UX hien tai.
 
-## Trạng thái hiện tại
+## Da Hoan Thanh
 
-- MXH đã tách khỏi template lớn:
-  - `app/templates/mxh.html`
-  - `app/static/css/mxh.css`
-  - `frontend/src/mxh.ts`
-  - `frontend/src/mxh/*.ts`
-  - `app/static/dist/mxh.bundle.js`
-- Notes đã tách template lớn:
-  - `app/templates/notes.html`
-  - `app/static/css/notes.css`
-  - `frontend/src/notes.ts`
-  - `app/static/dist/notes.bundle.js`
-- Image, Settings, Telegram, Notes Preview đã tách inline `<style>` và `<script>`:
-  - `app/static/css/image.css`
-  - `app/static/css/settings.css`
-  - `app/static/css/telegram.css`
-  - `app/static/css/notespreview.css`
-  - `frontend/src/image.ts`
-  - `frontend/src/settings.ts`
-  - `frontend/src/telegram.ts`
-  - `frontend/src/notespreview.ts`
-- `base.html` và `partials/navbar.html` đã tách JS dùng chung:
-  - `frontend/src/dashboard.ts`
-  - `frontend/src/script.ts`
-  - `app/static/js/dashboard.js`
-  - `app/static/js/script.js`
-- Các JS legacy khác đã đưa vào TypeScript source:
-  - `frontend/src/app.ts`
-  - `frontend/src/chat.ts`
-  - `frontend/src/console-mirror.ts`
+- MXH da tach template lon, co Vite bundle va nhieu module TS rieng.
+- Notes da tach template lon, co `notes.css`, `notes.bundle.js`, API facade va media helper typed.
+- Image da tach template lon, co `image.css`, API facade, storage helper va cac module Image rieng.
+- Settings, Telegram, Notes Preview da tach inline style/script co ban.
+- Home/dashboard da tach CSS/JS page-specific co ban.
+- Da co shared API/types trong `frontend/src/api/` va `frontend/src/types/`.
+- Khong con file TypeScript nao trong `frontend/src` dung `@ts-nocheck`.
 
-## TypeScript / Build
+## TypeScript
 
-- Đã thêm pipeline:
-  - `package.json`
-  - `package-lock.json`
-  - `tsconfig.json`
-  - `frontend/build-pages.mjs`
-  - `frontend/vite/*-entry.ts`
-- Script chính:
-  - `npm run build`
-  - `npm run build:ts`
-  - `npm run check:ts`
-  - `npm run test:browser`
-- MXH dùng Vite bundle:
-  - `app/static/dist/mxh.bundle.js`
-- Notes dùng Vite bundle:
-  - `app/static/dist/notes.bundle.js`
-- Các page legacy-compatible còn lại dùng JS sinh từ TypeScript trong `app/static/js/*.js`.
+- `frontend/src/notes.ts` da go `@ts-nocheck` va pass `npm run check:ts`.
+- `frontend/src/app.ts` da rut ve compatibility marker vi `app.js` khong con duoc template/Python nao load.
+- Cac module Image trong `frontend/src/image-editor/` da go `@ts-nocheck`.
+- `frontend/src/types/notes.d.ts` da bo sung type cho Notes global state/actions.
 
-## MXH sau refactor
+## CSS
 
-- Đã tách module: state, api, rules, badges, filters, render, flip-card, context-menu, inline-edit, histories, modal-forms, context-actions, init.
-- Đã tách thêm Notice/scan reset khỏi `account-actions.ts`:
-  - `frontend/src/mxh/account-notices.ts`
-- `account-actions.ts` đã giảm kích thước và đã bỏ `@ts-nocheck`.
-- Một số module MXH nhỏ cũng đã bỏ `@ts-nocheck` và qua `tsc`.
+- `app/static/css/style.css` da giam tu khoang 31KB xuong khoang 7.5KB.
+- Da tach them:
+  - `app/static/css/chat.css`
+  - `app/static/css/dashboard.css`
+- Base load CSS theo thu tu cascade: `style.css` -> `chat.css` -> `dashboard.css` -> page CSS.
+- Da sua mot cum CSS chat bi long sai cu phap sau khi tach file.
 
-## Inline còn lại
-
-- Template chính không còn `<style>`, `<script>` inline lớn, `onclick`, `onchange`, `oninput`, hoặc `style`.
-- HTML string động trong TS đã được gỡ các inline handler kiểu `onclick`, `onchange`, `oninput`, `oncontextmenu`.
-- Dashboard context menu đã được khóa `display: none` mặc định ở CSS global để không tự hiện trên các tab.
-- Một số style động vẫn được set bằng JS runtime qua `element.style`/CSS variable vì phụ thuộc dữ liệu runtime như màu note, màu text, vị trí menu, crop/canvas.
-- Các file TS lớn vẫn đang ở dạng legacy-compatible, chưa type hóa sâu 100%:
-  - `app.ts`
-  - `chat.ts`
-  - `dashboard.ts`
-  - `image.ts`
-  - `mxh.ts`
-  - `notes.ts`
-  - `settings.ts`
-  - `telegram.ts`
-
-## Kiểm tra đã chạy
+## Kiem Tra Gan Nhat
 
 - `npm run build`: OK.
 - `npm run check:ts`: OK.
-- `node --check app/static/js/*.js`: OK.
-- `node --check app/static/js/mxh/*.js`: OK.
-- `node --check app/static/dist/*.js`: OK.
+- `node --check app/static/js/*.js` va `app/static/dist/*.js`: OK.
 - `python -m compileall app`: OK.
-- Flask `test_client` render smoke các page chính: OK.
-- Browser smoke bằng Playwright/Chrome:
-  - `/`
-  - `/mxh`
-  - `/notes`
-  - `/image/`
-  - `/settings/`
-  - `/telegram`
-  - Kiểm tra thêm `#dashboard-context-menu` không tự hiện khi load page.
-  - Kết quả: 6 passed.
+- `git diff --check`: OK, chi con warning CRLF cua Windows.
+- `npm run test:browser`: OK, 6 page smoke passed (`/`, `/mxh`, `/notes`, `/image/`, `/settings/`, `/telegram`).
 
-## Việc còn lại nếu muốn siết thật sâu
+## Trang Thai
 
-- Muốn siết tiếp thì chỉ còn type hóa sâu các file legacy-compatible lớn và tách `image.ts`/`notes.ts` thành module nhỏ hơn.
-- Không còn việc template-inline lớn hoặc lỗi context menu đang biết.
+- Frontend refactor + TypeScript cleanup theo roadmap hien tai da hoan thanh.
+- Khong doi backend/API/schema/data.
+- Can test tay sau cung cac luong nang: MXH actions, Notes rich editor/profile/image/code preview, Image heal/crop/collage/text layer, Telegram task.

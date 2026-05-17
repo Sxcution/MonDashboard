@@ -1,5 +1,9 @@
 {% extends "layouts/base.html" %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
+
 {% block content %}
 <section class="home-clean-dashboard" aria-label="Home">
     <form class="home-smart-search" role="search" action="#" method="get">

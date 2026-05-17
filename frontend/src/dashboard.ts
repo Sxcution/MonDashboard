@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Dashboard-wide behavior extracted from base.html and partials/navbar.html.
 
 function showAlert(message, title = 'Thong Bao') {
@@ -12,8 +11,8 @@ function showAlert(message, title = 'Thong Bao') {
     new bootstrap.Modal(modalEl).show();
 }
 
-function showConfirm(message, title = 'Xac Nhan') {
-    return new Promise((resolve) => {
+function showConfirm(message, title = 'Xac Nhan'): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
         const textEl = document.getElementById('globalDeleteConfirmText');
         const titleEl = document.getElementById('globalDeleteConfirmModalLabel');
         const modalEl = document.getElementById('globalDeleteConfirmModal');
@@ -28,10 +27,10 @@ function showConfirm(message, title = 'Xac Nhan') {
         titleEl.innerHTML = `<i class="bi bi-exclamation-triangle me-2 text-warning"></i>${title}`;
 
         const modal = new bootstrap.Modal(modalEl);
-        const newConfirmBtn = confirmBtn.cloneNode(true);
-        const newCancelBtn = cancelBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        const newConfirmBtn = confirmBtn.cloneNode(true) as HTMLElement;
+        const newCancelBtn = cancelBtn.cloneNode(true) as HTMLElement;
+        confirmBtn.parentNode?.replaceChild(newConfirmBtn, confirmBtn);
+        cancelBtn.parentNode?.replaceChild(newCancelBtn, cancelBtn);
 
         newConfirmBtn.onclick = () => {
             modal.hide();
@@ -95,7 +94,7 @@ function openThemeColorPrompt() {
     showToast(`Da doi mau theme: ${normalized}`, 'success');
 }
 
-function handleImageNavClick(event) {
+function handleDashboardImageNavClick(event: Event) {
     if (window.location.pathname.startsWith('/image')) {
         event.preventDefault();
         return false;
@@ -104,12 +103,12 @@ function handleImageNavClick(event) {
 }
 
 function hideAllContextMenus() {
-    document.querySelectorAll('.custom-context-menu').forEach(menu => {
+    document.querySelectorAll<HTMLElement>('.custom-context-menu').forEach(menu => {
         menu.style.display = 'none';
     });
 }
 
-function showContextMenu(menu, x, y) {
+function showContextMenu(menu: HTMLElement, x: number, y: number) {
     menu.style.left = `${x}px`;
     menu.style.top = `${y}px`;
     menu.style.display = 'block';
@@ -120,7 +119,7 @@ function initDashboardContextMenu() {
     if (!dashboardMenu) return;
 
     dashboardMenu.addEventListener('click', (event) => {
-        const action = event.target.closest('[data-dashboard-action]')?.dataset.dashboardAction;
+        const action = (event.target as Element | null)?.closest<HTMLElement>('[data-dashboard-action]')?.dataset.dashboardAction;
         if (!action) return;
         event.preventDefault();
         if (action === 'reload') location.reload();
@@ -130,7 +129,8 @@ function initDashboardContextMenu() {
     });
 
     document.addEventListener('contextmenu', (event) => {
-        if (!event.target.closest('.tab-pane') && !event.target.closest('.custom-context-menu')) {
+        const target = event.target as Element | null;
+        if (!target?.closest('.tab-pane') && !target?.closest('.custom-context-menu')) {
             event.preventDefault();
             hideAllContextMenus();
             showContextMenu(dashboardMenu, event.clientX, event.clientY);
@@ -146,11 +146,12 @@ function initDashboardNavbar() {
     const hamburgerMenu = document.getElementById('global-hamburger-menu');
     if (!hamburgerMenu) return;
 
-    const navShell = hamburgerMenu.closest('[data-settings-url]');
+    const navShell = hamburgerMenu.closest<HTMLElement>('[data-settings-url]');
     const settingsUrl = navShell?.dataset.settingsUrl || '/settings/';
-    const menuLink = hamburgerMenu.querySelector('.nav-link');
-    const dropdownMenu = hamburgerMenu.querySelector('.dropdown-menu');
+    const menuLink = hamburgerMenu.querySelector<HTMLElement>('.nav-link');
+    const dropdownMenu = hamburgerMenu.querySelector<HTMLElement>('.dropdown-menu');
     const dropdownContentUl = document.getElementById('hamburger-dropdown-content');
+    if (!menuLink || !dropdownMenu || !dropdownContentUl) return;
     let bsDropdownInstance = null;
     let autoHideTimeout;
     let mouseLeaveTimeout;
@@ -193,7 +194,7 @@ function initDashboardNavbar() {
     };
 
     const updateDropdownContent = () => {
-        const activeTabLink = document.querySelector('#main-tab .nav-link.active');
+        const activeTabLink = document.querySelector<HTMLElement>('#main-tab .nav-link.active');
         const activeTabId = activeTabLink ? activeTabLink.dataset.tabId : 'home';
         dropdownContentUl.innerHTML = getMenuItemsForTab(activeTabId);
     };
@@ -251,14 +252,15 @@ function initDashboardNavbar() {
     });
 
     dropdownMenu.addEventListener('click', (event) => {
-        const themeBtn = event.target.closest('[data-dashboard-action="change-theme"]');
+        const target = event.target as Element | null;
+        const themeBtn = target?.closest('[data-dashboard-action="change-theme"]');
         if (themeBtn) {
             event.preventDefault();
             openThemeColorPrompt();
             hideDropdown();
             return;
         }
-        if (event.target.closest('.dropdown-item')) hideDropdown();
+        if (target?.closest('.dropdown-item')) hideDropdown();
     });
 
     hamburgerMenu.addEventListener('hidden.bs.dropdown', () => {
@@ -286,13 +288,13 @@ function applySavedDashboardTheme() {
 }
 
 window.alert = showAlert;
-window.confirm = showConfirm;
+window.confirm = showConfirm as any;
 window.showAlert = showAlert;
 window.showConfirm = showConfirm;
 window.requestNotificationPermission = requestNotificationPermission;
 window.showPlatformNotification = showPlatformNotification;
 window.openThemeColorPrompt = openThemeColorPrompt;
-window.handleImageNavClick = handleImageNavClick;
+window.handleImageNavClick = handleDashboardImageNavClick;
 window.hideAllContextMenus = hideAllContextMenus;
 
 applySavedDashboardTheme();
@@ -301,6 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initDashboardContextMenu();
     initDashboardNavbar();
     document.querySelectorAll('[data-dashboard-nav="image"]').forEach(link => {
-        link.addEventListener('click', handleImageNavClick);
+        link.addEventListener('click', handleDashboardImageNavClick);
     });
 });

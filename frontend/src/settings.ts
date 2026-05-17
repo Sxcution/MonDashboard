@@ -1,4 +1,3 @@
-// @ts-nocheck
 // ===== SETTINGS REAL-TIME SYSTEM =====
     const SETTINGS_CONFIG = {
         AUTO_REFRESH_INTERVAL: 3000,
@@ -186,7 +185,7 @@
                 body: JSON.stringify({ enabled: true, hours, minutes })
             });
 
-            localStorage.setItem('shutdownDeadline', Date.now() + totalMs);
+            localStorage.setItem('shutdownDeadline', String(Date.now() + totalMs));
             startShutdownCountdown();
             showToast(`Đã hẹn tắt máy sau ${hours}h ${minutes}p`, 'success');
         } catch (error) {
@@ -205,7 +204,7 @@
                 return;
             }
 
-            const remaining = deadline - Date.now();
+            const remaining = Number(deadline) - Date.now();
             if (remaining <= 0) {
                 clearInterval(shutdownCountdownInterval);
                 localStorage.removeItem('shutdownDeadline');
@@ -268,7 +267,7 @@
                 body: JSON.stringify({ enabled: true, hours, minutes, message })
             });
 
-            localStorage.setItem('notificationDeadline', Date.now() + totalMs);
+            localStorage.setItem('notificationDeadline', String(Date.now() + totalMs));
             localStorage.setItem('notificationMessage', message);
             startNotificationCountdown();
             showToast(`Đã hẹn thông báo sau ${hours}h ${minutes}p`, 'success');
@@ -288,7 +287,7 @@
                 return;
             }
 
-            const remaining = deadline - Date.now();
+            const remaining = Number(deadline) - Date.now();
             if (remaining <= 0) {
                 clearInterval(notificationCountdownInterval);
                 const message = localStorage.getItem('notificationMessage') || 'Hết giờ!';
@@ -314,13 +313,13 @@
     function checkTimers() {
         // Check shutdown timer
         const shutdownDeadline = localStorage.getItem('shutdownDeadline');
-        if (shutdownDeadline && Date.now() < shutdownDeadline) {
+        if (shutdownDeadline && Date.now() < Number(shutdownDeadline)) {
             startShutdownCountdown();
         }
 
         // Check notification timer
         const notificationDeadline = localStorage.getItem('notificationDeadline');
-        if (notificationDeadline && Date.now() < notificationDeadline) {
+        if (notificationDeadline && Date.now() < Number(notificationDeadline)) {
             startNotificationCountdown();
         }
     }
@@ -394,14 +393,14 @@
 
         document.querySelectorAll('[data-settings-action]').forEach((element) => {
             element.addEventListener('click', (event) => {
-                const action = event.currentTarget.dataset.settingsAction;
+                const action = (event.currentTarget as HTMLElement).dataset.settingsAction;
                 if (action === 'reload') loadSettings(true);
                 if (action === 'enable-notification') requestNotificationPermission();
                 if (action === 'apply-shutdown') applyShutdownTimer();
                 if (action === 'apply-notification') applyNotificationTimer();
             });
             element.addEventListener('change', (event) => {
-                const action = event.currentTarget.dataset.settingsAction;
+                const action = (event.currentTarget as HTMLElement).dataset.settingsAction;
                 if (action === 'toggle-auto-start') toggleAutoStart();
                 if (action === 'toggle-auto-open-dashboard') toggleAutoOpenDashboard();
                 if (action === 'toggle-shutdown') toggleShutdownTimer();

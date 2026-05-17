@@ -1,0 +1,544 @@
+// Typed Image editor module: text layers.
+// Keeps behavior compatible while the monolith is split into smaller files.
+
+// ========== TEXT LAYER FUNCTIONS ==========
+let textLayers: ImageTextLayer[] = [];
+let currentEditingLayer: ImageTextLayer | null = null;
+let textLayerCounter = 0;
+let selectedTextRange = null;
+
+function toggleTextLayer() {
+    // Deactivate other tools first
+    deactivateAllTools();
+    
+    if (collageImages.length === 0) {
+        showToast('Upload photos first!', 'warning');
+        return;
+    }
+    createNewTextLayer();
+}
+
+function createNewTextLayer() {
+    textLayerCounter++;
+    const layerId = `textLayer_${textLayerCounter}`;
+    
+    const textLayer = {
+        id: layerId,
+        text: 'Double click to edit',
+        color: '#ffffff',
+        rainbow: false,
+        fontFamily: 'Arial',
+        x: 50, // percentage
+        y: 50, // percentage
+        fontSize: 32
+    };
+    
+    textLayers.push(textLayer);
+    renderTextLayer(textLayer, false); // false = don't auto edit, let user double-click
+    
+    // Show helpful hint on first text layer
+    if (textLayers.length === 1) {
+        showToast('ðŸ’¡ Double-click text to edit, Drag to move, Right-click for options', 'info');
+    }
+}
+
+function renderTextLayer(layer, autoEdit = false) {
+    const container = document.getElementById('textLayersContainer');
+    
+    // Remove old layer element if exists
+    const oldElement = document.getElementById(layer.id);
+    if (oldElement) oldElement.remove();
+    
+    const layerDiv = document.createElement('div');
+    layerDiv.id = layer.id;
+    layerDiv.className = 'text-layer-wrapper';
+    layerDiv.style.cssText = `
+        position: absolute;
+        left: ${layer.x}%;
+        top: ${layer.y}%;
+        transform: translate(-50%, -50%);
+        cursor: move;
+        pointer-events: auto;
+        z-index: 10;
+        max-width: 80%;
+        user-select: none;
+    `;
+    
+    // Create text content
+    const textContent = document.createElement('div');
+    textContent.className = 'text-layer-content';
+    textContent.style.cssText = `
+        font-size: ${layer.fontSize}px;
+        font-weight: bold;
+        font-family: ${layer.fontFamily || 'Arial'}, sans-serif;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        padding: 8px 12px;
+        border: 2px solid transparent;
+        transition: border 0.2s;
+        pointer-events: auto;
+        cursor: move;
+        border-radius: 4px;
+    `;
+    
+    if (layer.rainbow) {
+        const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+        let html = '';
+        for (let i = 0; i < layer.text.length; i++) {
+            const color = colors[i % colors.length];
+            html += `<span data-image-rainbow-color="${color}">${layer.text[i] === '\n' ? '<br>' : layer.text[i]}</span>`;
+        }
+        textContent.innerHTML = html;
+        textContent.querySelectorAll<HTMLElement>('[data-image-rainbow-color]').forEach(span => {
+            span.style.color = span.dataset.imageRainbowColor;
+        });
+    } else {
+        textContent.style.color = layer.color;
+        textContent.innerHTML = layer.text.replace(/\n/g, '<br>');
+    }
+    
+    layerDiv.appendChild(textContent);
+    
+    // Hover effect
+    layerDiv.onmouseenter = () => {
+        if (textContent.contentEditable !== 'true') { // Only if not editing
+            textContent.style.borderColor = 'rgba(13, 202, 240, 0.5)';
+            textContent.style.backgroundColor = 'rgba(13, 202, 240, 0.1)';
+        }
+    };
+    layerDiv.onmouseleave = () => {
+        if (textContent.contentEditable !== 'true') { // Only if not editing
+            textContent.style.borderColor = 'transparent';
+            textContent.style.backgroundColor = 'transparent';
+        }
+    };
+    
+    // Double-click on wrapper or content to edit inline
+    const enableEdit = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        console.log('Double-click detected on text layer:', layer.id);
+        editTextLayerInline(layer.id);
+    };
+    
+    layerDiv.ondblclick = enableEdit;
+    textContent.ondblclick = enableEdit;
+    
+    // Right-click context menu for options
+    layerDiv.oncontextmenu = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showTextContextMenu(e, layer.id);
+    };
+    
+    // Drag functionality - MUST be on the wrapper
+    makeDraggableText(layerDiv, layer);
+    
+    container.appendChild(layerDiv);
+    
+    // Auto-edit removed - user must double-click to edit
+}
+
+function editTextLayerInline(layerId: string): void {
+    console.log('editTextLayerInline called for:', layerId);
+    
+    const layer = textLayers.find(l => l.id === layerId);
+    if (!layer) {
+        console.error('Layer not found:', layerId);
+        return;
+    }
+    
+    const layerElement = document.getElementById(layerId);
+    if (!layerElement) {
+        console.error('Layer element not found:', layerId);
+        return;
+    }
+    
+    const textContent = layerElement.querySelector<HTMLElement>('.text-layer-content');
+    if (!textContent) {
+        console.error('Text content not found for:', layerId);
+        return;
+    }
+    
+    // Check if already editing
+    if (textContent.contentEditable === 'true') {
+        console.log('Already editing');
+        textContent.focus();
+        return;
+    }
+    
+    console.log('Enabling contentEditable for direct editing');
+    
+    // LOCK image dragging while editing text
+    lockImageDragging(true);
+    
+    // Make text content editable directly
+    textContent.contentEditable = 'true';
+    textContent.style.outline = '3px solid #0dcaf0';
+    textContent.style.outlineOffset = '2px';
+    textContent.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    textContent.style.cursor = 'text';
+    textContent.style.zIndex = '1000'; // Bring to front
+    
+    // Store original HTML
+    const originalHTML = textContent.innerHTML;
+    
+    // Clear rainbow formatting for editing (use plain text)
+    if (layer.rainbow) {
+        textContent.textContent = layer.text;
+        textContent.style.color = '#ffffff';
+    }
+    
+    // Focus and select text
+    textContent.focus();
+    
+    // Select all text
+    setTimeout(() => {
+        const range = document.createRange();
+        range.selectNodeContents(textContent);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }, 10);
+    
+    // Function to save and exit edit mode
+    const saveAndExit = () => {
+        const newText = textContent.textContent.trim();
+        layer.text = newText || 'Double click to edit';
+        
+        // Exit edit mode
+        textContent.contentEditable = 'false';
+        textContent.style.outline = 'none';
+        textContent.style.backgroundColor = 'transparent';
+        textContent.style.cursor = 'move';
+        textContent.style.zIndex = '10'; // Reset z-index
+        
+        // UNLOCK image dragging
+        lockImageDragging(false);
+        
+        // Re-render to apply rainbow if needed
+        renderTextLayer(layer);
+        showToast('Text updated âœ“', 'success');
+    };
+    
+    // Save on blur (click outside)
+    textContent.onblur = saveAndExit;
+    
+    // Save on Escape key
+    textContent.onkeydown = (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            textContent.blur();
+        }
+        e.stopPropagation();
+    };
+    
+    // Prevent double-click while editing
+    textContent.ondblclick = (e) => {
+        e.stopPropagation();
+    };
+}
+
+function showColorPicker(layerId) {
+    const layer = textLayers.find(l => l.id === layerId);
+    if (!layer) return;
+    
+    currentEditingLayer = layer;
+    
+    // Position toolbar near the text layer
+    const layerElement = document.getElementById(layerId);
+    const rect = layerElement.getBoundingClientRect();
+    
+    const toolbar = document.getElementById('textColorToolbar');
+    toolbar.style.display = 'block';
+    toolbar.style.left = Math.min(rect.left, window.innerWidth - 300) + 'px';
+    toolbar.style.top = (rect.bottom + 10) + 'px';
+    
+    // Set current values
+    document.getElementById('toolbarColorPicker').value = layer.color;
+    document.getElementById('toolbarColorCode').value = layer.color;
+    document.getElementById('toolbarRainbowMode').checked = layer.rainbow;
+}
+
+// OLD FUNCTIONS - KEPT FOR COMPATIBILITY (can be removed later)
+function deleteTextLayer(layerId) {
+    textLayers = textLayers.filter(l => l.id !== layerId);
+    const element = document.getElementById(layerId);
+    if (element) element.remove();
+    showToast('Text layer deleted', 'success');
+}
+
+function showTextContextMenu(event, layerId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const layer = textLayers.find(l => l.id === layerId);
+    if (!layer) return;
+    
+    currentEditingLayer = layer;
+    
+    // Close any open menus first
+    closeAllMenus();
+    
+    // Show main context menu
+    const contextMenu = document.getElementById('textContextMenu');
+    contextMenu.style.display = 'block';
+    contextMenu.style.left = event.clientX + 'px';
+    contextMenu.style.top = event.clientY + 'px';
+    
+    // Setup submenu hover events
+    setupSubmenuHovers(event.clientX, event.clientY);
+    
+    // Close menu on click outside
+    setTimeout(() => {
+        document.addEventListener('click', closeAllMenus);
+    }, 100);
+}
+
+function setupSubmenuHovers(menuX, menuY) {
+    const colorMenuItem = document.getElementById('colorMenuItem');
+    const fontMenuItem = document.getElementById('fontMenuItem');
+    const colorSubmenu = document.getElementById('colorSubmenu');
+    const fontSubmenu = document.getElementById('fontSubmenu');
+    const contextMenu = document.getElementById('textContextMenu');
+    
+    // Color submenu hover
+    colorMenuItem.onmouseenter = () => {
+        fontSubmenu.style.display = 'none';
+        colorSubmenu.style.display = 'block';
+        
+        const rect = colorMenuItem.getBoundingClientRect();
+        colorSubmenu.style.left = (rect.right + 5) + 'px';
+        colorSubmenu.style.top = rect.top + 'px';
+        
+        // Populate preset colors
+        populatePresetColors();
+        
+        // Set current values
+        document.getElementById('colorCodeInput').value = currentEditingLayer.color;
+        document.getElementById('rainbowCheckbox').checked = currentEditingLayer.rainbow;
+    };
+    
+    // Font submenu hover
+    fontMenuItem.onmouseenter = () => {
+        colorSubmenu.style.display = 'none';
+        fontSubmenu.style.display = 'block';
+        
+        const rect = fontMenuItem.getBoundingClientRect();
+        fontSubmenu.style.left = (rect.right + 5) + 'px';
+        fontSubmenu.style.top = rect.top + 'px';
+        
+        // Populate font list
+        populateFontList();
+    };
+    
+    // Keep submenus open when hovering over them
+    colorSubmenu.onmouseenter = () => {
+        colorSubmenu.style.display = 'block';
+    };
+    
+    fontSubmenu.onmouseenter = () => {
+        fontSubmenu.style.display = 'block';
+    };
+}
+
+function populatePresetColors() {
+    const presetColors = [
+        '#FFFFFF', '#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
+        '#FFA500', '#800080', '#FFC0CB', '#A52A2A', '#808080', '#00FF7F', '#4B0082', '#FFD700',
+        '#FF69B4', '#32CD32', '#1E90FF', '#FF4500', '#8A2BE2', '#20B2AA', '#DC143C', '#7FFF00'
+    ];
+    
+    const container = document.getElementById('presetColors');
+    container.innerHTML = '';
+    
+    presetColors.forEach(color => {
+        const div = document.createElement('div');
+        div.className = 'color-preset';
+        div.style.backgroundColor = color;
+        div.title = color;
+        div.onclick = () => applyColor(color);
+        container.appendChild(div);
+    });
+}
+
+function populateFontList() {
+    const fonts = [
+        'Arial',
+        'Helvetica',
+        'Impact',
+        'Comic Sans MS',
+        'Courier New',
+        'Georgia',
+        'Palatino',
+        'Garamond',
+        'Bookman',
+        'Trebuchet MS',
+        'Arial Black',
+        'Verdana',
+        'Times New Roman',
+        'Brush Script MT',
+        'Lucida Handwriting',
+        'Copperplate',
+        'Papyrus',
+        'Lobster',
+        'Pacifico',
+        'Oswald',
+        'Montserrat',
+        'Playfair Display',
+        'Bebas Neue',
+        'Anton'
+    ];
+    
+    const container = document.getElementById('fontList');
+    container.innerHTML = '';
+    
+    fonts.forEach(font => {
+        const div = document.createElement('div');
+        div.className = 'font-item';
+        div.textContent = font;
+        div.style.fontFamily = font;
+        div.onclick = () => applyFont(font);
+        container.appendChild(div);
+    });
+}
+
+function applyColor(color) {
+    if (!currentEditingLayer) return;
+    
+    currentEditingLayer.color = color;
+    currentEditingLayer.rainbow = false;
+    renderTextLayer(currentEditingLayer);
+    showToast('Color applied âœ“', 'success');
+    closeAllMenus();
+}
+
+function applyCustomColor() {
+    const input = document.getElementById('colorCodeInput');
+    let color = input.value.trim();
+    
+    // Add # if missing
+    if (!color.startsWith('#')) {
+        color = '#' + color;
+    }
+    
+    // Validate hex color
+    if (!/^#[0-9A-F]{6}$/i.test(color)) {
+        showToast('Invalid color code! Use format: #FFFFFF', 'warning');
+        return;
+    }
+    
+    applyColor(color);
+}
+
+function applyRainbowMode(enabled) {
+    if (!currentEditingLayer) return;
+    
+    currentEditingLayer.rainbow = enabled;
+    
+    if (!enabled) {
+        // Use current color when disabling rainbow
+        currentEditingLayer.color = document.getElementById('colorCodeInput').value || '#FFFFFF';
+    }
+    
+    renderTextLayer(currentEditingLayer);
+    showToast(enabled ? 'Rainbow mode enabled ðŸŒˆ' : 'Rainbow mode disabled', 'success');
+}
+
+function applyFont(font) {
+    if (!currentEditingLayer) return;
+    
+    currentEditingLayer.fontFamily = font;
+    renderTextLayer(currentEditingLayer);
+    showToast(`Font changed to ${font} âœ“`, 'success');
+    closeAllMenus();
+}
+
+function deleteCurrentTextLayer() {
+    if (!currentEditingLayer) return;
+    
+    textLayers = textLayers.filter(l => l.id !== currentEditingLayer.id);
+    const element = document.getElementById(currentEditingLayer.id);
+    if (element) element.remove();
+    
+    showToast('Text layer deleted', 'success');
+    closeAllMenus();
+    currentEditingLayer = null;
+}
+
+function closeAllMenus() {
+    document.getElementById('textContextMenu').style.display = 'none';
+    document.getElementById('colorSubmenu').style.display = 'none';
+    document.getElementById('fontSubmenu').style.display = 'none';
+    document.removeEventListener('click', closeAllMenus);
+}
+
+function makeDraggableText(element, layer) {
+    let isDragging = false;
+    let startX, startY;
+    let dragStartTime = 0;
+    
+    element.onpointerdown = (e) => {
+        // Check if text is being edited
+        const textContent = element.querySelector('.text-layer-content');
+        if (textContent && textContent.contentEditable === 'true') {
+            return; // Don't drag while editing
+        }
+        
+        // Don't start drag on double-click
+        if (e.detail === 2) {
+            return;
+        }
+        
+        isDragging = true;
+        dragStartTime = Date.now();
+        startX = e.clientX;
+        startY = e.clientY;
+        element.style.cursor = 'grabbing';
+        
+        // Add visual feedback
+        if (textContent) {
+            textContent.style.borderColor = 'rgba(13, 202, 240, 0.8)';
+            textContent.style.borderWidth = '3px';
+        }
+        
+        e.preventDefault();
+        e.stopPropagation();
+    };
+    
+    document.onpointermove = (e) => {
+        if (!isDragging) return;
+        
+        const container = document.getElementById('textLayersContainer');
+        const rect = container.getBoundingClientRect();
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        layer.x += (deltaX / rect.width) * 100;
+        layer.y += (deltaY / rect.height) * 100;
+        
+        // Clamp values
+        layer.x = Math.max(5, Math.min(95, layer.x));
+        layer.y = Math.max(5, Math.min(95, layer.y));
+        
+        element.style.left = layer.x + '%';
+        element.style.top = layer.y + '%';
+        
+        startX = e.clientX;
+        startY = e.clientY;
+    };
+    
+    document.onpointerup = (e) => {
+        if (isDragging) {
+            element.style.cursor = 'move';
+            isDragging = false;
+            
+            // Reset border after drag
+            const textContent = element.querySelector('.text-layer-content');
+            if (textContent) {
+                textContent.style.borderWidth = '2px';
+            }
+        }
+    };
+}
+

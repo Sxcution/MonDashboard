@@ -1,5 +1,5 @@
-// @ts-nocheck
 // ===== MXH REAL-TIME CONFIGURATION =====
+(function () {
 const MXH_CONFIG = {
     AUTO_REFRESH_INTERVAL: 15000, // Changed from 3000 to 15000ms (15 seconds)
     DEBOUNCE_DELAY: 500, // Debounce for inline editing
@@ -30,10 +30,10 @@ const mxhInlineEditRuntime = MXHInlineEdit.createRuntime({ document, window });
 mxhInlineEditRuntime.bindGlobalEvents();
 
 function applyMXHDynamicStyles(root = document) {
-    root.querySelectorAll('[data-mxh-color]').forEach(el => {
+    root.querySelectorAll<HTMLElement>('[data-mxh-color]').forEach(el => {
         el.style.setProperty('--mxh-color', el.dataset.mxhColor || '#6c757d');
     });
-    root.querySelectorAll('[data-mxh-bg]').forEach(el => {
+    root.querySelectorAll<HTMLElement>('[data-mxh-bg]').forEach(el => {
         el.style.setProperty('--mxh-bg', el.dataset.mxhBg || '#6c757d');
         el.style.setProperty('--mxh-fg', el.dataset.mxhFg || '#fff');
         el.style.setProperty('--mxh-border', el.dataset.mxhBorder || '1px solid rgba(255,255,255,.25)');
@@ -59,12 +59,12 @@ let _mxhDefaultPlatformSet = false;
 const mxhAccountsContainer = document.getElementById('mxh-accounts-container');
 if (mxhAccountsContainer) {
     mxhAccountsContainer.addEventListener('click', (event) => {
-        if (event.target.closest('.mxh-card-number-edit')) {
+        if ((event.target as Element | null)?.closest('.mxh-card-number-edit')) {
             event.stopPropagation();
         }
     });
     mxhAccountsContainer.addEventListener('contextmenu', (event) => {
-        const card = event.target.closest('.mxh-card[data-card-id]');
+        const card = (event.target as Element | null)?.closest<HTMLElement>('.mxh-card[data-card-id]');
         if (!card || !mxhAccountsContainer.contains(card)) return;
         window.handleCardContextMenu(
             event,
@@ -74,7 +74,7 @@ if (mxhAccountsContainer) {
         );
     });
     mxhAccountsContainer.addEventListener('keydown', (event) => {
-        const field = event.target.closest('.editable-field[contenteditable="true"]');
+        const field = (event.target as Element | null)?.closest<HTMLElement>('.editable-field[contenteditable="true"]');
         if (!field || !mxhAccountsContainer.contains(field)) return;
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -82,7 +82,7 @@ if (mxhAccountsContainer) {
         }
     });
     mxhAccountsContainer.addEventListener('blur', (event) => {
-        const field = event.target.closest('.editable-field[contenteditable="true"]');
+        const field = (event.target as Element | null)?.closest<HTMLElement>('.editable-field[contenteditable="true"]');
         if (!field || !mxhAccountsContainer.contains(field)) return;
         window.saveInlineEdit(field, Number(field.dataset.accountId), field.dataset.field);
     }, true);
@@ -232,16 +232,16 @@ function getRenderContext() {
         stopAutoRefresh,
         debounce,
         showToast: (...args) => {
-            if (typeof showToast === 'function') showToast(...args);
+            if (typeof showToast === 'function') (showToast as any)(...args);
         },
         showAlert: (...args) => {
             if (typeof showAlert === 'function') {
-                showAlert(...args);
+                (showAlert as any)(...args);
             } else {
                 window.alert(args[0]);
             }
         },
-        confirm: (...args) => confirm(...args),
+        confirm: (...args) => (confirm as any)(...args),
         pauseAutoRefresh,
         resumeAutoRefresh
     };
@@ -437,7 +437,7 @@ function flipCardToAccount(cardId, accountId) {
 
 // Helper function for notice configuration
 function configureNoticeToggleFor(menuId, account) {
-    const el = document.querySelector(`#${menuId} [id$="-notice-toggle"]`);
+    const el = document.querySelector<HTMLElement>(`#${menuId} [id$="-notice-toggle"]`);
     if (!el) return;
     const noticeObj = ensureNoticeParsed(account.notice);
     const hasNotice = !!(noticeObj && noticeObj.enabled);
@@ -582,6 +582,8 @@ async function loadPhoneHistory(accountId) {
     return MXHPhoneHistory.loadPhoneHistory(getRenderContext(), accountId);
 }
 
+window.loadPhoneHistory = loadPhoneHistory;
+
 window.copyPhoneHistory = function (phone) {
     return MXHPhoneHistory.copyPhoneHistory(getRenderContext(), phone);
 };
@@ -636,3 +638,4 @@ async function openScanHistoryModal(accountId) {
 async function resetScanHistory(btn) {
     return MXHScanHistory.resetScanHistory(getRenderContext(), btn);
 }
+})();
