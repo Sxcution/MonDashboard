@@ -37,6 +37,17 @@ interface Window {
   MXHTypedApi: MXHTypedApiClient;
   NotesApiFactory: NotesApiFactory;
   ImageApi: ImageApiClient;
+  registerDashboardTabLifecycle?: (tabId: string, lifecycle: {
+    pause?: () => void | Promise<void>;
+    resume?: () => void | Promise<void>;
+  }) => void;
+  hideAllContextMenus?: (preserveSelection?: boolean) => void;
+  showAlert?: (message: string, title?: string) => void;
+  showConfirm?: (message: string, title?: string) => Promise<boolean>;
+  requestNotificationPermission?: () => void;
+  showPlatformNotification?: (title: string, body: string, icon?: string) => void;
+  openThemeColorPrompt?: () => void;
+  handleImageNavClick?: (event: Event) => boolean;
 }
 
 interface MXHTypedApiClient {

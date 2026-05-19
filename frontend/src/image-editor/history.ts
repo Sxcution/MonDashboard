@@ -38,9 +38,57 @@ function clearImageCache(type: ImageCacheType = 'edit'): void {
 }
 
 // ===== COLLAGE HISTORY MANAGEMENT =====
+function escapeHistoryHtml(value: unknown): string {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function getHistoryPreviewMarkup(item: ImageCollageHistoryItem): string {
+    const images = Array.isArray(item.images) ? item.images : [];
+    const count = images.length || item.imageCount || 0;
+    const firstImage = escapeHistoryHtml(images[0] || '');
+
+    if (count < 2) {
+        return `<img class="history-preview-img" src="${firstImage}" alt="Ảnh đã lưu">`;
+    }
+
+    const layoutId = typeof item.layoutId === 'string' ? item.layoutId : '';
+    const layout = layoutTemplates.find(candidate => candidate.id === layoutId && candidate.maxPhotos === count)
+        || layoutTemplates.find(candidate => candidate.maxPhotos === count);
+
+    if (!layout) {
+        const fallbackImages = images.slice(0, Math.min(count, 4)).map(src => `
+            <img src="${escapeHistoryHtml(src)}" alt="Ảnh trong lịch sử">
+        `).join('');
+        return `<div class="history-collage-preview history-collage-preview-fallback">${fallbackImages}</div>`;
+    }
+
+    const tiles = layout.cells.slice(0, Math.min(images.length, layout.cells.length)).map((cell, index) => {
+        const [col, row, colSpan, rowSpan] = cell;
+        return `
+            <img src="${escapeHistoryHtml(images[index] || '')}"
+                 alt="Ảnh trong lịch sử"
+                 style="grid-column:${col + 1} / span ${colSpan}; grid-row:${row + 1} / span ${rowSpan};">
+        `;
+    }).join('');
+
+    return `
+        <div class="history-collage-preview"
+             style="grid-template-columns:repeat(${layout.cols}, 1fr); grid-template-rows:repeat(${layout.rows}, 1fr);">
+            ${tiles}
+        </div>
+    `;
+}
+
 function saveToHistory(imageDataArray: string[]): string | null {
     try {
-        const newEntry = window.ImageEditorStorage.addCollageHistory(imageDataArray);
+        const newEntry = window.ImageEditorStorage.addCollageHistory(
+            imageDataArray,
+            imageDataArray.length > 1 ? selectedLayout : null
+        );
         console.log(`âœ… Saved to history: ${newEntry.imageCount} images`);
         
         // Reload history display
@@ -77,6 +125,17 @@ function loadCollageHistoryFromStorage() {
                 </div>
             `;
         }).join('');
+
+        container.innerHTML = history.map(item => `
+            <div class="history-item"
+                 data-id="${escapeHistoryHtml(item.id)}"
+                 data-image-history-edit="${escapeHistoryHtml(item.id)}"
+                 data-image-history-menu="${escapeHistoryHtml(item.id)}"
+                 title="${escapeHistoryHtml(item.date)} - ${item.imageCount} ảnh">
+                ${getHistoryPreviewMarkup(item)}
+                <div class="history-item-date">${item.imageCount} ảnh</div>
+            </div>
+        `).join('');
         
         console.log(`âœ… Loaded ${history.length} history items`);
     } catch (e) {

@@ -1,9 +1,12 @@
 "use strict";
 // Typed Notes rich-editor island. Kept as one closure for behavior compatibility.
-document.addEventListener('DOMContentLoaded', function () {
+function initNotesDashboardTab() {
+    if (window.__notesDashboardTabInitialized)
+        return;
     const notesPane = document.getElementById('notes-tool-pane');
     if (!notesPane)
         return;
+    window.__notesDashboardTabInitialized = true;
     const asElement = (target) => target instanceof Element ? target : null;
     const notesConfigEl = document.getElementById('notes-config');
     const notesApi = {
@@ -161,6 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let autoSaveTimer = null;
     let savedSelection = null;
     let blockNextBlurSave = false;
+    const NOTES_AUTOSAVE_DELAY_MS = 700;
     window.notesData = [];
     window.filteredNotes = [];
     // --- Core Functions ---
@@ -177,6 +181,77 @@ document.addEventListener('DOMContentLoaded', function () {
                 return `${value} ${unit} trước`;
         }
         return "vài giây trước";
+    }
+    function getActiveEditorElement() {
+        return document.getElementById('detail-editable-full');
+    }
+    function buildNotePayloadFromEditor(editorEl) {
+        const parts = editorEl.innerHTML.split('<br>');
+        return {
+            title_html: parts.shift() || '',
+            content_html: parts.join('<br>')
+        };
+    }
+    function flushPendingNoteSave() {
+        if (autoSaveTimer) {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = null;
+        }
+        if (!activeNoteId)
+            return;
+        const editorEl = getActiveEditorElement();
+        if (!editorEl)
+            return;
+        const currentContent = editorEl.innerHTML;
+        if (currentContent === editorEl.getAttribute('data-initial-content'))
+            return;
+        editorEl.setAttribute('data-initial-content', currentContent);
+        const payload = buildNotePayloadFromEditor(editorEl);
+        const body = JSON.stringify(payload);
+        const url = `${notesApi.updateNoteBase}${activeNoteId}`;
+        try {
+            if (navigator.sendBeacon) {
+                const blob = new Blob([body], { type: 'application/json' });
+                if (navigator.sendBeacon(url, blob))
+                    return;
+            }
+        }
+        catch (error) {
+            console.warn('Notes beacon save failed:', error);
+        }
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body,
+            keepalive: true
+        }).catch(error => console.warn('Notes keepalive save failed:', error));
+    }
+    let dashboardSavedSelection = null;
+    function captureDashboardSelection() {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0)
+            return;
+        const range = selection.getRangeAt(0);
+        const anchorNode = range.commonAncestorContainer;
+        const anchorElement = anchorNode instanceof Element ? anchorNode : anchorNode.parentElement;
+        if (!anchorElement || !notesPane.contains(anchorElement))
+            return;
+        dashboardSavedSelection = range.cloneRange();
+    }
+    function restoreDashboardSelection() {
+        if (!dashboardSavedSelection)
+            return;
+        const selection = window.getSelection();
+        if (!selection)
+            return;
+        const anchorNode = dashboardSavedSelection.commonAncestorContainer;
+        const anchorElement = anchorNode instanceof Element ? anchorNode : anchorNode.parentElement;
+        if (!anchorElement || !notesPane.contains(anchorElement)) {
+            dashboardSavedSelection = null;
+            return;
+        }
+        selection.removeAllRanges();
+        selection.addRange(dashboardSavedSelection);
     }
     async function fetchAndRenderNotes(searchTerm = '') {
         try {
@@ -375,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     autoSaveTimer = setTimeout(() => {
                         if (activeNoteId)
                             saveNoteChanges(activeNoteId, true, true);
-                    }, 100);
+                    }, NOTES_AUTOSAVE_DELAY_MS);
                 });
                 newEditor.addEventListener('contextmenu', handleEditorContextMenu);
                 // Re-initialize profile interactions
@@ -398,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         saveSplitState(activeNoteId, 2, rightEditor.innerHTML);
                         if (activeNoteId)
                             saveSplitNoteChanges(true);
-                    }, 100);
+                    }, NOTES_AUTOSAVE_DELAY_MS);
                 });
                 rightEditor.addEventListener('contextmenu', handleEditorContextMenu);
             }
@@ -435,7 +510,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     autoSaveTimer = setTimeout(() => {
                         if (activeNoteId)
                             saveNoteChanges(activeNoteId, true, true);
-                    }, 100);
+                    }, NOTES_AUTOSAVE_DELAY_MS);
                 });
                 newEditor.addEventListener('contextmenu', handleEditorContextMenu);
                 // Re-initialize profile interactions
@@ -569,13 +644,13 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('[editor input] ⌨️ Input event triggered');
             // Clear previous timer
             clearTimeout(autoSaveTimer);
-            // Auto-save after 1 second of no typing (debounced, silent mode)
+            // Auto-save shortly after typing stops (debounced, silent mode)
             autoSaveTimer = setTimeout(() => {
                 if (activeNoteId) {
                     console.log('[editor input] 💾 Auto-saving note after typing pause');
                     saveNoteChanges(activeNoteId, true, true); // forceSave=true, silentSave=true
                 }
-            }, 100);
+            }, NOTES_AUTOSAVE_DELAY_MS);
         });
         // Initialize profile interactions and apply saved colors
         initializeProfileInteractions();
@@ -644,12 +719,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!forceSave && currentContent === initialContent) {
             return;
         }
-        const fullContent = editorEl.innerHTML;
-        const parts = fullContent.split('<br>');
-        const payload = {
-            title_html: parts.shift() || '',
-            content_html: parts.join('<br>')
-        };
+        const payload = buildNotePayloadFromEditor(editorEl);
         try {
             if (!silentSave) {
                 showToast('Đang lưu...', 'info');
@@ -1893,5 +1963,26 @@ document.addEventListener('DOMContentLoaded', function () {
             showNoteDetail(firstNote);
         }
     }
+    window.addEventListener('pagehide', flushPendingNoteSave);
+    window.addEventListener('beforeunload', flushPendingNoteSave);
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden)
+            flushPendingNoteSave();
+    });
+    window.registerDashboardTabLifecycle?.('notes', {
+        pause() {
+            captureDashboardSelection();
+            flushPendingNoteSave();
+        },
+        resume() {
+            requestAnimationFrame(restoreDashboardSelection);
+        }
+    });
     initializeNotesView();
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNotesDashboardTab, { once: true });
+}
+else {
+    initNotesDashboardTab();
+}

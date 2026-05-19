@@ -318,8 +318,11 @@ async function applyMxhRefreshInterval() {
             body: JSON.stringify({ interval_ms: interval })
         });
         if (response.ok) {
+            localStorage.setItem('mxh_refresh_interval_ms', String(interval));
+            window.dispatchEvent(new CustomEvent('mxh-refresh-interval-changed', {
+                detail: { interval }
+            }));
             showToast(`✅ Đã lưu tần suất làm mới: ${interval / 1000} giây.`, 'success');
-            // NOTE: The main MXH page must re-read this setting on load/resume
         }
         else {
             const error = await response.json();

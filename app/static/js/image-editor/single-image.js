@@ -81,6 +81,9 @@ function showSingleImageViewer(image) {
     document.getElementById('collage-tiles').style.display = 'none';
     document.getElementById('collageCanvasContainer').style.display = 'none';
     document.getElementById('templatesPanel').style.display = 'none';
+    const collageQuickPanel = document.getElementById('collageQuickPanel');
+    if (collageQuickPanel)
+        collageQuickPanel.style.display = 'none';
     // Show single viewer
     const viewer = document.getElementById('singleImageViewer');
     viewer.style.display = 'flex';

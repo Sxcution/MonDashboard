@@ -91,6 +91,19 @@ console.log('🔍 Loading Telegram script...');
     let tg_currentTaskConfig = {};
     let tg_completedInTask = new Set();
     let tg_allGroups = [];
+    window.registerDashboardTabLifecycle?.('telegram', {
+        pause() {
+            const telegramMenu = document.getElementById('telegram-context-menu');
+            if (telegramMenu)
+                telegramMenu.style.display = 'none';
+            telegramPane.querySelectorAll('.modal.show').forEach(modalEl => {
+                bootstrap.Modal.getInstance(modalEl)?.hide();
+            });
+        },
+        resume() {
+            tg_updateSessionCountDisplay();
+        }
+    });
     async function tg_handleRunStopClick(event) {
         const button = event.currentTarget;
         if (button.dataset.taskRunning === 'true') {

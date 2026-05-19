@@ -29,14 +29,15 @@
     function writeCollageHistory(history) {
         localStorage.setItem(STORAGE_KEY_COLLAGE_HISTORY, JSON.stringify(history));
     }
-    function addCollageHistory(images) {
+    function addCollageHistory(images, layoutId = null) {
         const history = readCollageHistory();
         const entry = {
             id: Date.now().toString(),
             timestamp: new Date().toISOString(),
             date: new Date().toLocaleString("vi-VN"),
             imageCount: images.length,
-            images
+            images,
+            layoutId
         };
         history.unshift(entry);
         if (history.length > 50)

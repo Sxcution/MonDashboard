@@ -1,7 +1,49 @@
 // Typed Image editor module: initialization and delegated actions.
 // Keeps behavior compatible while the monolith is split into smaller files.
 
-document.addEventListener('DOMContentLoaded', () => {
+let imageEditorCoreInitialized = false;
+let imageEditorActionsInitialized = false;
+let imageDashboardLifecycleRegistered = false;
+
+function hasImageEditorDom() {
+    return !!document.getElementById('collageCanvas') || !!document.getElementById('singleImageCanvas');
+}
+
+function closeImageFloatingUi() {
+    document.querySelectorAll<HTMLElement>('.context-menu').forEach(menu => menu.remove());
+    ['textContextMenu', 'colorSubmenu', 'fontSubmenu', 'upscaleMenu', 'upscaleModelDialog', 'blemishSettingsMenu'].forEach(id => {
+        const el = document.getElementById(id) as HTMLElement | null;
+        if (!el) return;
+        if (id === 'upscaleModelDialog') {
+            el.setAttribute('aria-hidden', 'true');
+            el.classList.remove('is-open');
+            return;
+        }
+        el.style.display = 'none';
+    });
+}
+
+function registerImageDashboardLifecycle() {
+    if (imageDashboardLifecycleRegistered) return;
+    imageDashboardLifecycleRegistered = true;
+
+    window.registerDashboardTabLifecycle?.('image', {
+        pause() {
+            closeImageFloatingUi();
+        },
+        resume() {
+            requestAnimationFrame(() => {
+                if (typeof applyUI === 'function') applyUI();
+                if (typeof renderLayoutTemplates === 'function') renderLayoutTemplates();
+            });
+        }
+    });
+}
+
+function initImageEditorCore() {
+    if (imageEditorCoreInitialized || !hasImageEditorDom()) return;
+    imageEditorCoreInitialized = true;
+
     // Setup keyboard shortcuts for blemish tool
     document.addEventListener('keydown', handleBlemishKeys);
 
@@ -79,7 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Load history from localStorage
     loadCollageHistoryFromStorage();
-});
+    registerImageDashboardLifecycle();
+}
 
 function restoreCachedImages() {
     // Restore Collage images only (Edit Image removed)
@@ -224,7 +267,9 @@ function drawTextLayerAt(ctx: CanvasRenderingContext2D, layer: ImageTextLayer, x
             }
         });
     } else {
-        ctx.fillStyle = layer.color;
+        const fill = String(layer.fill || layer.color || '#ffffff');
+        const textWidth = Math.max(...lines.map(line => ctx.measureText(line).width), fontSize * 2);
+        ctx.fillStyle = collageCreateCanvasFill(ctx, fill, x - textWidth / 2, startY - lineHeight / 2, textWidth, lineHeight * lines.length);
         lines.forEach((line, lineIndex) => {
             ctx.fillText(line, x, startY + lineIndex * lineHeight);
         });
@@ -330,19 +375,22 @@ async function saveCollage() {
         const gutter = parseInt(document.getElementById('collageGutter').value);
         const radius = parseInt(document.getElementById('collageRadius').value);
         const borderWidth = parseInt(document.getElementById('collageBorder').value);
-        const borderColor = document.getElementById('collageBorderColor').value;
-        const backgroundColor = document.getElementById('collageBackground').value;
+        const borderColor = collageGetFill('border');
+        const backgroundColor = collageGetFill('background');
+        const aspect = document.getElementById('collageAspect').value || '1:1';
+        const [arW, arH] = aspect.split(':').map(Number);
         const layout = layoutTemplates.find(l => l.id === selectedLayout);
         
-        // Create high-res canvas (1080x1080)
+        // Create high-res canvas following the selected aspect ratio
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = 1080;
-        canvas.height = 1080;
+        const longSide = 1080;
+        canvas.width = arW >= arH ? longSide : Math.round(longSide * (arW / arH));
+        canvas.height = arH >= arW ? longSide : Math.round(longSide * (arH / arW));
         
         // Fill background
-        ctx.fillStyle = backgroundColor;
-        ctx.fillRect(0, 0, 1080, 1080);
+        ctx.fillStyle = collageCreateCanvasFill(ctx, backgroundColor, 0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Set high quality rendering
         ctx.imageSmoothingEnabled = true;
@@ -350,8 +398,8 @@ async function saveCollage() {
         
         // Calculate grid
         const padding = gutter * 1.5; // Scale gutter for 1080
-        const availableW = 1080 - padding * 2;
-        const availableH = 1080 - padding * 2;
+        const availableW = canvas.width - padding * 2;
+        const availableH = canvas.height - padding * 2;
         const cellW = availableW / layout.cols;
         const cellH = availableH / layout.rows;
         const gap = gutter * 1.5;
@@ -412,7 +460,7 @@ async function saveCollage() {
             
             // Draw border
             if (borderWidth > 0) {
-                ctx.strokeStyle = borderColor;
+                ctx.strokeStyle = collageCreateCanvasFill(ctx, borderColor, x, y, w, h);
                 ctx.lineWidth = borderWidth * 1.5;
                 
                 if (radius > 0) {
@@ -437,7 +485,7 @@ async function saveCollage() {
         
         // Draw text layers
         for (const layer of textLayers) {
-            drawCanvasTextLayer(ctx, layer, 1080);
+            drawCanvasTextLayer(ctx, layer, canvas.width, canvas.height);
         }
         
         const blob = await imageCanvasToBlob(canvas);
@@ -872,7 +920,10 @@ function bindImageTemplateActions() {
 }
 
 // Initialize layout templates on page load
-document.addEventListener('DOMContentLoaded', function() {
+function initImageEditorActions() {
+    if (imageEditorActionsInitialized || !hasImageEditorDom()) return;
+    imageEditorActionsInitialized = true;
+
     bindImageTemplateActions();
     renderLayoutTemplates();
     // History is now loaded via loadCollageHistoryFromStorage() in earlier DOMContentLoaded handler
@@ -929,4 +980,13 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
         }
     });
-});
+    registerImageDashboardLifecycle();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initImageEditorCore, { once: true });
+    document.addEventListener('DOMContentLoaded', initImageEditorActions, { once: true });
+} else {
+    initImageEditorCore();
+    initImageEditorActions();
+}

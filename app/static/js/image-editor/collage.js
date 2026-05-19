@@ -5,12 +5,20 @@
 function bindLockedDrag(img, imageIndex) {
     if (!img)
         return;
+    const dragSurface = (img.parentElement || img);
     img.setAttribute('draggable', 'false'); // cháº·n drag máº·c Ä‘á»‹nh cá»§a trÃ¬nh duyá»‡t
     img.style.cursor = 'grab';
-    let dragging = false;
+    img.style.userSelect = 'none';
+    img.style.touchAction = 'none';
+    img.style.setProperty('-webkit-user-drag', 'none');
+    dragSurface.style.cursor = 'grab';
+    dragSurface.style.touchAction = 'none';
+    let panDragging = false;
+    let swapDragging = false;
+    let swapMoved = false;
     let startX = 0, startY = 0;
     let startPosX = 50, startPosY = 50; // object-position ban Ä‘áº§u (%)
-    img.addEventListener('pointerdown', (e) => {
+    dragSurface.addEventListener('pointerdown', (e) => {
         if (e.button !== 0 && e.button !== 2)
             return;
         // Don't allow dragging if locked (editing text)
@@ -18,26 +26,39 @@ function bindLockedDrag(img, imageIndex) {
             console.log('â›” Image drag blocked - text editing in progress');
             return;
         }
-        dragging = true;
+        panDragging = e.button === 2;
+        swapDragging = e.button === 0;
+        swapMoved = false;
+        dragSurface.classList.toggle('is-swap-dragging', swapDragging);
         startX = e.clientX;
         startY = e.clientY;
         // Láº¥y object-position hiá»‡n táº¡i
-        const pos = img.style.objectPosition || '50% 50%';
+        const pos = img.style.objectPosition || window.getComputedStyle(img).objectPosition || '50% 50%';
         const [px, py] = pos.split(' ').map(s => parseFloat(s));
-        startPosX = px;
-        startPosY = py;
-        if (img.setPointerCapture) {
-            img.setPointerCapture(e.pointerId);
+        startPosX = Number.isFinite(px) ? px : 50;
+        startPosY = Number.isFinite(py) ? py : 50;
+        if (dragSurface.setPointerCapture) {
+            dragSurface.setPointerCapture(e.pointerId);
         }
         img.style.cursor = 'grabbing';
+        dragSurface.style.cursor = 'grabbing';
         e.preventDefault();
+        e.stopPropagation();
     }, { passive: false });
-    img.addEventListener('pointermove', (e) => {
-        if (!dragging)
+    dragSurface.addEventListener('pointermove', (e) => {
+        if (!panDragging && !swapDragging)
             return;
-        const rect = img.getBoundingClientRect();
+        const rect = dragSurface.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0)
+            return;
         const deltaX = e.clientX - startX;
         const deltaY = e.clientY - startY;
+        if (swapDragging) {
+            swapMoved = swapMoved || Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6;
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
         // Chuyá»ƒn delta pixel sang % dá»±a trÃªn kÃ­ch thÆ°á»›c tile
         const deltaXPercent = (deltaX / rect.width) * 100;
         const deltaYPercent = (deltaY / rect.height) * 100;
@@ -53,14 +74,35 @@ function bindLockedDrag(img, imageIndex) {
             imagePositions[imageIndex] = { x: newX, y: newY };
         }
         e.preventDefault();
+        e.stopPropagation();
     }, { passive: false });
-    const end = () => {
-        dragging = false;
+    const end = (e) => {
+        const shouldSwap = Boolean(e && e.type === 'pointerup' && swapDragging && swapMoved);
+        const fromIndex = imageIndex ?? -1;
+        let toIndex = -1;
+        if (shouldSwap && e) {
+            const dropTarget = document
+                .elementFromPoint(e.clientX, e.clientY)
+                ?.closest('.tile[data-collage-tile-index]');
+            toIndex = parseInt(dropTarget?.dataset.collageTileIndex || '-1', 10);
+        }
+        panDragging = false;
+        swapDragging = false;
+        swapMoved = false;
+        dragSurface.classList.remove('is-swap-dragging');
         img.style.cursor = 'grab';
+        dragSurface.style.cursor = 'grab';
+        if (e && dragSurface.releasePointerCapture && dragSurface.hasPointerCapture(e.pointerId)) {
+            dragSurface.releasePointerCapture(e.pointerId);
+        }
+        if (shouldSwap && fromIndex >= 0 && toIndex >= 0 && fromIndex !== toIndex) {
+            swapCollageImageOrder(fromIndex, toIndex);
+        }
     };
-    img.addEventListener('pointerup', end);
-    img.addEventListener('pointercancel', end);
-    img.addEventListener('contextmenu', (e) => e.preventDefault());
+    dragSurface.addEventListener('pointerup', end);
+    dragSurface.addEventListener('pointercancel', end);
+    dragSurface.addEventListener('lostpointercapture', () => end());
+    dragSurface.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 // ===== HELPER FUNCTIONS FOR CANVAS COLLAGE =====
 // Preload áº£nh: tráº£ vá» HTMLImageElement Ä‘Ã£ sáºµn sÃ ng
@@ -75,6 +117,27 @@ async function loadImage(src) {
 }
 // TÃ­nh danh sÃ¡ch cell theo layout cho 3 áº£nh
 // Tráº£ vá» máº£ng cÃ¡c rect: [{x,y,w,h}, ...] (tá»a Ä‘á»™ pixel trong canvas)
+function swapCollageImageOrder(fromIndex, toIndex) {
+    if (fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= collageImages.length ||
+        toIndex >= collageImages.length ||
+        fromIndex === toIndex) {
+        return;
+    }
+    [collageImages[fromIndex], collageImages[toIndex]] = [collageImages[toIndex], collageImages[fromIndex]];
+    [imagePositions[fromIndex], imagePositions[toIndex]] = [
+        imagePositions[toIndex] || { x: 50, y: 50 },
+        imagePositions[fromIndex] || { x: 50, y: 50 }
+    ];
+    [imageOffsets[fromIndex], imageOffsets[toIndex]] = [
+        imageOffsets[toIndex] || { x: 0, y: 0 },
+        imageOffsets[fromIndex] || { x: 0, y: 0 }
+    ];
+    saveImageToCache(collageImages.map(img => img.src), 'collage');
+    createHTMLCollage();
+    showToast('Đã đổi vị trí ảnh', 'success');
+}
 function getCellsForLayout(layoutKey, W, H, gutter) {
     const g = gutter;
     // Máº·c Ä‘á»‹nh: 1 áº£nh bÃªn pháº£i full height, 2 áº£nh bÃªn trÃ¡i chia Ä‘Ã´i
@@ -171,6 +234,7 @@ let imagePositions = []; // Array of {x: 50, y: 50} (percentage)
 // Current images and layout for canvas redraw
 let currentImages = [];
 let currentLayoutKey = null;
+let collageColorTarget = 'background';
 // Drag state
 let isDragging = false;
 let dragImageIndex = -1;
@@ -217,51 +281,315 @@ const layoutTemplates = [
     // === 9 PHOTOS ===
     { id: 'layout-9-grid', name: '9 ảnh lưới 3x3', cols: 3, rows: 3, maxPhotos: 9, cells: [[0, 0, 1, 1], [1, 0, 1, 1], [2, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [2, 1, 1, 1], [0, 2, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1]] }
 ];
+function collageInput(id) {
+    return document.getElementById(id);
+}
+function collageIsGradientFill(fill) {
+    return /^linear-gradient\(/i.test((fill || '').trim());
+}
+function collageExtractFillColors(fill) {
+    return (fill || '').match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/g) || [];
+}
+function collageCreateCanvasFill(ctx, fill, x, y, w, h) {
+    const value = (fill || '').trim();
+    if (!collageIsGradientFill(value))
+        return value || '#111111';
+    const colors = collageExtractFillColors(value);
+    if (colors.length < 2)
+        return colors[0] || '#111111';
+    const angleMatch = value.match(/linear-gradient\(\s*(-?\d+(?:\.\d+)?)deg/i);
+    const angle = angleMatch ? parseFloat(angleMatch[1]) : 90;
+    const radians = ((angle - 90) * Math.PI) / 180;
+    const half = Math.sqrt(w * w + h * h) / 2;
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    const dx = Math.cos(radians) * half;
+    const dy = Math.sin(radians) * half;
+    const gradient = ctx.createLinearGradient(cx - dx, cy - dy, cx + dx, cy + dy);
+    colors.forEach((color, index) => {
+        gradient.addColorStop(index / (colors.length - 1), color);
+    });
+    return gradient;
+}
+function collageGetFill(target) {
+    const fillInput = collageInput(target === 'background' ? 'collageBackgroundFill' : 'collageBorderFill');
+    const colorInput = collageInput(target === 'background' ? 'collageBackground' : 'collageBorderColor');
+    return fillInput?.value || colorInput?.value || (target === 'background' ? '#111111' : '#ff3b30');
+}
+function collageSetFill(target, fill) {
+    const fillInput = collageInput(target === 'background' ? 'collageBackgroundFill' : 'collageBorderFill');
+    const colorInput = collageInput(target === 'background' ? 'collageBackground' : 'collageBorderColor');
+    if (fillInput)
+        fillInput.value = fill;
+    if (colorInput && !collageIsGradientFill(fill))
+        colorInput.value = fill;
+    updateCollageQuickPanelValues();
+    if (selectedLayout && collageImages.length > 0) {
+        createCollageWithLayout();
+    }
+}
+function collageNormalizeHexColor(value) {
+    let color = (value || '').trim();
+    if (!color)
+        return null;
+    if (!color.startsWith('#'))
+        color = `#${color}`;
+    if (/^#[0-9a-fA-F]{3}$/.test(color)) {
+        color = `#${color.slice(1).split('').map(char => char + char).join('')}`;
+    }
+    return /^#[0-9a-fA-F]{6}$/.test(color) ? color.toUpperCase() : null;
+}
+function collageApplyPanelFill(fill) {
+    if (collageColorTarget === 'text') {
+        if (typeof applyTextFillFromCollagePanel === 'function' && applyTextFillFromCollagePanel(fill)) {
+            showToast('Đã đổi màu chữ', 'success');
+        }
+        else {
+            showToast('Chọn hoặc thêm chữ trước khi đổi màu', 'warning');
+        }
+        return;
+    }
+    if (collageColorTarget === 'border' && parseInt(collageInput('collageBorder')?.value || '0', 10) === 0) {
+        collageSetInputValue('collageBorder', '6');
+    }
+    collageSetFill(collageColorTarget, fill);
+}
+function collageBuildCheckpointGradient() {
+    const stops = Array.from(document.querySelectorAll('[data-collage-gradient-stop]'))
+        .map(input => input.value || '#ffffff');
+    return `linear-gradient(90deg, ${stops.join(', ')})`;
+}
+function collageUpdateGradientPreview() {
+    const gradient = collageBuildCheckpointGradient();
+    const preview = document.getElementById('collageGradientPreview');
+    if (preview)
+        preview.style.background = gradient;
+    return gradient;
+}
+function collageSyncGradientStops(fill) {
+    const colors = collageExtractFillColors(fill).filter(color => color.startsWith('#'));
+    if (colors.length < 2)
+        return;
+    const chosen = colors.length >= 3
+        ? [colors[0], colors[Math.floor(colors.length / 2)], colors[colors.length - 1]]
+        : [colors[0], colors[1], colors[1]];
+    document.querySelectorAll('[data-collage-gradient-stop]').forEach((input, index) => {
+        input.value = chosen[index] || chosen[chosen.length - 1];
+    });
+    collageUpdateGradientPreview();
+}
+function collageSetInputValue(id, value, eventType = 'input') {
+    const input = collageInput(id);
+    if (!input)
+        return;
+    input.value = value;
+    input.dispatchEvent(new Event(eventType, { bubbles: true }));
+}
+function setCollageQuickPanelVisible(visible) {
+    const panel = document.getElementById('collageQuickPanel');
+    if (panel)
+        panel.style.display = visible ? 'block' : 'none';
+    if (!visible)
+        closeCollagePopovers();
+}
+function closeCollagePopovers() {
+    document.querySelectorAll('.collage-popover.is-open').forEach(menu => menu.classList.remove('is-open'));
+    document.querySelectorAll('.collage-quick-item.is-open').forEach(button => button.classList.remove('is-open'));
+}
+function updateCollageQuickPanelValues() {
+    const aspect = collageInput('collageAspect')?.value || '1:1';
+    const gutter = collageInput('collageGutter')?.value || '0';
+    const radius = collageInput('collageRadius')?.value || '0';
+    const border = collageInput('collageBorder')?.value || '0';
+    const currentFill = collageColorTarget === 'border' ? collageGetFill('border') : collageGetFill('background');
+    const aspectValue = document.getElementById('collageAspectQuickValue');
+    if (aspectValue)
+        aspectValue.textContent = aspect;
+    const spaceValue = document.getElementById('collageSpaceQuickValue');
+    if (spaceValue)
+        spaceValue.textContent = gutter;
+    const swatch = document.getElementById('collageColorQuickSwatch');
+    if (swatch)
+        swatch.style.background = currentFill;
+    const cornerIcon = document.getElementById('collageCornerQuickIcon');
+    if (cornerIcon)
+        cornerIcon.style.setProperty('--corner-preview-radius', `${Math.min(parseInt(radius, 10) || 0, 18)}px`);
+    const spaceMirror = collageInput('collageSpaceMirror');
+    const borderMirror = collageInput('collageBorderMirror');
+    const cornerMirror = collageInput('collageCornerMirror');
+    if (spaceMirror)
+        spaceMirror.value = gutter;
+    if (borderMirror)
+        borderMirror.value = border;
+    if (cornerMirror)
+        cornerMirror.value = radius;
+    const spaceMirrorValue = document.getElementById('collageSpaceMirrorValue');
+    const borderMirrorValue = document.getElementById('collageBorderMirrorValue');
+    const cornerMirrorValue = document.getElementById('collageCornerMirrorValue');
+    if (spaceMirrorValue)
+        spaceMirrorValue.textContent = gutter;
+    if (borderMirrorValue)
+        borderMirrorValue.textContent = border;
+    if (cornerMirrorValue)
+        cornerMirrorValue.textContent = radius;
+    document.querySelectorAll('[data-collage-aspect-option]').forEach(button => {
+        button.classList.toggle('is-active', button.dataset.collageAspectOption === aspect);
+    });
+    document.querySelectorAll('[data-collage-space-option]').forEach(button => {
+        button.classList.toggle('is-active', button.dataset.collageSpaceOption === gutter);
+    });
+    document.querySelectorAll('[data-collage-corner-option]').forEach(button => {
+        button.classList.toggle('is-active', button.dataset.collageCornerOption === radius);
+    });
+    document.querySelectorAll('[data-collage-color-target]').forEach(button => {
+        button.classList.toggle('is-active', button.dataset.collageColorTarget === collageColorTarget);
+    });
+}
+function bindCollageQuickControls() {
+    document.querySelectorAll('[data-collage-popover]').forEach(button => {
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            const targetId = button.dataset.collagePopover || '';
+            const menu = document.getElementById(targetId);
+            const shouldOpen = !menu?.classList.contains('is-open');
+            closeCollagePopovers();
+            if (shouldOpen && menu) {
+                button.classList.add('is-open');
+                menu.classList.add('is-open');
+            }
+        });
+    });
+    document.querySelectorAll('.collage-popover').forEach(menu => {
+        menu.addEventListener('click', event => event.stopPropagation());
+    });
+    document.querySelectorAll('[data-collage-aspect-option]').forEach(button => {
+        button.addEventListener('click', () => {
+            const value = button.dataset.collageAspectOption;
+            if (!value)
+                return;
+            collageSetInputValue('collageAspect', value, 'change');
+            closeCollagePopovers();
+        });
+    });
+    document.querySelectorAll('[data-collage-space-option]').forEach(button => {
+        button.addEventListener('click', () => {
+            const value = button.dataset.collageSpaceOption;
+            if (!value)
+                return;
+            collageSetInputValue('collageGutter', value);
+        });
+    });
+    document.querySelectorAll('[data-collage-corner-option]').forEach(button => {
+        button.addEventListener('click', () => {
+            const value = button.dataset.collageCornerOption;
+            if (!value)
+                return;
+            collageSetInputValue('collageRadius', value);
+        });
+    });
+    document.querySelectorAll('[data-collage-color-target]').forEach(button => {
+        button.addEventListener('click', () => {
+            const target = button.dataset.collageColorTarget;
+            if (target === 'background' || target === 'border' || target === 'text') {
+                collageColorTarget = target;
+                updateCollageQuickPanelValues();
+            }
+        });
+    });
+    document.querySelectorAll('[data-collage-fill]').forEach(button => {
+        button.addEventListener('click', () => {
+            const fill = button.dataset.collageFill || '#ffffff';
+            if (collageIsGradientFill(fill))
+                collageSyncGradientStops(fill);
+            collageApplyPanelFill(fill);
+        });
+    });
+    document.querySelectorAll('[data-collage-gradient-stop]').forEach(input => {
+        input.addEventListener('input', collageUpdateGradientPreview);
+    });
+    document.querySelector('[data-collage-gradient-apply]')?.addEventListener('click', () => {
+        collageApplyPanelFill(collageUpdateGradientPreview());
+    });
+    const collageColorCodeInput = document.getElementById('collageColorCodeInput');
+    const applyCollageCustomColor = () => {
+        const color = collageNormalizeHexColor(collageColorCodeInput?.value || '');
+        if (!color) {
+            showToast('Mã màu không hợp lệ. Dùng dạng #FFFFFF', 'warning');
+            return;
+        }
+        if (collageColorCodeInput)
+            collageColorCodeInput.value = color;
+        collageApplyPanelFill(color);
+    };
+    document.querySelector('[data-collage-custom-fill]')?.addEventListener('click', applyCollageCustomColor);
+    collageColorCodeInput?.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            applyCollageCustomColor();
+        }
+    });
+    const spaceMirror = collageInput('collageSpaceMirror');
+    const borderMirror = collageInput('collageBorderMirror');
+    const cornerMirror = collageInput('collageCornerMirror');
+    spaceMirror?.addEventListener('input', () => collageSetInputValue('collageGutter', spaceMirror.value));
+    borderMirror?.addEventListener('input', () => collageSetInputValue('collageBorder', borderMirror.value));
+    cornerMirror?.addEventListener('input', () => collageSetInputValue('collageRadius', cornerMirror.value));
+    document.addEventListener('click', closeCollagePopovers);
+    collageUpdateGradientPreview();
+    updateCollageQuickPanelValues();
+}
+bindCollageQuickControls();
 // Update slider values display and trigger collage update
 document.getElementById('collageGutter').addEventListener('input', function (e) {
     document.getElementById('gutterValue2').textContent = e.target.value;
+    updateCollageQuickPanelValues();
     if (selectedLayout && collageImages.length > 0) {
         createCollageWithLayout();
     }
 });
 document.getElementById('collageRadius').addEventListener('input', function (e) {
     document.getElementById('radiusValue2').textContent = e.target.value;
+    updateCollageQuickPanelValues();
     if (selectedLayout && collageImages.length > 0) {
         createCollageWithLayout();
     }
 });
 document.getElementById('collageBorder').addEventListener('input', function (e) {
     document.getElementById('borderValue2').textContent = e.target.value;
+    updateCollageQuickPanelValues();
     if (selectedLayout && collageImages.length > 0) {
         createCollageWithLayout();
     }
 });
 // Auto-update collage when settings change
 document.getElementById('collageAspect').addEventListener('change', function () {
+    updateCollageQuickPanelValues();
     if (selectedLayout && collageImages.length > 0) {
         createCollageWithLayout();
     }
 });
 document.getElementById('collageBorderColor').addEventListener('change', function () {
-    if (selectedLayout && collageImages.length > 0) {
-        createCollageWithLayout();
-    }
+    collageSetFill('border', this.value);
 });
 document.getElementById('collageBackground').addEventListener('change', function () {
-    if (selectedLayout && collageImages.length > 0) {
-        createCollageWithLayout();
-    }
+    collageSetFill('background', this.value);
 });
 // Render layout templates
 function renderLayoutTemplates() {
     const container = document.getElementById('layoutTemplates');
     const panel = document.getElementById('templatesPanel');
-    // Show/hide panel based on uploaded photos
-    if (collageImages.length === 0) {
+    // Show collage controls only when there is a real collage, not a single image.
+    if (collageImages.length < 2) {
         panel.style.display = 'none';
+        if (container)
+            container.innerHTML = '';
+        setCollageQuickPanelVisible(false);
         return;
     }
     panel.style.display = 'block';
+    setCollageQuickPanelVisible(true);
+    updateCollageQuickPanelValues();
     let html = '';
     // Filter templates: only show templates matching uploaded photo count
     const availableTemplates = layoutTemplates.filter(layout => layout.maxPhotos === collageImages.length);
@@ -283,8 +611,8 @@ function renderLayoutTemplates() {
             <div class="layout-template ${selectedLayout === layout.id ? 'selected' : ''}"
                  data-image-layout-id="${layout.id}"
                  title="${layout.name} (${layout.maxPhotos} ảnh)">
-                <svg viewBox="0 0 ${layout.cols * 100} ${layout.rows * 100}" 
-                     width="${svgWidth}" 
+                <svg viewBox="0 0 ${layout.cols * 100} ${layout.rows * 100}"
+                     width="${svgWidth}"
                      height="${svgHeight}"
                      class="image-layout-svg">
                     ${layout.cells.map(cell => {
@@ -293,9 +621,9 @@ function renderLayoutTemplates() {
             const cellY = y * 100;
             const cellW = w * 100;
             const cellH = h * 100;
-            return `<rect x="${cellX + 3}" y="${cellY + 3}" width="${cellW - 6}" height="${cellH - 6}" 
-                                     fill="#495057" 
-                                     stroke="#6c757d" 
+            return `<rect x="${cellX + 3}" y="${cellY + 3}" width="${cellW - 6}" height="${cellH - 6}"
+                                     fill="#495057"
+                                     stroke="#6c757d"
                                      stroke-width="3"
                                      rx="5" ry="5"/>`;
         }).join('')}
@@ -307,6 +635,11 @@ function renderLayoutTemplates() {
     container.innerHTML = html;
 }
 function selectLayout(layoutId) {
+    if (collageImages.length < 2) {
+        selectedLayout = null;
+        setCollageQuickPanelVisible(false);
+        return;
+    }
     const layout = layoutTemplates.find(l => l.id === layoutId);
     if (!layout)
         return;
@@ -384,8 +717,8 @@ function createHTMLCollage() {
     const gutter = parseInt(document.getElementById('collageGutter').value);
     const radius = parseInt(document.getElementById('collageRadius').value);
     const borderWidth = parseInt(document.getElementById('collageBorder').value);
-    const borderColor = document.getElementById('collageBorderColor').value;
-    const backgroundColor = document.getElementById('collageBackground').value;
+    const borderColor = collageGetFill('border');
+    const backgroundColor = collageGetFill('background');
     const collageTiles = document.getElementById('collage-tiles');
     // Get current layout
     const layout = layoutTemplates.find(l => l.id === selectedLayout);
@@ -405,14 +738,17 @@ function createHTMLCollage() {
     collageTiles.style.setProperty('--gutter', `${gutter}px`);
     collageTiles.style.setProperty('--radius', `${radius}px`);
     collageTiles.style.setProperty('--stroke', `${borderWidth}px`);
-    collageTiles.style.setProperty('--stroke-color', borderColor);
+    collageTiles.style.setProperty('--stroke-color', collageIsGradientFill(borderColor) ? '#ffffff' : borderColor);
     // Apply background
-    collageTiles.style.backgroundColor = backgroundColor;
+    collageTiles.style.background = backgroundColor;
     collageTiles.style.padding = `${gutter}px`;
     // Clear existing tiles
     collageTiles.innerHTML = '';
     // Set up CSS Grid based on layout
     collageTiles.style.display = 'grid';
+    collageTiles.style.pointerEvents = 'auto';
+    collageTiles.style.opacity = '1';
+    collageTiles.style.filter = 'none';
     collageTiles.style.gridTemplateColumns = `repeat(${layout.cols}, 1fr)`;
     collageTiles.style.gridTemplateRows = `repeat(${layout.rows}, 1fr)`;
     collageTiles.style.gap = `${gutter}px`;
@@ -424,12 +760,23 @@ function createHTMLCollage() {
         // Create tile container
         const tileDiv = document.createElement('div');
         tileDiv.className = 'tile';
+        tileDiv.dataset.collageTileIndex = String(index);
         tileDiv.style.gridColumn = `${col + 1} / span ${colSpan}`;
         tileDiv.style.gridRow = `${row + 1} / span ${rowSpan}`;
         tileDiv.style.overflow = 'hidden';
         tileDiv.style.borderRadius = `${radius}px`;
-        tileDiv.style.border = borderWidth > 0 ? `${borderWidth}px solid ${borderColor}` : 'none';
+        tileDiv.style.boxSizing = 'border-box';
+        if (borderWidth > 0 && collageIsGradientFill(borderColor)) {
+            tileDiv.style.border = `${borderWidth}px solid transparent`;
+            tileDiv.style.background = borderColor;
+        }
+        else {
+            tileDiv.style.border = borderWidth > 0 ? `${borderWidth}px solid ${borderColor}` : 'none';
+            tileDiv.style.background = 'transparent';
+        }
         tileDiv.style.position = 'relative';
+        tileDiv.style.userSelect = 'none';
+        tileDiv.style.touchAction = 'none';
         // Create image
         const img = document.createElement('img');
         img.src = collageImages[index].src;
@@ -448,6 +795,7 @@ function createHTMLCollage() {
         img.style.pointerEvents = 'auto';
         img.style.userSelect = 'none';
         img.style.display = 'block';
+        img.style.borderRadius = `${Math.max(radius - borderWidth, 0)}px`;
         tileDiv.appendChild(img);
         collageTiles.appendChild(tileDiv);
         // Bind drag functionality with index
@@ -493,8 +841,8 @@ async function createCanvasCollage(images, layoutKey) {
     const gutter = parseInt(document.getElementById('collageGutter').value || '0', 10);
     const radius = parseInt(document.getElementById('collageRadius').value || '0', 10);
     const border = parseInt(document.getElementById('collageBorder').value || '0', 10);
-    const borderColor = document.getElementById('collageBorderColor').value || '#ff3b30';
-    const backgroundColor = document.getElementById('collageBackground').value || '#111111';
+    const borderColor = collageGetFill('border') || '#ff3b30';
+    const backgroundColor = collageGetFill('background') || '#111111';
     // 2) Preload áº£nh (fix lá»—i "chá»‰ 1 áº£nh")
     const imgs = await Promise.all(images.map(src => loadImage(src)));
     // 3) TÃ­nh cell theo layout
@@ -503,7 +851,7 @@ async function createCanvasCollage(images, layoutKey) {
     const n = Math.min(cells.length, imgs.length);
     collageCtx.clearRect(0, 0, CW, CH);
     // Fill background
-    collageCtx.fillStyle = backgroundColor;
+    collageCtx.fillStyle = collageCreateCanvasFill(collageCtx, backgroundColor, 0, 0, CW, CH);
     collageCtx.fillRect(0, 0, CW, CH);
     for (let i = 0; i < n; i++) {
         const { x, y, w, h } = cells[i];
@@ -538,7 +886,7 @@ async function createCanvasCollage(images, layoutKey) {
         if (border > 0) {
             collageCtx.save();
             collageCtx.lineWidth = border;
-            collageCtx.strokeStyle = borderColor;
+            collageCtx.strokeStyle = collageCreateCanvasFill(collageCtx, borderColor, x, y, w, h);
             const inset = border / 2;
             collageCtx.beginPath();
             if (radius > 0) {

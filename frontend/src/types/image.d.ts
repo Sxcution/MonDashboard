@@ -8,6 +8,7 @@ interface ImageTextLayer {
   fontSize: number;
   fontFamily: string;
   color: string;
+  fill?: string;
   rotation?: number;
   rainbow?: boolean;
   [key: string]: unknown;
@@ -19,6 +20,7 @@ interface ImageCollageHistoryItem {
   date?: string;
   imageCount: number;
   images: string[];
+  layoutId?: string | null;
   [key: string]: unknown;
 }
 
@@ -75,7 +77,7 @@ interface ImageStorageHelpers {
   clearImageCache(type?: ImageCacheType): void;
   readCollageHistory(): ImageCollageHistoryItem[];
   writeCollageHistory(history: ImageCollageHistoryItem[]): void;
-  addCollageHistory(images: string[]): ImageCollageHistoryItem;
+  addCollageHistory(images: string[], layoutId?: string | null): ImageCollageHistoryItem;
 }
 
 interface Window {

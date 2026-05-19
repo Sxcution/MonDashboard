@@ -155,6 +155,20 @@
             let tg_completedInTask = new Set<string>();
             let tg_allGroups: TelegramGroup[] = [];
 
+            window.registerDashboardTabLifecycle?.('telegram', {
+                  pause() {
+                        const telegramMenu = document.getElementById('telegram-context-menu');
+                        if (telegramMenu) telegramMenu.style.display = 'none';
+
+                        telegramPane.querySelectorAll<HTMLElement>('.modal.show').forEach(modalEl => {
+                              bootstrap.Modal.getInstance(modalEl)?.hide();
+                        });
+                  },
+                  resume() {
+                        tg_updateSessionCountDisplay();
+                  }
+            });
+
             async function tg_handleRunStopClick(event) {
                   const button = event.currentTarget;
                   if (button.dataset.taskRunning === 'true') {

@@ -34,14 +34,15 @@
         localStorage.setItem(STORAGE_KEY_COLLAGE_HISTORY, JSON.stringify(history));
     }
 
-    function addCollageHistory(images: string[]): ImageCollageHistoryItem {
+    function addCollageHistory(images: string[], layoutId: string | null = null): ImageCollageHistoryItem {
         const history = readCollageHistory();
         const entry: ImageCollageHistoryItem = {
             id: Date.now().toString(),
             timestamp: new Date().toISOString(),
             date: new Date().toLocaleString("vi-VN"),
             imageCount: images.length,
-            images
+            images,
+            layoutId
         };
 
         history.unshift(entry);

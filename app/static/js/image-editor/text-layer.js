@@ -38,6 +38,32 @@ function appendRainbowTextWithBreaks(target, text) {
         }
     });
 }
+function textLayerIsGradientFill(fill) {
+    return /^linear-gradient\(/i.test((fill || '').trim());
+}
+function getTextLayerFill(layer) {
+    return String(layer.fill || layer.color || '#ffffff');
+}
+function textLayerFirstColor(fill, fallback = '#ffffff') {
+    return (fill || '').match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/)?.[0] || fill || fallback;
+}
+function applyTextLayerFillStyle(target, layer) {
+    const fill = getTextLayerFill(layer);
+    target.style.backgroundImage = '';
+    target.style.backgroundClip = '';
+    target.style.webkitBackgroundClip = '';
+    target.style.webkitTextFillColor = '';
+    if (textLayerIsGradientFill(fill)) {
+        target.style.color = 'transparent';
+        target.style.backgroundImage = fill;
+        target.style.backgroundClip = 'text';
+        target.style.webkitBackgroundClip = 'text';
+        target.style.webkitTextFillColor = 'transparent';
+    }
+    else {
+        target.style.color = fill;
+    }
+}
 function toggleTextLayer() {
     // Deactivate other tools first
     deactivateAllTools();
@@ -52,8 +78,9 @@ function createNewTextLayer() {
     const layerId = `textLayer_${textLayerCounter}`;
     const textLayer = {
         id: layerId,
-        text: 'Bấm đúp để sửa',
+        text: 'Nhập Text',
         color: '#ffffff',
+        fill: '#ffffff',
         rainbow: false,
         fontFamily: 'Georgia',
         x: 50, // percentage
@@ -107,7 +134,7 @@ function renderTextLayer(layer, autoEdit = false) {
         appendRainbowTextWithBreaks(textContent, layer.text);
     }
     else {
-        textContent.style.color = layer.color;
+        applyTextLayerFillStyle(textContent, layer);
         appendPlainTextWithBreaks(textContent, layer.text);
     }
     layerDiv.appendChild(textContent);
@@ -184,6 +211,10 @@ function editTextLayerInline(layerId) {
         textContent.textContent = layer.text;
         textContent.style.color = '#ffffff';
     }
+    textContent.style.backgroundImage = '';
+    textContent.style.backgroundClip = '';
+    textContent.style.webkitBackgroundClip = '';
+    textContent.style.webkitTextFillColor = '';
     // Focus and select text
     textContent.focus();
     // Select all text
@@ -287,8 +318,12 @@ function setupSubmenuHovers(menuX, menuY) {
         // Populate preset colors
         populatePresetColors();
         // Set current values
-        document.getElementById('colorCodeInput').value = currentEditingLayer.color;
-        document.getElementById('rainbowCheckbox').checked = currentEditingLayer.rainbow;
+        const colorInput = document.getElementById('colorCodeInput');
+        const rainbowInput = document.getElementById('rainbowCheckbox');
+        if (colorInput)
+            colorInput.value = currentEditingLayer.color;
+        if (rainbowInput)
+            rainbowInput.checked = Boolean(currentEditingLayer.rainbow);
     };
     // Font submenu hover
     fontMenuItem.onmouseenter = () => {
@@ -309,21 +344,84 @@ function setupSubmenuHovers(menuX, menuY) {
     };
 }
 function populatePresetColors() {
-    const presetColors = [
-        '#FFFFFF', '#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
-        '#FFA500', '#800080', '#FFC0CB', '#A52A2A', '#808080', '#00FF7F', '#4B0082', '#FFD700',
-        '#FF69B4', '#32CD32', '#1E90FF', '#FF4500', '#8A2BE2', '#20B2AA', '#DC143C', '#7FFF00'
+    const quickColors = [
+        '#ffffff', '#111111', '#ff3b30', '#ff9500', '#ffcc00',
+        '#34c759', '#00c7be', '#007aff', '#5856d6', '#af52de'
+    ];
+    const gradients = [
+        'linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #00c7be, #007aff, #af52de)',
+        'linear-gradient(135deg, #ffffff, #868e96, #111111)',
+        'linear-gradient(135deg, #00f5a0, #00d9f5, #665dff)',
+        'linear-gradient(135deg, #ff0844, #ffb199)',
+        'linear-gradient(135deg, #f9d423, #ff4e50)',
+        'linear-gradient(135deg, #4facfe, #00f2fe)',
+        'linear-gradient(135deg, #43e97b, #38f9d7)',
+        'linear-gradient(135deg, #fa709a, #fee140)',
+        'linear-gradient(135deg, #30cfd0, #330867)',
+        'linear-gradient(135deg, #667eea, #764ba2)'
     ];
     const container = document.getElementById('presetColors');
-    container.innerHTML = '';
-    presetColors.forEach(color => {
-        const div = document.createElement('div');
-        div.className = 'color-preset';
-        div.style.backgroundColor = color;
-        div.title = color;
-        div.onclick = () => applyColor(color);
-        container.appendChild(div);
+    container.innerHTML = `
+        <div class="collage-color-section-title">Màu nhanh</div>
+        <div class="collage-color-grid" data-text-color-grid></div>
+        <div class="collage-color-section-title">Gradient</div>
+        <div class="image-gradient-editor" data-gradient-editor="text">
+            <div class="image-gradient-preview" id="textGradientPreview"></div>
+            <div class="image-gradient-checkpoints">
+                <input type="color" value="#1700d8" data-text-gradient-stop title="Điểm màu 1">
+                <input type="color" value="#e7a62b" data-text-gradient-stop title="Điểm màu 2">
+                <input type="color" value="#1600d8" data-text-gradient-stop title="Điểm màu 3">
+            </div>
+            <div class="image-color-action-row">
+                <button type="button" class="image-modern-color-apply" data-text-gradient-apply>Áp dụng Gradient</button>
+            </div>
+        </div>
+        <div class="collage-gradient-grid" data-text-gradient-grid></div>
+    `;
+    const colorGrid = container.querySelector('[data-text-color-grid]');
+    const gradientGrid = container.querySelector('[data-text-gradient-grid]');
+    quickColors.forEach(color => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'collage-fill-swatch color-preset';
+        button.style.background = color;
+        button.title = color;
+        button.onclick = () => applyColor(color);
+        colorGrid.appendChild(button);
     });
+    gradients.forEach(gradient => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'collage-gradient-swatch color-preset';
+        button.style.background = gradient;
+        button.title = 'Gradient';
+        button.onclick = () => applyColor(gradient);
+        gradientGrid.appendChild(button);
+    });
+    const updatePreview = () => {
+        const stops = Array.from(container.querySelectorAll('[data-text-gradient-stop]')).map(input => input.value);
+        const gradient = `linear-gradient(90deg, ${stops.join(', ')})`;
+        const preview = document.getElementById('textGradientPreview');
+        if (preview)
+            preview.style.background = gradient;
+        return gradient;
+    };
+    container.querySelectorAll('[data-text-gradient-stop]').forEach(input => {
+        input.addEventListener('input', updatePreview);
+    });
+    const gradientButton = container.querySelector('[data-text-gradient-apply]');
+    gradientButton?.addEventListener('click', () => applyColor(updatePreview()));
+    const customRow = document.querySelector('#colorSubmenu .image-inline-47');
+    if (customRow && !customRow.querySelector('[data-text-custom-fill]')) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'image-modern-color-apply';
+        button.dataset.textCustomFill = 'true';
+        button.textContent = 'Áp dụng mã';
+        button.addEventListener('click', applyCustomColor);
+        customRow.appendChild(button);
+    }
+    updatePreview();
 }
 function populateFontList() {
     const container = document.getElementById('fontList');
@@ -340,11 +438,23 @@ function populateFontList() {
 function applyColor(color) {
     if (!currentEditingLayer)
         return;
-    currentEditingLayer.color = color;
+    currentEditingLayer.fill = color;
+    currentEditingLayer.color = textLayerIsGradientFill(color) ? textLayerFirstColor(color) : color;
     currentEditingLayer.rainbow = false;
     renderTextLayer(currentEditingLayer);
     showToast('Đã đổi màu', 'success');
     closeAllMenus();
+}
+function applyTextFillFromCollagePanel(fill) {
+    const targetLayer = currentEditingLayer || textLayers[textLayers.length - 1];
+    if (!targetLayer)
+        return false;
+    currentEditingLayer = targetLayer;
+    targetLayer.fill = fill;
+    targetLayer.color = textLayerIsGradientFill(fill) ? textLayerFirstColor(fill) : fill;
+    targetLayer.rainbow = false;
+    renderTextLayer(targetLayer);
+    return true;
 }
 function applyCustomColor() {
     const input = document.getElementById('colorCodeInput');
@@ -367,6 +477,7 @@ function applyRainbowMode(enabled) {
     if (!enabled) {
         // Use current color when disabling rainbow
         currentEditingLayer.color = document.getElementById('colorCodeInput').value || '#FFFFFF';
+        currentEditingLayer.fill = currentEditingLayer.color;
     }
     renderTextLayer(currentEditingLayer);
     showToast(enabled ? 'Đã bật màu cầu vồng' : 'Đã tắt màu cầu vồng', 'success');

@@ -1,12 +1,16 @@
 "use strict";
 // ===== MXH REAL-TIME CONFIGURATION =====
 (function () {
+    let isMXHDashboardTabInitialized = false;
     const MXH_CONFIG = {
         AUTO_REFRESH_INTERVAL: 15000, // Changed from 3000 to 15000ms (15 seconds)
         DEBOUNCE_DELAY: 500, // Debounce for inline editing
         RENDER_BATCH_SIZE: 50, // Cards to render per batch (for smooth rendering)
         ENABLE_AUTO_REFRESH: true // Changed from false to true
     };
+    const MXH_REFRESH_INTERVAL_KEY = 'mxh_refresh_interval_ms';
+    const MXH_MIN_REFRESH_INTERVAL = 3000;
+    const MXH_DEFAULT_REFRESH_INTERVAL = 15000;
     const MXHState = window.MXHState;
     const MXHApi = window.MXHApi;
     const MXHUtils = window.MXHUtils;
@@ -52,6 +56,59 @@
     let mxhSearchQuery = '';
     // Default platform: ưu tiên WeChat (chỉ set 1 lần khi vừa load data)
     let _mxhDefaultPlatformSet = false;
+    function normalizeRefreshInterval(value) {
+        const interval = Number(value);
+        if (!Number.isFinite(interval) || interval < MXH_MIN_REFRESH_INTERVAL)
+            return null;
+        return Math.round(interval);
+    }
+    function setMXHRefreshInterval(value) {
+        const interval = normalizeRefreshInterval(value) || MXH_DEFAULT_REFRESH_INTERVAL;
+        MXH_CONFIG.AUTO_REFRESH_INTERVAL = interval;
+        try {
+            localStorage.setItem(MXH_REFRESH_INTERVAL_KEY, String(interval));
+        }
+        catch (error) {
+            console.warn('Unable to cache MXH refresh interval:', error);
+        }
+        return interval;
+    }
+    async function loadMXHRefreshIntervalSetting() {
+        try {
+            const cachedInterval = normalizeRefreshInterval(localStorage.getItem(MXH_REFRESH_INTERVAL_KEY));
+            if (cachedInterval)
+                setMXHRefreshInterval(cachedInterval);
+        }
+        catch (error) {
+            console.warn('Unable to read cached MXH refresh interval:', error);
+        }
+        try {
+            const response = await fetch('/settings/api/settings', { cache: 'no-store' });
+            if (!response.ok)
+                return MXH_CONFIG.AUTO_REFRESH_INTERVAL;
+            const settings = await response.json();
+            return setMXHRefreshInterval(settings.mxh_refresh_interval);
+        }
+        catch (error) {
+            console.warn('Unable to load MXH refresh interval from settings:', error);
+            return MXH_CONFIG.AUTO_REFRESH_INTERVAL;
+        }
+    }
+    function bindMXHRefreshIntervalUpdates() {
+        window.addEventListener('storage', (event) => {
+            if (event.key !== MXH_REFRESH_INTERVAL_KEY || !event.newValue)
+                return;
+            setMXHRefreshInterval(event.newValue);
+            if (autoRefreshTimer)
+                startAutoRefresh();
+        });
+        window.addEventListener('mxh-refresh-interval-changed', (event) => {
+            const interval = event.detail?.interval;
+            setMXHRefreshInterval(interval);
+            if (autoRefreshTimer)
+                startAutoRefresh();
+        });
+    }
     const mxhAccountsContainer = document.getElementById('mxh-accounts-container');
     if (mxhAccountsContainer) {
         mxhAccountsContainer.addEventListener('click', (event) => {
@@ -301,9 +358,11 @@
         if (!MXH_CONFIG.ENABLE_AUTO_REFRESH)
             return;
         stopAutoRefresh(); // Clear any existing timer
+        const interval = normalizeRefreshInterval(MXH_CONFIG.AUTO_REFRESH_INTERVAL) || MXH_DEFAULT_REFRESH_INTERVAL;
+        MXH_CONFIG.AUTO_REFRESH_INTERVAL = interval;
         autoRefreshTimer = setInterval(async () => {
             await loadMXHData(false); // Don't force render, only if data changed
-        }, MXH_CONFIG.AUTO_REFRESH_INTERVAL);
+        }, interval);
         // console.log('✅ MXH Auto-refresh enabled (every', MXH_CONFIG.AUTO_REFRESH_INTERVAL / 1000, 'seconds)');
     }
     function stopAutoRefresh() {
@@ -312,13 +371,28 @@
             autoRefreshTimer = null;
         }
     }
-    // Pause auto-refresh when user is interacting (context menu open, modal open, etc.)
-    let interactionPaused = false;
     function pauseAutoRefresh() {
-        interactionPaused = true;
+        window.interactionPaused = true;
     }
     function resumeAutoRefresh() {
-        interactionPaused = false;
+        window.interactionPaused = false;
+    }
+    function pauseMXHDashboardTab() {
+        window.interactionPaused = true;
+        mxhInlineEditRuntime.captureSelection();
+        stopAutoRefresh();
+        refreshAbortController?.abort();
+        hideCardContextMenu();
+    }
+    function resumeMXHDashboardTab() {
+        window.interactionPaused = false;
+        startAutoRefresh();
+        if (mxhInlineEditRuntime.isEditing()) {
+            setTimeout(() => mxhInlineEditRuntime.restoreSelection(), 50);
+        }
+        else {
+            loadMXHData(false);
+        }
     }
     async function ensurePlatformGroup(platform) {
         return await MXHAccountActions.ensurePlatformGroup(platform);
@@ -474,9 +548,29 @@
         return await MXHAccountActions.resetAccount(accountId);
     }
     // Initialize - Load data and start auto-refresh
-    document.addEventListener('DOMContentLoaded', async () => {
+    async function initMXHDashboardTab() {
+        if (isMXHDashboardTabInitialized)
+            return;
+        if (!document.getElementById('mxh-tool-pane'))
+            return;
+        isMXHDashboardTabInitialized = true;
+        window.registerDashboardTabLifecycle?.('mxh', {
+            pause: pauseMXHDashboardTab,
+            resume: resumeMXHDashboardTab
+        });
+        bindMXHRefreshIntervalUpdates();
+        await loadMXHRefreshIntervalSetting();
         await MXHInit.init(getRenderContext());
-    });
+        const mxhPaneShell = document.getElementById('mxh-tool-pane')?.closest('[data-dashboard-tab-pane]');
+        if (mxhPaneShell?.hidden)
+            pauseMXHDashboardTab();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMXHDashboardTab, { once: true });
+    }
+    else {
+        initMXHDashboardTab();
+    }
     // Initialize tooltips function
     function initializeTooltips() {
         // Initialize Bootstrap tooltips

@@ -1,5 +1,5 @@
 {% extends "layouts/base.html" %}
-{% set image_asset_v = '20260518-collage-drag-panel' %}
+{% set image_asset_v = '20260519-soft-gray-panel-lines' %}
 
 {% block title %}Chỉnh Ảnh{% endblock %}
 
@@ -26,25 +26,27 @@
                             <input type="file" class="d-none" id="collageUpload" accept="image/*" multiple>
                         </div>
 
-                        <div class="col-auto"><div class="vr image-inline-4"></div></div>
+                        <div class="col-auto collage-legacy-controls" hidden aria-hidden="true"><div class="vr image-inline-4"></div></div>
 
                         <!-- Ratio -->
-                        <div class="col-auto">
+                        <div class="col-auto collage-legacy-controls" hidden aria-hidden="true">
                             <div class="d-flex align-items-center gap-2">
                                 <label class="form-label mb-0 image-inline-5">Tỷ lệ</label>
                                 <select class="form-select form-select-sm image-inline-6" id="collageAspect">
                                     <option value="1:1" selected>1:1</option>
                                     <option value="3:4">3:4</option>
+                                    <option value="4:3">4:3</option>
                                     <option value="4:5">4:5</option>
+                                    <option value="9:16">9:16</option>
                                     <option value="16:9">16:9</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div class="col-auto"><div class="vr image-inline-4"></div></div>
+                        <div class="col-auto collage-legacy-controls" hidden aria-hidden="true"><div class="vr image-inline-4"></div></div>
 
                         <!-- Collage Settings Button with Dropdown -->
-                        <div class="col-auto position-relative">
+                        <div class="col-auto position-relative collage-legacy-controls" hidden aria-hidden="true">
                             <button class="btn btn-outline-secondary btn-sm image-inline-7" id="collageSettingsBtn"
                                    >
                                 <i class="bi bi-grid-3x3-gap image-inline-8"></i>
@@ -84,16 +86,18 @@
                                     <div class="image-inline-14">
                                         <label class="form-label mb-1 image-inline-15">Màu viền</label>
                                         <input type="color" class="form-control form-control-color image-inline-16" id="collageBorderColor" value="#ff3b30">
+                                        <input type="hidden" id="collageBorderFill" value="#ff3b30">
                                     </div>
                                     <div class="image-inline-14">
                                         <label class="form-label mb-1 image-inline-15">Nền</label>
                                         <input type="color" class="form-control form-control-color image-inline-16" id="collageBackground" value="#111111">
+                                        <input type="hidden" id="collageBackgroundFill" value="#111111">
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="col-auto"><div class="vr image-inline-4"></div></div>
+                        <div class="col-auto collage-legacy-controls" hidden aria-hidden="true"><div class="vr image-inline-4"></div></div>
 
                         <!-- Text Button -->
                         <div class="col-auto">
@@ -214,6 +218,151 @@
                     <!-- Text Layers Container -->
                     <div id="textLayersContainer" class="image-inline-35">
                         <!-- Text layers will be added here -->
+                    </div>
+
+                    <!-- Quick Collage Controls - added above the collage preview, old controls remain in the toolbar -->
+                    <div id="collageQuickPanel" class="collage-quick-panel">
+                        <div class="collage-quick-grid">
+                            <div class="collage-quick-item-wrap">
+                                <button type="button" class="collage-quick-item" data-collage-popover="collageAspectPopover">
+                                    <span class="collage-quick-value" id="collageAspectQuickValue">1:1</span>
+                                    <span class="collage-quick-label">Aspect</span>
+                                </button>
+                                <div class="collage-popover collage-aspect-popover" id="collageAspectPopover">
+                                    <button type="button" class="collage-popover-option is-active" data-collage-aspect-option="1:1">
+                                        <span class="collage-aspect-icon square"></span>
+                                        <span>Square (1:1)</span>
+                                    </button>
+                                    <button type="button" class="collage-popover-option" data-collage-aspect-option="3:4">
+                                        <span class="collage-aspect-icon portrait"></span>
+                                        <span>Portrait (3:4)</span>
+                                    </button>
+                                    <button type="button" class="collage-popover-option" data-collage-aspect-option="4:3">
+                                        <span class="collage-aspect-icon post"></span>
+                                        <span>Post (4:3)</span>
+                                    </button>
+                                    <button type="button" class="collage-popover-option" data-collage-aspect-option="9:16">
+                                        <span class="collage-aspect-icon story"></span>
+                                        <span>Story (9:16)</span>
+                                    </button>
+                                    <button type="button" class="collage-popover-option" data-collage-aspect-option="16:9">
+                                        <span class="collage-aspect-icon wide"></span>
+                                        <span>Wide (16:9)</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="collage-quick-item-wrap">
+                                <button type="button" class="collage-quick-item" data-collage-popover="collageColorPopover">
+                                    <span class="collage-quick-swatch" id="collageColorQuickSwatch"></span>
+                                    <span class="collage-quick-label">Color</span>
+                                </button>
+                                <div class="collage-popover collage-color-popover" id="collageColorPopover">
+                                    <div class="collage-color-tabs">
+                                        <button type="button" class="is-active" data-collage-color-target="background">Nen</button>
+                                        <button type="button" data-collage-color-target="border">Vien</button>
+                                        <button type="button" data-collage-color-target="text">Chu</button>
+                                    </div>
+                                    <div class="collage-color-section-title">Mau nhanh</div>
+                                    <div class="collage-color-grid">
+                                        <button type="button" class="collage-fill-swatch" data-collage-fill="#ffffff" style="background:#ffffff" title="#ffffff"></button>
+                                        <button type="button" class="collage-fill-swatch" data-collage-fill="#111111" style="background:#111111" title="#111111"></button>
+                                        <button type="button" class="collage-fill-swatch" data-collage-fill="#ff3b30" style="background:#ff3b30" title="#ff3b30"></button>
+                                        <button type="button" class="collage-fill-swatch" data-collage-fill="#ff9500" style="background:#ff9500" title="#ff9500"></button>
+                                        <button type="button" class="collage-fill-swatch" data-collage-fill="#ffcc00" style="background:#ffcc00" title="#ffcc00"></button>
+                                        <button type="button" class="collage-fill-swatch" data-collage-fill="#34c759" style="background:#34c759" title="#34c759"></button>
+                                        <button type="button" class="collage-fill-swatch" data-collage-fill="#00c7be" style="background:#00c7be" title="#00c7be"></button>
+                                        <button type="button" class="collage-fill-swatch" data-collage-fill="#007aff" style="background:#007aff" title="#007aff"></button>
+                                        <button type="button" class="collage-fill-swatch" data-collage-fill="#5856d6" style="background:#5856d6" title="#5856d6"></button>
+                                        <button type="button" class="collage-fill-swatch" data-collage-fill="#af52de" style="background:#af52de" title="#af52de"></button>
+                                    </div>
+                                    <div class="collage-color-section-title">Gradient</div>
+                                    <div class="image-gradient-editor" data-gradient-editor="collage">
+                                        <div class="image-gradient-preview" id="collageGradientPreview"></div>
+                                        <div class="image-gradient-checkpoints">
+                                            <input type="color" value="#1700d8" data-collage-gradient-stop title="Điểm màu 1">
+                                            <input type="color" value="#e7a62b" data-collage-gradient-stop title="Điểm màu 2">
+                                            <input type="color" value="#1600d8" data-collage-gradient-stop title="Điểm màu 3">
+                                        </div>
+                                        <div class="image-color-action-row">
+                                            <input type="text" id="collageColorCodeInput" placeholder="#FFFFFF" maxlength="7">
+                                            <button type="button" data-collage-custom-fill>Áp dụng mã</button>
+                                            <button type="button" data-collage-gradient-apply>Áp dụng Gradient</button>
+                                        </div>
+                                    </div>
+                                    <div class="collage-gradient-grid">
+                                        <button type="button" class="collage-gradient-swatch" data-collage-fill="linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #00c7be, #007aff, #af52de)" style="background:linear-gradient(90deg, #ff3b30, #ff9500, #ffcc00, #34c759, #00c7be, #007aff, #af52de)" title="7 sac"></button>
+                                        <button type="button" class="collage-gradient-swatch" data-collage-fill="linear-gradient(135deg, #ffffff, #868e96, #111111)" style="background:linear-gradient(135deg, #ffffff, #868e96, #111111)" title="Den trang"></button>
+                                        <button type="button" class="collage-gradient-swatch" data-collage-fill="linear-gradient(135deg, #00f5a0, #00d9f5, #665dff)" style="background:linear-gradient(135deg, #00f5a0, #00d9f5, #665dff)" title="Neon lanh"></button>
+                                        <button type="button" class="collage-gradient-swatch" data-collage-fill="linear-gradient(135deg, #ff0844, #ffb199)" style="background:linear-gradient(135deg, #ff0844, #ffb199)" title="Rose"></button>
+                                        <button type="button" class="collage-gradient-swatch" data-collage-fill="linear-gradient(135deg, #f9d423, #ff4e50)" style="background:linear-gradient(135deg, #f9d423, #ff4e50)" title="Sunset"></button>
+                                        <button type="button" class="collage-gradient-swatch" data-collage-fill="linear-gradient(135deg, #4facfe, #00f2fe)" style="background:linear-gradient(135deg, #4facfe, #00f2fe)" title="Sky"></button>
+                                        <button type="button" class="collage-gradient-swatch" data-collage-fill="linear-gradient(135deg, #43e97b, #38f9d7)" style="background:linear-gradient(135deg, #43e97b, #38f9d7)" title="Mint"></button>
+                                        <button type="button" class="collage-gradient-swatch" data-collage-fill="linear-gradient(135deg, #fa709a, #fee140)" style="background:linear-gradient(135deg, #fa709a, #fee140)" title="Pop"></button>
+                                        <button type="button" class="collage-gradient-swatch" data-collage-fill="linear-gradient(135deg, #30cfd0, #330867)" style="background:linear-gradient(135deg, #30cfd0, #330867)" title="Deep"></button>
+                                        <button type="button" class="collage-gradient-swatch" data-collage-fill="linear-gradient(135deg, #667eea, #764ba2)" style="background:linear-gradient(135deg, #667eea, #764ba2)" title="Violet"></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="collage-quick-item-wrap">
+                                <button type="button" class="collage-quick-item" data-collage-popover="collageSpacePopover">
+                                    <span class="collage-quick-value" id="collageSpaceQuickValue">8</span>
+                                    <span class="collage-quick-label">Space</span>
+                                </button>
+                                <div class="collage-popover collage-space-popover" id="collageSpacePopover">
+                                    <button type="button" class="collage-popover-option" data-collage-space-option="0">
+                                        <span class="collage-space-icon none"></span>
+                                        <span>None (0)</span>
+                                    </button>
+                                    <button type="button" class="collage-popover-option" data-collage-space-option="10">
+                                        <span class="collage-space-icon small"></span>
+                                        <span>Small (10)</span>
+                                    </button>
+                                    <button type="button" class="collage-popover-option" data-collage-space-option="20">
+                                        <span class="collage-space-icon medium"></span>
+                                        <span>Medium (20)</span>
+                                    </button>
+                                    <button type="button" class="collage-popover-option" data-collage-space-option="40">
+                                        <span class="collage-space-icon large"></span>
+                                        <span>Large (40)</span>
+                                    </button>
+                                    <div class="collage-popover-slider">
+                                        <label>Between <span id="collageSpaceMirrorValue">8</span></label>
+                                        <input type="range" min="0" max="40" value="8" id="collageSpaceMirror">
+                                    </div>
+                                    <div class="collage-popover-slider">
+                                        <label>Border <span id="collageBorderMirrorValue">0</span></label>
+                                        <input type="range" min="0" max="20" value="0" id="collageBorderMirror">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="collage-quick-item-wrap">
+                                <button type="button" class="collage-quick-item" data-collage-popover="collageCornerPopover">
+                                    <span class="collage-quick-corner" id="collageCornerQuickIcon"></span>
+                                    <span class="collage-quick-label">Corner</span>
+                                </button>
+                                <div class="collage-popover collage-corner-popover" id="collageCornerPopover">
+                                    <button type="button" class="collage-popover-option is-active" data-collage-corner-option="0">
+                                        <span class="collage-corner-icon square"></span>
+                                        <span>Square</span>
+                                    </button>
+                                    <button type="button" class="collage-popover-option" data-collage-corner-option="18">
+                                        <span class="collage-corner-icon round"></span>
+                                        <span>Round</span>
+                                    </button>
+                                    <button type="button" class="collage-popover-option" data-collage-corner-option="40">
+                                        <span class="collage-corner-icon pill"></span>
+                                        <span>Soft</span>
+                                    </button>
+                                    <div class="collage-popover-slider">
+                                        <label>Corner <span id="collageCornerMirrorValue">0</span></label>
+                                        <input type="range" min="0" max="40" value="0" id="collageCornerMirror">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- COLLAGE START -->
@@ -346,11 +495,11 @@
 </div>
 
 <!-- Color Submenu (Appears on hover) -->
-<div id="colorSubmenu" class="image-inline-44">
+<div id="colorSubmenu" class="image-inline-44 image-modern-color-panel">
     <div class="image-inline-45">Chọn màu</div>
 
     <!-- Preset Colors Grid -->
-    <div id="presetColors" class="image-inline-46">
+    <div id="presetColors" class="image-modern-palette">
         <!-- Will be populated by JS -->
     </div>
 

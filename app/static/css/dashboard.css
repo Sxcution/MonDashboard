@@ -358,6 +358,19 @@ main,
     background: var(--dashboard-bg) !important;
 }
 
+.dashboard-tab-cache-pane {
+    width: 100%;
+    min-height: calc(100vh - 56px);
+}
+
+.dashboard-tab-cache-pane[hidden] {
+    display: none !important;
+}
+
+.dashboard-tab-cache-pane.is-active {
+    display: block;
+}
+
 /* === Global Background Unification === */
 :root {
     --dashboard-bg: #1a1a1a;
