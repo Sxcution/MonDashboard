@@ -30,40 +30,30 @@
         width: 33.333333%;
     }
 
-    /* Grid View */
-    #notes-container.notes-grid-view .note-card-wrapper {
-        flex: 0 0 33.333333%;
-        max-width: 33.333333%;
-        padding: 0 !important;
-    }
-
-    #notes-container.notes-grid-view .card {
-        height: 120px;
-    }
-
-    /* List View */
-    #notes-container.notes-list-view .note-card-wrapper {
+    /* Notes list */
+    #notes-container .note-card-wrapper {
         flex: 0 0 100%;
         max-width: 100%;
         padding: 0 !important;
     }
 
-    #notes-container.notes-list-view .card {
-        height: 70px;
+    #notes-container .card {
+        --note-card-height: 70px;
+        height: var(--note-card-height);
     }
 
-    #notes-container.notes-list-view .card .card-title {
+    #notes-container .card .card-title {
         font-size: 1.14rem;
         margin-bottom: 0.2rem;
     }
 
-    #notes-container.notes-list-view .card .card-note-body {
+    #notes-container .card .card-note-body {
         font-size: 0.75rem;
         -webkit-line-clamp: 1;
         line-clamp: 1;
     }
 
-    #notes-container.notes-list-view .card .card-body {
+    #notes-container .card .card-body {
         padding: 0.5rem;
     }
 
@@ -150,23 +140,6 @@
 
     .has-profile:hover {
         background-color: rgba(0, 224, 255, 0.3);
-    }
-
-    /* Card Enter Animation */
-    .note-card-enter-active {
-        animation: noteCardEnter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-
-    @keyframes noteCardEnter {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
     }
 
     /* Profile Highlight Animation */
@@ -802,6 +775,34 @@
 .notes-copy-preview-img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .notes-copy-profile-content { margin-top: 8px; max-width: 400px; word-wrap: break-word; }
 
+.notes-delete-confirm-dialog {
+    max-width: 390px;
+}
+
+.notes-delete-confirm-dialog .modal-content {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.notes-delete-confirm-dialog .modal-header {
+    padding: 0.85rem 1rem;
+}
+
+.notes-delete-confirm-dialog .modal-body {
+    padding: 1.25rem 1rem 1rem;
+}
+
+.notes-delete-confirm-dialog .modal-footer {
+    padding: 1rem;
+    gap: 0.5rem;
+}
+
+.notes-delete-confirm-dialog .modal-footer .btn {
+    min-width: 82px;
+    padding: 0.45rem 0.8rem;
+    font-weight: 700;
+}
+
 /* Migrated from global style.css: Notes */
 /* ===== NOTES LAYOUT STYLES ===== */
 /* New Layout System with Animation */
@@ -842,40 +843,29 @@
     /* List now takes up 1/3 of the space */
 }
 
-/* Grid View: Cards are in a multi-column grid */
-#notes-container.notes-grid-view .note-card-wrapper {
-    flex: 0 0 33.333333%;
-    max-width: 33.333333%;
-    padding: 0 !important;
-    /* Remove all padding */
-}
-
-#notes-container.notes-grid-view .card {
-    height: 120px;
-}
-
-/* List View: Cards are in a single vertical list */
-#notes-container.notes-list-view .note-card-wrapper {
+/* Notes list: cards are in a single vertical list */
+#notes-container .note-card-wrapper {
     flex: 0 0 100%;
     max-width: 100%;
     padding: 0 !important;
     /* Remove all padding */
 }
 
-#notes-container.notes-list-view .card {
-    height: 70px;
+#notes-container .card {
+    --note-card-height: 70px;
+    height: var(--note-card-height);
     /* Giảm từ 100px xuống 70px */
 }
 
-/* Font size adjustments for list view */
-#notes-container.notes-list-view .card .card-title {
+/* Font size adjustments for note rows */
+#notes-container .card .card-title {
     font-size: 1.14rem;
     /* Tăng thêm 20% từ 0.95rem lên 1.14rem */
     margin-bottom: 0.2rem;
     /* Giảm khoảng cách giữa title và body */
 }
 
-#notes-container.notes-list-view .card .card-note-body {
+#notes-container .card .card-note-body {
     font-size: 0.75rem;
     /* Giảm kích thước font body */
     display: -webkit-box;
@@ -886,19 +876,9 @@
     overflow: hidden;
 }
 
-#notes-container.notes-list-view .card .card-body {
+#notes-container .card .card-body {
     padding: 0.5rem;
     /* Giảm padding của card body */
-}
-
-/* Grid view - also truncate content */
-#notes-container.notes-grid-view .card .card-note-body {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    overflow: hidden;
-    font-size: 0.8rem;
 }
 
 /* Compact notes container */
@@ -992,39 +972,6 @@
     display: inline-block;
     /* Ensure transform works correctly */
     animation: profile-bounce 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* --- Grid View Specific Styles (Xem Mặc Định) --- */
-.notes-grid-view .col-lg-4,
-.notes-grid-view .col-md-6 {
-    /* Remove padding to make cards flush */
-    padding: 0 !important;
-}
-
-.notes-grid-view .card {
-    --note-card-height: 120px;
-    /* Default height for grid view */
-    height: var(--note-card-height);
-    transition: height 0.3s ease-in-out;
-    /* Add transition */
-}
-
-/* --- List View Specific Styles (Xem Danh Sách) --- */
-.notes-list-view .col-lg-4,
-.notes-list-view .col-md-6 {
-    /* In list view, each item is a full-width row */
-    flex: 0 0 100%;
-    max-width: 100%;
-    padding: 0 !important;
-    /* Only bottom padding for spacing */
-}
-
-.notes-list-view .card {
-    --note-card-height: 100px;
-    /* Default height for list view */
-    height: var(--note-card-height);
-    transition: height 0.3s ease-in-out;
-    /* Add transition */
 }
 
 /* --- Card Height Modifiers --- */
@@ -1536,31 +1483,6 @@
 }
 
 
-/* --- Animation cho thẻ Ghi chú mới --- */
-@keyframes noteCardEnterAnimation {
-    0% {
-        opacity: 0;
-        transform: translateY(25px) scale(0.95);
-        box-shadow: 0 0 15px rgba(0, 224, 255, 0.4);
-    }
-
-    60% {
-        opacity: 1;
-        transform: translateY(0) scale(1.02);
-        box-shadow: 0 8px 25px rgba(0, 224, 255, 0.25);
-    }
-
-    100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        box-shadow: none;
-    }
-}
-
-.note-card-enter .card {
-    animation: noteCardEnterAnimation 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-
 #notes-container .card {
     /* Transition mượt mà cho các thuộc tính sẽ thay đổi khi hover */
     transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
@@ -1578,17 +1500,23 @@
         0 12px 30px rgba(0, 0, 0, 0.4);
 }
 
-.note-card-enter-active {
-    transform: translateY(-10px);
-    border-color: #00e0ff;
-    box-shadow: 0 8px 32px 0 rgba(0, 255, 255, 0.2), 0 12px 30px rgba(0, 0, 0, 0.4);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    /* <-- ADD THIS LINE */
+/* === Notes internal scroll === */
+#main-tab-content > .dashboard-tab-cache-pane.is-active:has(#notes-tool-pane) {
+    height: calc(100dvh - 60px);
+    min-height: calc(100dvh - 60px);
+    overflow: hidden;
 }
 
-/* === Notes internal scroll === */
+#notes-tool-pane {
+    height: 100%;
+    overflow: hidden;
+}
+
 .notes-layout-container {
-    height: calc(100vh - 120px);
+    height: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 #notes-list-wrapper,
@@ -1597,16 +1525,97 @@
     overflow: hidden;
 }
 
+#notes-list-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+#notes-list-wrapper > .d-flex {
+    flex: 0 0 auto;
+}
+
+#notes-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    align-content: flex-start;
+    padding-right: 0.35rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 224, 255, 0.7) rgba(255, 255, 255, 0.08);
+    -webkit-overflow-scrolling: touch;
+}
+
+#notes-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+#notes-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+}
+
+#notes-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 224, 255, 0.65);
+    border: 2px solid #1a1a1a;
+    border-radius: 999px;
+}
+
+#notes-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 224, 255, 0.9);
+}
+
 #notes-detail-panel {
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
+#notes-detail-panel .card-header {
+    flex: 0 0 auto;
+}
+
 #notes-detail-content-wrapper {
     flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#notes-detail-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    overflow-x: hidden;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 224, 255, 0.7) rgba(255, 255, 255, 0.08);
     -webkit-overflow-scrolling: touch;
+}
+
+#notes-detail-content::-webkit-scrollbar {
+    width: 10px;
+}
+
+#notes-detail-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+}
+
+#notes-detail-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 224, 255, 0.65);
+    border: 2px solid #1a1a1a;
+    border-radius: 999px;
+}
+
+#notes-detail-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 224, 255, 0.9);
+}
+
+#detail-editable-full {
+    min-height: 100%;
+    box-sizing: border-box;
 }
 
 /* Notes page background moved from global style.css */

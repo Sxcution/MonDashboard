@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/notes.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/notes.css') }}?v=20260521-notes-list-only">
 {% endblock %}
 
 {% block content %}
@@ -19,7 +19,7 @@
         <i class="bi bi-plus-lg me-2"></i> Thêm Ghi Chú Mới
     </div>
     <div class="menu-item has-submenu">
-        <i class="bi bi-aspect-ratio me-2"></i> Chế độ xem
+        <i class="bi bi-arrows-vertical me-2"></i> Độ cao dòng
         <i class="bi bi-chevron-right submenu-arrow"></i>
         <div class="submenu">
             <div class="menu-item" data-size-modifier="default">
@@ -266,18 +266,17 @@
 
 <!-- Confirm Delete Modal -->
 <div class="modal fade" id="notes-confirmDeleteModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-dialog modal-dialog-centered notes-delete-confirm-dialog">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Xác nhận xóa</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center py-4">
-                <p class="mb-0">Bạn có chắc chắn muốn xóa ghi chú này?</p>
-                <small class="text-muted">Hành động này không thể hoàn tác.</small>
+            <div class="modal-body text-center notes-delete-confirm-body">
+                <p class="mb-0 text-nowrap">Bạn có chắc chắn muốn xóa ghi chú này?</p>
             </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy Bỏ</button>
+            <div class="modal-footer justify-content-center notes-delete-confirm-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                 <button type="button" class="btn btn-danger" id="notes-confirm-delete-btn">Xác Nhận</button>
             </div>
         </div>

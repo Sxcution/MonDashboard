@@ -171,8 +171,9 @@ function initNotesDashboardTab() {
         let activeNoteId = null;
         let autoSaveTimer = null;
         let savedSelection = null;
-        let blockNextBlurSave = false;
         const NOTES_AUTOSAVE_DELAY_MS = 700;
+        const NOTES_SAVED_TOAST_COOLDOWN_MS = 1200;
+        let lastNotesSavedToastAt = 0;
         window.notesData = [];
         window.filteredNotes = [];
 
@@ -193,38 +194,262 @@ function initNotesDashboardTab() {
             return document.getElementById('detail-editable-full') as HTMLElement | null;
         }
 
-        function buildNotePayloadFromEditor(editorEl) {
-            const parts = editorEl.innerHTML.split('<br>');
+        function getNoteKey(noteId) {
+            return String(noteId);
+        }
+
+        function unwrapNode(node: Element) {
+            const parent = node.parentNode;
+            if (!parent) return;
+            while (node.firstChild) {
+                parent.insertBefore(node.firstChild, node);
+            }
+            parent.removeChild(node);
+        }
+
+        function stripTransientEditorMarkup(html) {
+            const scratch = document.createElement('div');
+            scratch.innerHTML = html;
+            scratch.querySelectorAll('.notes-search-highlight').forEach(unwrapNode);
+            return scratch.innerHTML;
+        }
+
+        function getPersistableEditorHtml(editorEl) {
+            return stripTransientEditorMarkup(editorEl.innerHTML);
+        }
+
+        function buildNotePayloadFromHtml(html) {
+            const parts = html.split('<br>');
             return {
                 title_html: parts.shift() || '',
                 content_html: parts.join('<br>')
             };
         }
 
-        function flushPendingNoteSave() {
+        const noteSaveStateById = new Map<string, any>();
+
+        function getNoteSaveState(noteId) {
+            const key = getNoteKey(noteId);
+            let state = noteSaveStateById.get(key);
+            if (!state) {
+                state = {
+                    lastSavedHtml: null,
+                    queuedHtml: null,
+                    queuedSilent: true,
+                    saving: false,
+                    promise: null
+                };
+                noteSaveStateById.set(key, state);
+            }
+            return state;
+        }
+
+        function rememberEditorSnapshot(noteId, editorEl) {
+            const html = getPersistableEditorHtml(editorEl);
+            editorEl.dataset.noteEditorId = getNoteKey(noteId);
+            editorEl.setAttribute('data-initial-content', html);
+            getNoteSaveState(noteId).lastSavedHtml = html;
+            return html;
+        }
+
+        function findLatestNote(noteId) {
+            return window.notesData.find(n => String(n.id) === String(noteId)) || null;
+        }
+
+        function sortNotesDataByModifiedAt() {
+            window.notesData.sort((a, b) => new Date(b.modified_at || 0).getTime() - new Date(a.modified_at || 0).getTime());
+        }
+
+        function getCurrentSearchTerm() {
+            return (searchInput?.value || '').toLowerCase().trim();
+        }
+
+        function noteMatchesSearch(note, searchTerm) {
+            if (!searchTerm) return true;
+
+            const titleLower = (note.title_html || '').toLowerCase();
+            const contentLower = (note.content_html || '').toLowerCase();
+            if (titleLower.includes(searchTerm) || contentLower.includes(searchTerm)) return true;
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = note.content_html || '';
+            if ((tempDiv.textContent || '').toLowerCase().includes(searchTerm)) return true;
+
+            return contentLower.includes(`data-profile-id="${searchTerm}"`);
+        }
+
+        function refreshFilteredNotesFromState(searchTerm = getCurrentSearchTerm()) {
+            window.filteredNotes = searchTerm
+                ? window.notesData.filter(note => noteMatchesSearch(note, searchTerm))
+                : [...window.notesData];
+            return window.filteredNotes;
+        }
+
+        function applySavedNoteToUi(noteId, updatedNote) {
+            const index = window.notesData.findIndex(n => String(n.id) === String(noteId));
+            if (index !== -1) {
+                window.notesData[index] = updatedNote;
+            } else {
+                window.notesData.unshift(updatedNote);
+            }
+
+            sortNotesDataByModifiedAt();
+            const searchTerm = getCurrentSearchTerm();
+            renderNotes(refreshFilteredNotesFromState(searchTerm), searchTerm);
+            container.scrollTop = 0;
+        }
+
+        function showNotesSavedToast() {
+            const now = performance.now();
+            if (now - lastNotesSavedToastAt < NOTES_SAVED_TOAST_COOLDOWN_MS) return;
+            lastNotesSavedToastAt = now;
+            showToast('✅ Đã lưu ghi chú!', 'success');
+        }
+
+        function queuePersistNoteHtml(noteId, html, options = {}) {
+            const forceSave = Boolean((options as any).forceSave);
+            const silentSave = Boolean((options as any).silentSave);
+            const state = getNoteSaveState(noteId);
+
+            if (!forceSave && html === state.lastSavedHtml) {
+                return Promise.resolve(null);
+            }
+
+            const alreadyQueued = state.queuedHtml !== null;
+            state.queuedHtml = html;
+            state.queuedSilent = alreadyQueued ? (state.queuedSilent && silentSave) : silentSave;
+
+            if (state.saving && state.promise) {
+                return state.promise;
+            }
+
+            state.saving = true;
+            state.promise = (async () => {
+                try {
+                    while (state.queuedHtml !== null) {
+                        const htmlToSave = state.queuedHtml;
+                        const isSilent = state.queuedSilent;
+                        state.queuedHtml = null;
+                        state.queuedSilent = true;
+
+                        if (htmlToSave === state.lastSavedHtml) continue;
+
+                        try {
+                            if (!isSilent) {
+                                showToast('Đang lưu...', 'info');
+                            }
+
+                            const updatedNote = await updateNoteOnServer(noteId, buildNotePayloadFromHtml(htmlToSave));
+                            state.lastSavedHtml = htmlToSave;
+                            applySavedNoteToUi(noteId, updatedNote);
+                            showNotesSavedToast();
+                        } catch (error) {
+                            if (state.queuedHtml === null) {
+                                state.queuedHtml = htmlToSave;
+                                state.queuedSilent = isSilent;
+                            }
+                            throw error;
+                        }
+                    }
+                    return null;
+                } finally {
+                    state.saving = false;
+                    state.promise = null;
+                }
+            })();
+
+            return state.promise;
+        }
+
+        function scheduleNoteAutoSave(noteId, editorEl) {
+            if (autoSaveTimer) {
+                clearTimeout(autoSaveTimer);
+            }
+
+            autoSaveTimer = setTimeout(() => {
+                autoSaveTimer = null;
+                saveNoteChanges(noteId, false, true, editorEl);
+            }, NOTES_AUTOSAVE_DELAY_MS);
+        }
+
+        function attachMainEditorAutoSave(editorEl, noteId, resetSavedSnapshot = false) {
+            editorEl.spellcheck = false;
+            if (resetSavedSnapshot) {
+                rememberEditorSnapshot(noteId, editorEl);
+            } else {
+                const html = getPersistableEditorHtml(editorEl);
+                const state = getNoteSaveState(noteId);
+                editorEl.dataset.noteEditorId = getNoteKey(noteId);
+                if (state.lastSavedHtml === null) {
+                    state.lastSavedHtml = html;
+                }
+                editorEl.setAttribute('data-initial-content', state.lastSavedHtml);
+            }
+
+            editorEl.addEventListener('blur', () => {
+                saveNoteChanges(noteId, false, true, editorEl);
+            });
+
+            editorEl.addEventListener('input', () => {
+                scheduleNoteAutoSave(noteId, editorEl);
+            });
+
+            editorEl.addEventListener('contextmenu', handleEditorContextMenu);
+        }
+
+        function attachRightSplitEditorAutoSave(editorEl, noteId) {
+            editorEl.addEventListener('blur', () => {
+                saveSplitState(noteId, 2, editorEl.innerHTML);
+            });
+
+            editorEl.addEventListener('input', () => {
+                if (autoSaveTimer) {
+                    clearTimeout(autoSaveTimer);
+                }
+
+                autoSaveTimer = setTimeout(() => {
+                    autoSaveTimer = null;
+                    saveSplitState(noteId, 2, editorEl.innerHTML);
+                }, NOTES_AUTOSAVE_DELAY_MS);
+            });
+
+            editorEl.addEventListener('contextmenu', handleEditorContextMenu);
+        }
+
+        function flushPendingNoteSave(useKeepalive = false) {
             if (autoSaveTimer) {
                 clearTimeout(autoSaveTimer);
                 autoSaveTimer = null;
             }
 
-            if (!activeNoteId) return;
+            const noteId = activeNoteId;
+            if (!noteId) return;
 
             const editorEl = getActiveEditorElement();
             if (!editorEl) return;
 
-            const currentContent = editorEl.innerHTML;
-            if (currentContent === editorEl.getAttribute('data-initial-content')) return;
+            const currentContent = getPersistableEditorHtml(editorEl);
+            const state = getNoteSaveState(noteId);
+            const initialContent = editorEl.getAttribute('data-initial-content');
+            if (currentContent === initialContent && currentContent === state.lastSavedHtml) return;
 
-            editorEl.setAttribute('data-initial-content', currentContent);
+            if (!useKeepalive) {
+                saveNoteChanges(noteId, true, true, editorEl);
+                return;
+            }
 
-            const payload = buildNotePayloadFromEditor(editorEl);
+            const payload = buildNotePayloadFromHtml(currentContent);
             const body = JSON.stringify(payload);
-            const url = `${notesApi.updateNoteBase}${activeNoteId}`;
+            const url = `${notesApi.updateNoteBase}${noteId}`;
 
             try {
                 if (navigator.sendBeacon) {
                     const blob = new Blob([body], { type: 'application/json' });
-                    if (navigator.sendBeacon(url, blob)) return;
+                    if (navigator.sendBeacon(url, blob)) {
+                        state.lastSavedHtml = currentContent;
+                        editorEl.setAttribute('data-initial-content', currentContent);
+                        return;
+                    }
                 }
             } catch (error) {
                 console.warn('Notes beacon save failed:', error);
@@ -235,7 +460,12 @@ function initNotesDashboardTab() {
                 headers: { 'Content-Type': 'application/json' },
                 body,
                 keepalive: true
-            }).catch(error => console.warn('Notes keepalive save failed:', error));
+            })
+                .then(() => {
+                    state.lastSavedHtml = currentContent;
+                    editorEl.setAttribute('data-initial-content', currentContent);
+                })
+                .catch(error => console.warn('Notes keepalive save failed:', error));
         }
 
         let dashboardSavedSelection: Range | null = null;
@@ -271,13 +501,9 @@ function initNotesDashboardTab() {
         async function fetchAndRenderNotes(searchTerm = '') {
             try {
                 const notes = await loadNotesFromApi();
-                window.notesData = notes.sort((a, b) => new Date(b.modified_at || 0).getTime() - new Date(a.modified_at || 0).getTime());
-
-                window.filteredNotes = searchTerm
-                    ? window.notesData.filter(note =>
-                    ((note.title_html || '').toLowerCase().includes(searchTerm) ||
-                        (note.content_html || '').toLowerCase().includes(searchTerm)))
-                    : [...window.notesData];
+                window.notesData = notes;
+                sortNotesDataByModifiedAt();
+                refreshFilteredNotesFromState(searchTerm);
 
                 renderNotes(window.filteredNotes, searchTerm);
 
@@ -361,7 +587,7 @@ function initNotesDashboardTab() {
             const cardElement = col.querySelector('.card');
             cardElement.addEventListener('click', (e) => {
                 if (asElement(e.target)?.closest('button')) return;
-                showNoteDetail(note);
+                showNoteDetail(findLatestNote(note.id) || note);
             });
 
             return col;
@@ -370,15 +596,12 @@ function initNotesDashboardTab() {
         function openDetailPanel() {
             listWrapper.classList.add('shrunk');
             detailWrapper.classList.add('visible');
-            container.classList.remove('notes-grid-view');
-            container.classList.add('notes-list-view');
         }
 
         window.closeDetailPanel = () => {
+            flushPendingNoteSave(false);
             listWrapper.classList.remove('shrunk');
             detailWrapper.classList.remove('visible');
-            container.classList.remove('notes-list-view');
-            container.classList.add('notes-grid-view');
             document.querySelector('.note-card-active')?.classList.remove('note-card-active');
             activeNoteId = null;
 
@@ -424,6 +647,7 @@ function initNotesDashboardTab() {
 
             if (!detailContent || !editorEl) return;
 
+            flushPendingNoteSave(false);
             currentSplitMode = mode;
 
             if (mode === 2) {
@@ -483,17 +707,7 @@ function initNotesDashboardTab() {
                 // Re-attach event listeners to new editable
                 const newEditor = document.getElementById('detail-editable-full');
                 if (newEditor) {
-                    newEditor.setAttribute('data-initial-content', newEditor.innerHTML);
-                    newEditor.addEventListener('blur', () => {
-                        if (activeNoteId) saveNoteChanges(activeNoteId);
-                    });
-                    newEditor.addEventListener('input', () => {
-                        clearTimeout(autoSaveTimer);
-                        autoSaveTimer = setTimeout(() => {
-                            if (activeNoteId) saveNoteChanges(activeNoteId, true, true);
-                        }, NOTES_AUTOSAVE_DELAY_MS);
-                    });
-                    newEditor.addEventListener('contextmenu', handleEditorContextMenu);
+                    attachMainEditorAutoSave(newEditor, activeNoteId);
 
                     // Re-initialize profile interactions
                     initializeProfileInteractions();
@@ -503,20 +717,7 @@ function initNotesDashboardTab() {
                 // Attach event listeners to RIGHT pane editor too
                 const rightEditor = document.getElementById('detail-editable-right');
                 if (rightEditor) {
-                    rightEditor.addEventListener('blur', () => {
-                        // Save right pane content to localStorage
-                        saveSplitState(activeNoteId, 2, rightEditor.innerHTML);
-                        if (activeNoteId) saveSplitNoteChanges();
-                    });
-                    rightEditor.addEventListener('input', () => {
-                        clearTimeout(autoSaveTimer);
-                        autoSaveTimer = setTimeout(() => {
-                            // Save right pane content to localStorage
-                            saveSplitState(activeNoteId, 2, rightEditor.innerHTML);
-                            if (activeNoteId) saveSplitNoteChanges(true);
-                        }, NOTES_AUTOSAVE_DELAY_MS);
-                    });
-                    rightEditor.addEventListener('contextmenu', handleEditorContextMenu);
+                    attachRightSplitEditorAutoSave(rightEditor, activeNoteId);
                 }
 
                 // Only save initial empty state if this is a NEW split (not restoring from localStorage)
@@ -545,17 +746,7 @@ function initNotesDashboardTab() {
                 // Re-attach event listeners
                 const newEditor = document.getElementById('detail-editable-full');
                 if (newEditor) {
-                    newEditor.setAttribute('data-initial-content', newEditor.innerHTML);
-                    newEditor.addEventListener('blur', () => {
-                        if (activeNoteId) saveNoteChanges(activeNoteId);
-                    });
-                    newEditor.addEventListener('input', () => {
-                        clearTimeout(autoSaveTimer);
-                        autoSaveTimer = setTimeout(() => {
-                            if (activeNoteId) saveNoteChanges(activeNoteId, true, true);
-                        }, NOTES_AUTOSAVE_DELAY_MS);
-                    });
-                    newEditor.addEventListener('contextmenu', handleEditorContextMenu);
+                    attachMainEditorAutoSave(newEditor, activeNoteId);
 
                     // Re-initialize profile interactions
                     initializeProfileInteractions();
@@ -573,6 +764,11 @@ function initNotesDashboardTab() {
         };
 
         function showNoteDetail(note) {
+            note = findLatestNote(note.id) || note;
+
+            if (activeNoteId && String(activeNoteId) !== String(note.id)) {
+                flushPendingNoteSave(false);
+            }
             activeNoteId = note.id;
 
             document.querySelectorAll('#notes-container .card').forEach(card => card.classList.remove('note-card-active'));
@@ -632,27 +828,7 @@ function initNotesDashboardTab() {
             detailContent.innerHTML = `<div id="detail-editable-full" contenteditable="true" spellcheck="false" data-placeholder="Dòng đầu là tiêu đề...">${titleHtml}<br>${contentHtml}</div>`;
             const editorEl = document.getElementById('detail-editable-full');
 
-            // Force disable spellcheck via JavaScript
-            editorEl.spellcheck = false;
-
-            // Set initial content for comparison
-            editorEl.setAttribute('data-initial-content', editorEl.innerHTML);
-
-            // Focus handler - update initial content
-            editorEl.addEventListener('focus', () => {
-                editorEl.setAttribute('data-initial-content', editorEl.innerHTML);
-            });
-
-            // Blur handler - save immediately if content changed
-            editorEl.addEventListener('blur', () => {
-                if (blockNextBlurSave) {
-                    blockNextBlurSave = false;
-                    return;
-                }
-                saveNoteChanges(note.id);
-            });
-
-            editorEl.addEventListener('contextmenu', handleEditorContextMenu);
+            attachMainEditorAutoSave(editorEl, note.id, true);
 
             // Click handler for links - open in new tab
             editorEl.addEventListener('click', (e) => {
@@ -704,27 +880,11 @@ function initNotesDashboardTab() {
 
                 // Auto-save after paste
                 setTimeout(() => {
-                    if (activeNoteId) {
-                        console.log('🔍 Auto-saving note after paste:', activeNoteId);
-                        saveNoteChanges(activeNoteId, true);
+                    if (note.id) {
+                        console.log('🔍 Auto-saving note after paste:', note.id);
+                        saveNoteChanges(note.id, true, false, editorEl);
                     }
                 }, 100);
-            });
-
-            // Input handler - auto-save on typing
-            editorEl.addEventListener('input', (e) => {
-                console.log('[editor input] ⌨️ Input event triggered');
-
-                // Clear previous timer
-                clearTimeout(autoSaveTimer);
-
-                // Auto-save shortly after typing stops (debounced, silent mode)
-                autoSaveTimer = setTimeout(() => {
-                    if (activeNoteId) {
-                        console.log('[editor input] 💾 Auto-saving note after typing pause');
-                        saveNoteChanges(activeNoteId, true, true); // forceSave=true, silentSave=true
-                    }
-                }, NOTES_AUTOSAVE_DELAY_MS);
             });
 
             // Initialize profile interactions and apply saved colors
@@ -759,99 +919,41 @@ function initNotesDashboardTab() {
         }
 
         // Save function for split view - saves LEFT pane to DB, RIGHT pane to localStorage ONLY
-        async function saveSplitNoteChanges(silentSave = false) {
-            if (!activeNoteId) return;
+        async function saveSplitNoteChanges(silentSave = false, noteId = activeNoteId, leftEditorOverride = null, rightEditorOverride = null) {
+            if (!noteId) return;
 
-            const leftEditor = document.getElementById('detail-editable-full');
-            const rightEditor = document.getElementById('detail-editable-right');
+            const leftEditor = leftEditorOverride || document.getElementById('detail-editable-full');
+            const rightEditor = rightEditorOverride || document.getElementById('detail-editable-right');
 
-            if (!leftEditor) return;
-
-            // Save LEFT pane to database (normal note content)
-            const leftHtml = leftEditor.innerHTML;
-            const parts = leftHtml.split('<br>');
-            const payload = {
-                title_html: parts.shift() || '',
-                content_html: parts.join('<br>')
-            };
-
-            try {
-                const updatedNote = await updateNoteOnServer(activeNoteId, payload);
-                const index = window.notesData.findIndex(n => n.id === activeNoteId);
-                if (index !== -1) window.notesData[index] = updatedNote;
-            } catch (error) {
-                showToast('Lỗi khi lưu!', 'error');
+            if (rightEditor) {
+                saveSplitState(noteId, 2, rightEditor.innerHTML);
             }
 
-            // Save RIGHT pane to localStorage ONLY (not to DB)
-            if (rightEditor) {
-                saveSplitState(activeNoteId, 2, rightEditor.innerHTML);
+            if (leftEditor) {
+                await saveNoteChanges(noteId, false, silentSave, leftEditor);
             }
         }
 
-        async function saveNoteChanges(noteId, forceSave = false, silentSave = false) {
+        async function saveNoteChanges(noteId, forceSave = false, silentSave = false, editorOverride = null) {
             if (!noteId) return;
 
-            const editorEl = document.getElementById('detail-editable-full');
+            const editorEl = editorOverride || document.getElementById('detail-editable-full');
             if (!editorEl) return;
 
             const initialContent = editorEl.getAttribute('data-initial-content');
-            const currentContent = editorEl.innerHTML;
+            const currentContent = getPersistableEditorHtml(editorEl);
+            const saveState = getNoteSaveState(noteId);
 
             // Skip save if content unchanged and not forced
-            if (!forceSave && currentContent === initialContent) {
+            if (!forceSave && (currentContent === initialContent || currentContent === saveState.lastSavedHtml)) {
                 return;
             }
 
-            const payload = buildNotePayloadFromEditor(editorEl);
-
             try {
-                if (!silentSave) {
-                    showToast('Đang lưu...', 'info');
-                }
+                await queuePersistNoteHtml(noteId, currentContent, { forceSave, silentSave });
 
-                const updatedNote = await updateNoteOnServer(noteId, payload);
-
-                // Update local data immediately
-                const index = window.notesData.findIndex(n => n.id === noteId);
-                if (index !== -1) {
-                    window.notesData[index] = updatedNote;
-                }
-
-                // Update initial content to new saved state
-                editorEl.setAttribute('data-initial-content', currentContent);
-
-                // Silent save - no toast spam
-                // if (!silentSave) {
-                //     showToast('Đã lưu thay đổi!', 'success');
-                // }
-
-                // Update only the specific card without full re-render
-                const cardWrapper = document.querySelector(`[data-note-id="${noteId}"]`);
-                if (cardWrapper) {
-                    const card = cardWrapper.querySelector('.card');
-                    if (card) {
-                        // Update card preview content
-                        const cardTitle = card.querySelector('.card-title');
-                        const cardBody = card.querySelector('.card-note-body');
-                        const timeStamp = card.querySelector('.text-muted[title*="Ngày"]');
-
-                        if (cardTitle) {
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = updatedNote.title_html;
-                            cardTitle.innerHTML = tempDiv.textContent || tempDiv.innerText;
-                        }
-
-                        if (cardBody) {
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = updatedNote.content_html;
-                            cardBody.innerHTML = tempDiv.textContent || tempDiv.innerText;
-                        }
-
-                        if (timeStamp) {
-                            timeStamp.innerHTML = `<i class="bi bi-clock-history me-1"></i>${formatTimeAgo(updatedNote.modified_at)}`;
-                        }
-                    }
+                if (getPersistableEditorHtml(editorEl) === currentContent) {
+                    editorEl.setAttribute('data-initial-content', currentContent);
                 }
 
             } catch (error) {
@@ -879,15 +981,29 @@ function initNotesDashboardTab() {
         };
 
         // Confirm Delete Modal
-        const confirmDeleteModal = new bootstrap.Modal(document.getElementById('notes-confirmDeleteModal') as HTMLElement);
+        const confirmDeleteModalEl = document.getElementById('notes-confirmDeleteModal') as HTMLElement;
+        const confirmDeleteModal = new bootstrap.Modal(confirmDeleteModalEl);
         const confirmDeleteBtn = document.getElementById('notes-confirm-delete-btn') as HTMLElement;
         let pendingDeleteNoteId = null;
+        let isDeletingNote = false;
 
-        window.deleteNoteWrapper = async (id, event) => {
+        function requestDeleteNote(id, event = null) {
+            event?.preventDefault?.();
             event?.stopPropagation();
+            if (!id) return;
             pendingDeleteNoteId = id;
             confirmDeleteModal.show();
+        }
+
+        window.deleteNoteWrapper = async (id, event) => {
+            requestDeleteNote(id, event);
         };
+
+        confirmDeleteModalEl.addEventListener('hidden.bs.modal', () => {
+            if (!isDeletingNote) {
+                pendingDeleteNoteId = null;
+            }
+        });
 
         document.addEventListener('click', (event) => {
             const target = asElement(event.target)?.closest<HTMLElement>('[data-notes-action], [data-notes-split-mode]');
@@ -916,19 +1032,30 @@ function initNotesDashboardTab() {
         confirmDeleteBtn.addEventListener('click', async () => {
             if (!pendingDeleteNoteId) return;
 
+            const noteId = pendingDeleteNoteId;
+            isDeletingNote = true;
+            confirmDeleteBtn.setAttribute('disabled', 'true');
+
             try {
-                await deleteNoteOnServer(pendingDeleteNoteId, 'POST');
+                await deleteNoteOnServer(noteId, 'POST');
 
-                if (pendingDeleteNoteId === activeNoteId) window.closeDetailPanel();
+                if (String(noteId) === String(activeNoteId)) {
+                    activeNoteId = null;
+                    window.closeDetailPanel();
+                }
 
-                confirmDeleteModal.hide();
                 pendingDeleteNoteId = null;
+                confirmDeleteModal.hide();
 
                 await fetchAndRenderNotes(searchInput.value.toLowerCase().trim());
                 showToast('Đã xóa ghi chú.', 'info');
             } catch (error) {
-                showToast('Lỗi: Không thể xóa ghi chú.', 'error');
+                console.error('Error deleting note:', error);
+                showToast('Không thể xóa ghi chú này, vui lòng thử lại.', 'error');
                 confirmDeleteModal.hide();
+            } finally {
+                isDeletingNote = false;
+                confirmDeleteBtn.removeAttribute('disabled');
             }
         });
 
@@ -1050,6 +1177,16 @@ function initNotesDashboardTab() {
             }
         });
 
+        document.addEventListener('pointerdown', (event) => {
+            const editorEl = getActiveEditorElement();
+            if (!activeNoteId || !editorEl) return;
+
+            const target = asElement(event.target);
+            if (target && editorEl.contains(target)) return;
+
+            saveNoteChanges(activeNoteId, false, true, editorEl);
+        }, true);
+
         // Main form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1079,31 +1216,7 @@ function initNotesDashboardTab() {
         // Search input - Enhanced search like original version
         searchInput.addEventListener('input', (e) => {
             const searchTerm = (e.target as HTMLInputElement).value.toLowerCase().trim();
-            const notesToShow = searchTerm
-                ? window.notesData.filter(note => {
-                    const titleLower = (note.title_html || '').toLowerCase();
-                    const contentLower = (note.content_html || '').toLowerCase();
-                    const searchLower = searchTerm.toLowerCase();
-
-                    // Check 1: Search in visible title
-                    if (titleLower.includes(searchLower)) return true;
-
-                    // Check 2: Search in visible content (plain text)
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = note.content_html || '';
-                    if (tempDiv.textContent.toLowerCase().includes(searchLower)) return true;
-
-                    // Check 3: Search for the profile ID attribute directly in the HTML string
-                    // This is crucial for finding IDs that are not part of the visible text.
-                    const profileIdSearchString = `data-profile-id="${searchLower}"`.toLowerCase();
-                    if (contentLower.includes(profileIdSearchString)) return true;
-
-                    return false;
-                })
-                : window.notesData;
-
-            window.filteredNotes = notesToShow;
-            renderNotes(notesToShow, searchTerm);
+            renderNotes(refreshFilteredNotesFromState(searchTerm), searchTerm);
         });
 
         // Context menu actions for note card
@@ -1533,7 +1646,6 @@ function initNotesDashboardTab() {
             profileContentInput.innerHTML = '';
             deleteProfileBtn.style.display = 'none';
             currentProfileSpan = null;
-            blockNextBlurSave = true;
             hideAllContextMenus(true); // Preserve savedSelection!
             profileModal.show();
         });
@@ -1739,7 +1851,6 @@ function initNotesDashboardTab() {
                     loadImagesIntoThumbnailArea(images);               // đổ thumb
                 }
                 deleteProfileBtn.style.display = 'block';
-                blockNextBlurSave = true;
                 profileModal.show();
             }
         });
@@ -1821,7 +1932,7 @@ function initNotesDashboardTab() {
             }
         });
 
-        // --- Card Size Modifier (Chế độ xem) ---
+        // --- Card Height Modifier ---
         function applySavedCardSize() {
             const savedModifier = localStorage.getItem('notesCardSizeModifier') || 'default';
             container.classList.remove('h-minus-2', 'h-minus-4');
@@ -2158,21 +2269,7 @@ function initNotesDashboardTab() {
                         break;
 
                     case 'delete':
-                        // Xóa ghi chú với confirm
-                        if (noteId) {
-                            if (confirm('Bạn có chắc chắn muốn xóa ghi chú này?')) {
-                                try {
-                                    const data = await deleteNoteOnServer(noteId, 'DELETE');
-                                    if (data.success) {
-                                        await fetchAndRenderNotes(searchInput.value.toLowerCase().trim());
-                                        showToast('Đã xóa ghi chú!', 'success');
-                                    }
-                                } catch (error) {
-                                    console.error('Error deleting note:', error);
-                                    showToast('Lỗi khi xóa ghi chú. Vui lòng thử lại.', 'error');
-                                }
-                            }
-                        }
+                        requestDeleteNote(noteId, ev);
                         break;
                 }
             });
@@ -2180,11 +2277,7 @@ function initNotesDashboardTab() {
 
         // --- Initial Setup ---
         async function initializeNotesView() {
-            // Requirement 1: Set default to list view (như phiên bản cũ)
-            container.classList.add('notes-list-view');
-            container.classList.remove('notes-grid-view');
-
-            // Close detail panel if it's open, ensuring a clean list view
+            // Close detail panel if it's open, ensuring a clean list state.
             if (detailWrapper.classList.contains('visible')) {
                 window.closeDetailPanel();
             }
@@ -2194,15 +2287,6 @@ function initNotesDashboardTab() {
 
             // Apply card size settings
             applySavedCardSize();
-
-            // Animate the cards after they have been rendered
-            setTimeout(() => {
-                const cards = container.querySelectorAll('.card');
-                cards.forEach(card => {
-                    card.classList.add('note-card-enter-active');
-                    setTimeout(() => card.classList.remove('note-card-enter-active'), 400);
-                });
-            }, 50);
 
             // NEW LOGIC: Automatically select and show the first note (như phiên bản cũ)
             if (window.filteredNotes && window.filteredNotes.length > 0) {
@@ -2216,10 +2300,10 @@ function initNotesDashboardTab() {
             }
         }
 
-        window.addEventListener('pagehide', flushPendingNoteSave);
-        window.addEventListener('beforeunload', flushPendingNoteSave);
+        window.addEventListener('pagehide', () => flushPendingNoteSave(true));
+        window.addEventListener('beforeunload', () => flushPendingNoteSave(true));
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) flushPendingNoteSave();
+            if (document.hidden) flushPendingNoteSave(true);
         });
 
         window.registerDashboardTabLifecycle?.('notes', {
