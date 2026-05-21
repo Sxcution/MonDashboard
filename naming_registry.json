@@ -11,7 +11,11 @@
         "input_user_message": "user-input",
         "form_chat": "chat-form",
         "container_image_preview": "image-preview-container",
-        "img_preview": "image-preview"
+        "img_preview": "image-preview",
+        "chat_context_menu": "chat-context-menu",
+        "current_model_name": "current-model-name",
+        "mini_chat_bubble": "mini-chat-bubble",
+        "mini_chat_window": "mini-chat-window"
     },
     "UI_SETTINGS_MODAL": {
         "tab_api": "settings-api",
@@ -54,7 +58,12 @@
         "field_container_type": "container_type",
         "field_wechat_status": "wechat_status",
         "field_email": "email",
-        "field_nearby_people_until": "nearby_people_until"
+        "field_nearby_people_until": "nearby_people_until",
+        "table_session_groups": "session_groups",
+        "table_task_configs": "task_configs",
+        "table_auto_seeding_settings": "auto_seeding_settings",
+        "table_mxh_groups": "mxh_groups",
+        "table_mxh_phone_history": "mxh_phone_history"
     },
     "CONFIG_KEYS": {
         "key_provider": "provider",
@@ -122,7 +131,16 @@
         "badge_nearby_eligible": "nearby-eligible-badge",
         "fn_is_eligible_nearby_people": "isEligibleNearbyPeople",
         "fn_is_nearby_people_active": "isNearbyPeopleActive",
-        "class_btn_mxh_action": "btn-mxh-action"
+        "class_btn_mxh_action": "btn-mxh-action",
+        "dynamic_style": "mxh-dynamic-style",
+        "context_menu_card": "card-context-menu",
+        "modal_move_account": "move-account-modal",
+        "btn_move_account_confirm": "move-account-confirm-btn",
+        "section_phone_history": "phone-history-section",
+        "list_phone_history": "phone-history-list",
+        "input_new_phone_history": "input-new-phone-history",
+        "storage_cards_per_row": "mxh_cards_per_row",
+        "storage_refresh_interval": "mxh_refresh_interval_ms"
     },
     "UI_NOTES": {
         "tab_pane": "notes-tool-pane",
@@ -160,7 +178,30 @@
         "dropdown_split_view": "splitViewDropdown",
         "container_split_view": "split-view-container",
         "pane_split_left": "split-pane-left",
-        "pane_split_right": "split-pane-right"
+        "pane_split_right": "split-pane-right",
+        "config": "notes-config",
+        "editor_detail_full": "detail-editable-full",
+        "editor_detail_right": "detail-editable-right",
+        "modal_codeblock_confirm_delete": "codeblock-confirmDeleteModal",
+        "btn_codeblock_confirm_delete": "codeblock-confirm-delete-btn",
+        "container_profile_images": "profile-images-container",
+        "container_profile_thumbnails": "profile-images-thumbnails",
+        "btn_copy_profile_id": "notes-copy-profile-id-btn",
+        "btn_copy_profile_password": "notes-copy-profile-password-btn",
+        "class_note_card_wrapper": "note-card-wrapper",
+        "class_note_card_active": "note-card-active",
+        "class_list_shrunk": "shrunk",
+        "class_detail_visible": "visible",
+        "class_row_height_small": "h-minus-2",
+        "class_row_height_shortest": "h-minus-4",
+        "css_delete_confirm_dialog": "notes-delete-confirm-dialog",
+        "action_tab_add_note": "add-note",
+        "action_card_mark": "mark",
+        "action_card_copy_id": "copy-id",
+        "action_card_delete": "delete",
+        "storage_split_states": "noteSplitStates",
+        "storage_profile_colors": "profileColors",
+        "storage_card_size_modifier": "notesCardSizeModifier"
     },
     "UI_TELEGRAM": {
         "tab_pane": "telegram-tool-pane",
@@ -214,7 +255,18 @@
         "switch_proxy_enabled": "tg-proxy-enabled",
         "textarea_proxy_list": "tg-proxy-list",
         "btn_save_proxy": "tg-save-proxy-btn",
-        "context_menu_telegram": "telegram-context-menu"
+        "context_menu_telegram": "telegram-context-menu",
+        "btn_check_live_header": "tg-check-live-btn-header",
+        "modal_task_completed": "tg-taskCompletedModal",
+        "text_completed_total": "tg-completed-total",
+        "text_completed_success": "tg-completed-success",
+        "text_completed_failed": "tg-completed-failed",
+        "badge_auto_seeding_status": "auto-seeding-status-badge-container",
+        "input_auto_seeding_end_hour": "auto-seeding-end-hour",
+        "input_auto_seeding_end_minute": "auto-seeding-end-minute",
+        "select_auto_seeding_end_ampm": "auto-seeding-end-ampm",
+        "storage_selected_group": "tg_selectedGroupId",
+        "storage_last_selected_task": "tg_lastSelectedTask"
     },
     "UI_IMAGE": {
         "input_upload": "collageUpload",
@@ -250,6 +302,1418 @@
         "prompt_collage": "collagePrompt",
         "context_menu_text": "textContextMenu",
         "submenu_color": "colorSubmenu",
-        "submenu_font": "fontSubmenu"
+        "submenu_font": "fontSubmenu",
+        "quick_panel": "collageQuickPanel",
+        "color_popover": "collageColorPopover",
+        "corner_popover": "collageCornerPopover",
+        "space_popover": "collageSpacePopover",
+        "aspect_popover": "collageAspectPopover",
+        "toolbar_color_picker": "toolbarColorPicker",
+        "toolbar_color_code": "toolbarColorCode",
+        "toolbar_rainbow_mode": "toolbarRainbowMode",
+        "text_gradient_preview": "textGradientPreview",
+        "upscale_menu": "upscaleMenu",
+        "upscale_model_dialog": "upscaleModelDialog",
+        "upscale_model": "upscaleModel",
+        "upscale_scale": "upscaleScale"
+    },
+    "PROJECT_DOCS": {
+        "rules": "Rule.md",
+        "project_structure": "project_structure.md",
+        "naming_registry": "naming_registry.json",
+        "color_inventory": "color_inventory.md",
+        "readme": "README.md",
+        "frontend_refactor_notes": "AI.md"
+    },
+    "BUILD_COMMANDS": {
+        "check_typescript": "npm run check:ts",
+        "build_all_frontend": "npm run build",
+        "build_typescript_emit": "npm run build:ts",
+        "build_vite_bundles": "npm run vite:build",
+        "compile_python": "python -m compileall app",
+        "browser_smoke": "npm run test:browser",
+        "validate_registry_json": "python -m json.tool naming_registry.json"
+    },
+    "FRONTEND_ENTRYPOINTS": {
+        "mxh": "frontend/vite/mxh-entry.ts",
+        "notes": "frontend/vite/notes-entry.ts",
+        "settings": "frontend/vite/settings-entry.ts",
+        "telegram": "frontend/vite/telegram-entry.ts",
+        "image": "frontend/vite/image-entry.ts"
+    },
+    "GENERATED_ASSETS": {
+        "classic_js_dir": "app/static/js/",
+        "vite_dist_dir": "app/static/dist/",
+        "mxh_bundle": "app/static/dist/mxh.bundle.js",
+        "notes_bundle": "app/static/dist/notes.bundle.js",
+        "settings_bundle": "app/static/dist/settings.bundle.js",
+        "telegram_bundle": "app/static/dist/telegram.bundle.js",
+        "image_bundle": "app/static/dist/image.bundle.js",
+        "vite_manifest": "app/static/dist/.vite/manifest.json"
+    },
+    "CSS_FILES": {
+        "global": "app/static/css/style.css",
+        "chat": "app/static/css/chat.css",
+        "dashboard": "app/static/css/dashboard.css",
+        "home": "app/static/css/home.css",
+        "notes": "app/static/css/notes.css",
+        "notes_preview": "app/static/css/notespreview.css",
+        "mxh": "app/static/css/mxh.css",
+        "mxh_new_features": "app/static/css/mxh_new_features.css",
+        "image": "app/static/css/image.css",
+        "telegram": "app/static/css/telegram.css",
+        "settings": "app/static/css/settings.css"
+    },
+    "TEMPLATE_FILES": {
+        "base": "app/templates/layouts/base.html",
+        "navbar": "app/templates/partials/navbar.html",
+        "home": "app/templates/home.html",
+        "notes": "app/templates/notes.html",
+        "mxh": "app/templates/mxh.html",
+        "image": "app/templates/image.html",
+        "telegram": "app/templates/telegram.html",
+        "settings": "app/templates/settings.html",
+        "notes_preview": "app/templates/notespreview.html"
+    },
+    "UI_BASE": {
+        "main_tab_content": "main-tab-content",
+        "dashboard_context_menu": "dashboard-context-menu",
+        "global_hamburger_menu": "global-hamburger-menu",
+        "hamburger_dropdown_content": "hamburger-dropdown-content",
+        "live_toast": "liveToast",
+        "toast_header": "toastHeader",
+        "toast_title": "toastTitle",
+        "toast_body": "toastBody",
+        "global_delete_confirm_modal": "globalDeleteConfirmModal",
+        "global_delete_confirm_label": "globalDeleteConfirmModalLabel",
+        "global_delete_confirm_text": "globalDeleteConfirmText",
+        "global_delete_confirm_btn": "globalDeleteConfirmBtn",
+        "global_alert_modal": "globalAlertModal",
+        "global_alert_label": "globalAlertModalLabel",
+        "global_alert_text": "globalAlertText",
+        "nav_main_tab": "main-tab",
+        "nav_notes": "notes-tab-link",
+        "nav_mxh": "mxh-tab-link",
+        "nav_home": "home-tab-link",
+        "nav_image": "image-tab-link",
+        "nav_telegram": "telegram-tab-link"
+    },
+    "LOCAL_STORAGE_KEYS": {
+        "dashboard_theme_color": "dashboardThemeColor",
+        "dashboard_theme_reset_version": "dashboardThemeResetVersion.v1",
+        "selected_ai_model": "selectedModel",
+        "shutdown_deadline": "shutdownDeadline",
+        "notification_deadline": "notificationDeadline",
+        "notification_message": "notificationMessage",
+        "mxh_refresh_interval": "mxh_refresh_interval_ms",
+        "mxh_cards_per_row": "mxh_cards_per_row",
+        "notes_split_states": "noteSplitStates",
+        "notes_profile_colors": "profileColors",
+        "notes_card_size_modifier": "notesCardSizeModifier",
+        "telegram_selected_group": "tg_selectedGroupId",
+        "telegram_last_selected_task": "tg_lastSelectedTask",
+        "image_edit_cache": "stool_edit_image_cache",
+        "image_collage_cache": "stool_collage_images_cache",
+        "image_collage_history": "stool_collage_history"
+    },
+    "SESSION_STORAGE_KEYS": {
+        "chat_current_session": "currentSessionId",
+        "chat_was_on_home_page": "wasOnHomePage",
+        "mxh_notice_notified_prefix": "mxh_notice_notified:"
+    },
+    "API_ROUTES_BY_MODULE": {
+        "automatic_routes.py": [
+            {
+                "path": "/automatic/api/seeding/settings",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/automatic/api/seeding/settings",
+                "methods": [
+                    "POST"
+                ]
+            }
+        ],
+        "chatbot_routes.py": [
+            {
+                "path": "/api/chat/sessions",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/api/chat/new",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/api/chat/history/<session_id>",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/api/chat/delete_session/<session_id>",
+                "methods": [
+                    "DELETE"
+                ]
+            },
+            {
+                "path": "/api/chat/settings",
+                "methods": [
+                    "GET",
+                    "POST"
+                ]
+            },
+            {
+                "path": "/api/chat/send",
+                "methods": [
+                    "POST"
+                ]
+            }
+        ],
+        "image_routes.py": [
+            {
+                "path": "/image/",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/image/edit",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/image/collage",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/image/api/upload",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/image/api/save-collage",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/image/api/collage-history",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/image/api/collage-thumbnail/<collage_id>",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/image/api/collage-data/<collage_id>",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/image/api/collage-delete/<collage_id>",
+                "methods": [
+                    "DELETE"
+                ]
+            },
+            {
+                "path": "/image/api/object_remove",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/image/api/upscale_image",
+                "methods": [
+                    "POST"
+                ]
+            }
+        ],
+        "mxh_api.py": [
+            {
+                "path": "/mxh/api/accounts",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/mxh/api/cards",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/cards",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/mxh/api/cards/<int:card_id>/accounts",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/quick-update",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/groups",
+                "methods": [
+                    "GET",
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>",
+                "methods": [
+                    "PUT"
+                ]
+            },
+            {
+                "path": "/mxh/api/notice",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/mxh/api/notice/disable",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/phone-history",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/phone-history",
+                "methods": [
+                    "DELETE"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/phone-history/add",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/nearby_people",
+                "methods": [
+                    "POST"
+                ]
+            }
+        ],
+        "mxh_routes.py": [
+            {
+                "path": "/mxh/api/accounts",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:any_id>",
+                "methods": [
+                    "DELETE"
+                ]
+            },
+            {
+                "path": "/mxh/api/groups",
+                "methods": [
+                    "GET",
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/mxh/api/cards",
+                "methods": [
+                    "GET",
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/cards/<int:card_id>",
+                "methods": [
+                    "PUT",
+                    "DELETE"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>",
+                "methods": [
+                    "PUT"
+                ]
+            },
+            {
+                "path": "/mxh/api/cards/<int:card_id>/accounts",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:card_id>/sub_accounts",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/sub_accounts/<int:sub_account_id>",
+                "methods": [
+                    "PUT",
+                    "DELETE"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/toggle-status",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/scan",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/scan-history",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/scan-history",
+                "methods": [
+                    "DELETE"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/rescue",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/mark-die",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/reset",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/notice",
+                "methods": [
+                    "PUT",
+                    "DELETE"
+                ]
+            },
+            {
+                "path": "/mxh/api/accounts/<int:account_id>/move",
+                "methods": [
+                    "POST"
+                ]
+            }
+        ],
+        "notes_routes.py": [
+            {
+                "path": "/notes/api/get",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/notes/api/add",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/notes/api/update/<note_id>",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/notes/api/delete/<note_id>",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/notes/api/mark/<note_id>",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/notes/api/acknowledge-notification/<note_id>",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/notes/api/check-notifications",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/notes/sounds/<path:filename>",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/notes/api/upload-image",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/notes/images/<path:filename>",
+                "methods": [
+                    "GET"
+                ]
+            }
+        ],
+        "routes.py": [
+            {
+                "path": "/",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/telegram",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/notes",
+                "methods": [
+                    "GET"
+                ]
+            }
+        ],
+        "settings_routes.py": [
+            {
+                "path": "/settings/",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/settings/api/settings",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/settings/api/settings",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/settings/api/settings/auto-start",
+                "methods": [
+                    "PUT"
+                ]
+            },
+            {
+                "path": "/settings/api/settings/auto-open-dashboard",
+                "methods": [
+                    "PUT"
+                ]
+            },
+            {
+                "path": "/settings/api/settings/shutdown-timer",
+                "methods": [
+                    "PUT"
+                ]
+            },
+            {
+                "path": "/settings/api/settings/notification-timer",
+                "methods": [
+                    "PUT"
+                ]
+            },
+            {
+                "path": "/settings/api/settings/mxh-refresh-interval",
+                "methods": [
+                    "PUT"
+                ]
+            },
+            {
+                "path": "/settings/api/system/shutdown",
+                "methods": [
+                    "POST"
+                ]
+            }
+        ],
+        "telegram_routes.py": [
+            {
+                "path": "/telegram/api/groups",
+                "methods": [
+                    "GET",
+                    "POST"
+                ]
+            },
+            {
+                "path": "/telegram/api/groups/<int:group_id>",
+                "methods": [
+                    "DELETE"
+                ]
+            },
+            {
+                "path": "/telegram/api/groups/<int:group_id>/sessions",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/telegram/api/upload-admin-sessions",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/telegram/api/config/<task_name>",
+                "methods": [
+                    "GET",
+                    "POST"
+                ]
+            },
+            {
+                "path": "/telegram/api/proxies",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/telegram/api/proxies",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/telegram/api/run-task",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/telegram/api/global-settings",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/telegram/api/task-status/<task_id>",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/telegram/api/stop-task/<task_id>",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/telegram/api/active-tasks",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/telegram/api/sessions/delete",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/telegram/api/update-session-info",
+                "methods": [
+                    "POST"
+                ]
+            }
+        ]
+    },
+    "UI_TEMPLATE_IDS": {
+        "app/templates/image.html": [
+            "blemishBrushSlider",
+            "blemishBrushValue",
+            "blemishOpacitySlider",
+            "blemishOpacityValue",
+            "blemishSettingsMenu",
+            "blemishToolBtn",
+            "borderValue2",
+            "collage-tiles",
+            "collageAspect",
+            "collageAspectPopover",
+            "collageAspectQuickValue",
+            "collageBackground",
+            "collageBackgroundFill",
+            "collageBorder",
+            "collageBorderColor",
+            "collageBorderFill",
+            "collageBorderMirror",
+            "collageBorderMirrorValue",
+            "collageCanvas",
+            "collageCanvasContainer",
+            "collageColorCodeInput",
+            "collageColorPopover",
+            "collageColorQuickSwatch",
+            "collageCornerMirror",
+            "collageCornerMirrorValue",
+            "collageCornerPopover",
+            "collageCornerQuickIcon",
+            "collageGradientPreview",
+            "collageGutter",
+            "collageHistory",
+            "collagePrompt",
+            "collageQuickPanel",
+            "collageRadius",
+            "collageSettingsBtn",
+            "collageSettingsMenu",
+            "collageSpaceMirror",
+            "collageSpaceMirrorValue",
+            "collageSpacePopover",
+            "collageSpaceQuickValue",
+            "collageUpload",
+            "colorCodeInput",
+            "colorMenuItem",
+            "colorSubmenu",
+            "enhanceBtn",
+            "fontList",
+            "fontMenuItem",
+            "fontSubmenu",
+            "gutterValue2",
+            "historyPanel",
+            "layoutTemplates",
+            "presetColors",
+            "radiusValue2",
+            "rainbowCheckbox",
+            "singleImageCanvas",
+            "singleImageViewer",
+            "templatesPanel",
+            "textContextMenu",
+            "textLayersContainer",
+            "uploadedPhotosPreview",
+            "upscaleMenu",
+            "upscaleModel",
+            "upscaleModelDialog",
+            "upscaleModelDialogTitle",
+            "upscaleScale",
+            "upscaleSelectedModelDesc",
+            "upscaleSelectedModelName"
+        ],
+        "app/templates/layouts/base.html": [
+            "dashboard-context-menu",
+            "globalAlertModal",
+            "globalAlertModalLabel",
+            "globalAlertText",
+            "globalDeleteConfirmBtn",
+            "globalDeleteConfirmModal",
+            "globalDeleteConfirmModalLabel",
+            "globalDeleteConfirmText",
+            "liveToast",
+            "main-tab-content",
+            "toastBody",
+            "toastHeader",
+            "toastTitle"
+        ],
+        "app/templates/mxh.html": [
+            "apply-card-number-btn",
+            "btn-add-phone-history",
+            "btn-cancel-add-phone-history",
+            "btn-clear-phone-history",
+            "btn-confirm-add-phone-history",
+            "btn-reset-scan-history",
+            "change-card-number-modal",
+            "confirm-delete-btn",
+            "confirm-reset-btn",
+            "delete-card-modal",
+            "generic-account-edit-form",
+            "generic-account-modal",
+            "generic-apply-btn",
+            "generic-display-name",
+            "generic-notes",
+            "generic-password",
+            "generic-phone",
+            "generic-reset-btn",
+            "generic-url",
+            "generic-username",
+            "input-new-phone-history",
+            "move-account-confirm-btn",
+            "move-account-current-card",
+            "move-account-error",
+            "move-account-modal",
+            "move-account-name",
+            "move-account-target-card",
+            "mxh-accounts-container",
+            "mxh-addAccountModal",
+            "mxh-apply-view-mode-btn",
+            "mxh-background-context-menu",
+            "mxh-cards-per-row",
+            "mxh-day",
+            "mxh-filter-btn",
+            "mxh-groups-nav",
+            "mxh-month",
+            "mxh-password",
+            "mxh-phone",
+            "mxh-platform",
+            "mxh-save-account-btn",
+            "mxh-search-clear",
+            "mxh-search-group",
+            "mxh-search-icon",
+            "mxh-search-input",
+            "mxh-stats-accounts",
+            "mxh-stats-cards",
+            "mxh-stats-panel",
+            "mxh-submit-notice-btn",
+            "mxh-tool-pane",
+            "mxh-url",
+            "mxh-username",
+            "mxh-view-mode-modal",
+            "mxh-year",
+            "new-card-number",
+            "noticeDays",
+            "noticeModal",
+            "noticeNote",
+            "noticeTitle",
+            "phone-history-add-row",
+            "phone-history-list",
+            "phone-history-section",
+            "reset-card-modal",
+            "scan-history-list",
+            "scan-history-modal",
+            "view-card2-check",
+            "view-card3-check",
+            "view-default-check",
+            "wechat-account-modal",
+            "wechat-apply-btn",
+            "wechat-card-name",
+            "wechat-date",
+            "wechat-email",
+            "wechat-nickname",
+            "wechat-notes",
+            "wechat-phone",
+            "wechat-reset-btn",
+            "wechat-status",
+            "wechat-username"
+        ],
+        "app/templates/notes.html": [
+            "codeblock-confirm-delete-btn",
+            "codeblock-confirmDeleteModal",
+            "context-bold",
+            "context-code-block",
+            "context-color",
+            "context-copy-image",
+            "context-delete-profile",
+            "context-link",
+            "context-profile",
+            "image-modal-context-menu",
+            "note-card-context-menu",
+            "notes-addEditForm",
+            "notes-addEditModal",
+            "notes-addLinkModal",
+            "notes-addProfileModal",
+            "notes-config",
+            "notes-confirm-delete-btn",
+            "notes-confirmDeleteModal",
+            "notes-container",
+            "notes-content-editor",
+            "notes-context-menu",
+            "notes-copy-profile-id-btn",
+            "notes-copy-profile-password-btn",
+            "notes-delete-profile-btn",
+            "notes-detail-content",
+            "notes-detail-content-wrapper",
+            "notes-detail-panel",
+            "notes-detail-placeholder",
+            "notes-detail-wrapper",
+            "notes-editId",
+            "notes-link-url",
+            "notes-list-wrapper",
+            "notes-modalTitle",
+            "notes-profile-content-editor",
+            "notes-profile-id",
+            "notes-profile-password",
+            "notes-save-link-btn",
+            "notes-save-profile-btn",
+            "notes-search-input",
+            "notes-tab-context-menu",
+            "notes-title-input",
+            "notes-tool-pane",
+            "np-imagePreview",
+            "np-imagePreviewModal",
+            "profile-images-container",
+            "profile-images-thumbnails",
+            "profile-span-context-menu"
+        ],
+        "app/templates/notespreview.html": [
+            "btn-test-preview",
+            "notes-tool-pane",
+            "preview"
+        ],
+        "app/templates/partials/navbar.html": [
+            "global-hamburger-menu",
+            "hamburger-dropdown-content",
+            "home-tab-link",
+            "image-tab-link",
+            "main-tab",
+            "mxh-tab-link",
+            "notes-tab-link",
+            "telegram-tab-link"
+        ],
+        "app/templates/settings.html": [
+            "apply-mxh-refresh-btn",
+            "applyNotificationBtn",
+            "applyShutdownBtn",
+            "autoOpenDashboardSwitch",
+            "autoStartSwitch",
+            "btnEnableNotification",
+            "lastUpdated",
+            "mxh-refresh-interval-ms",
+            "notificationCountdown",
+            "notificationHours",
+            "notificationInputs",
+            "notificationMessage",
+            "notificationMinutes",
+            "notificationToggle",
+            "realtime-indicator",
+            "shutdownCountdown",
+            "shutdownHours",
+            "shutdownInputs",
+            "shutdownMinutes",
+            "shutdownToggle"
+        ],
+        "app/templates/telegram.html": [
+            "auto-seeding-ampm",
+            "auto-seeding-daily",
+            "auto-seeding-enabled",
+            "auto-seeding-end-ampm",
+            "auto-seeding-end-hour",
+            "auto-seeding-end-minute",
+            "auto-seeding-group-select",
+            "auto-seeding-hour",
+            "auto-seeding-minute",
+            "auto-seeding-status-badge-container",
+            "save-auto-seeding-btn",
+            "telegram-context-menu",
+            "telegram-tool-pane",
+            "tg-addSessionForm",
+            "tg-addSessionModal",
+            "tg-admin-delay-input",
+            "tg-admin-reply-switch",
+            "tg-check-live-btn-header",
+            "tg-checkLiveBtn",
+            "tg-completed-failed",
+            "tg-completed-success",
+            "tg-completed-total",
+            "tg-confirmDeleteDeadBtn",
+            "tg-context-delete-session",
+            "tg-core-input",
+            "tg-delay-batch-input",
+            "tg-delay-session-input",
+            "tg-deleteDeadSessionsModal",
+            "tg-deleteDeadSessionsModalBody",
+            "tg-existing-groups-list",
+            "tg-group-session-select",
+            "tg-group-task-cards",
+            "tg-groupName",
+            "tg-joinGroupLinks",
+            "tg-joinGroupModal",
+            "tg-proxy-enabled",
+            "tg-proxy-list",
+            "tg-proxyModal",
+            "tg-runStopBtn",
+            "tg-save-proxy-btn",
+            "tg-saveGroupBtn",
+            "tg-saveJoinGroupConfigBtn",
+            "tg-saveSeedingGroupConfigBtn",
+            "tg-seedingAdminMessages",
+            "tg-seedingAdminSessionSelect",
+            "tg-seedingGroupLinks",
+            "tg-seedingGroupMessages",
+            "tg-seedingGroupModal",
+            "tg-seedingSilentSwitch",
+            "tg-selectAllCheckbox",
+            "tg-session-tables-container",
+            "tg-sessionFiles",
+            "tg-sessions-table-body",
+            "tg-shuffleMessagesBtn",
+            "tg-status-failed-count",
+            "tg-status-progress-text",
+            "tg-status-success-count",
+            "tg-taskCompletedModal",
+            "tg-total-sessions-count",
+            "tg-uploadAdminSession",
+            "tg-v-pills-automatic",
+            "tg-v-pills-automatic-tab",
+            "tg-v-pills-group",
+            "tg-v-pills-group-tab",
+            "tg-v-pills-session-manager",
+            "tg-v-pills-session-manager-tab",
+            "tg-v-pills-tab",
+            "tg-v-pills-tabContent"
+        ]
+    },
+    "DOM_LOOKUP_IDS": {
+        "frontend/src/chat.ts": [
+            "ai-api-key",
+            "ai-model",
+            "ai-provider",
+            "aiSettingsModal",
+            "chat-context-menu",
+            "chat-form",
+            "chat-messages",
+            "chatHistoryList",
+            "chatSearch",
+            "chatSidebar",
+            "current-model-name",
+            "home-tab-link",
+            "image-preview",
+            "image-preview-container",
+            "mini-chat-bubble",
+            "mini-chat-window",
+            "system-prompt-general",
+            "system-prompt-image",
+            "system-prompt-mxh",
+            "system-prompt-notes",
+            "system-prompt-telegram",
+            "user-input"
+        ],
+        "frontend/src/dashboard.ts": [
+            "dashboard-context-menu",
+            "global-hamburger-menu",
+            "globalAlertModal",
+            "globalAlertModalLabel",
+            "globalAlertText",
+            "globalDeleteConfirmBtn",
+            "globalDeleteConfirmModal",
+            "globalDeleteConfirmModalLabel",
+            "globalDeleteConfirmText",
+            "hamburger-dropdown-content",
+            "main-tab-content"
+        ],
+        "frontend/src/image-editor/collage.ts": [
+            "borderValue2",
+            "collage-tiles",
+            "collageAspect",
+            "collageAspectQuickValue",
+            "collageBackground",
+            "collageBorder",
+            "collageBorderColor",
+            "collageBorderMirrorValue",
+            "collageCanvas",
+            "collageCanvasContainer",
+            "collageColorCodeInput",
+            "collageColorQuickSwatch",
+            "collageCornerMirrorValue",
+            "collageCornerQuickIcon",
+            "collageGradientPreview",
+            "collageGutter",
+            "collagePrompt",
+            "collageQuickPanel",
+            "collageRadius",
+            "collageSpaceMirrorValue",
+            "collageSpaceQuickValue",
+            "collageUpload",
+            "gutterValue2",
+            "layoutTemplates",
+            "radiusValue2",
+            "singleImageViewer",
+            "templatesPanel",
+            "uploadedPhotosPreview"
+        ],
+        "frontend/src/image-editor/crop-tool.ts": [
+            "cropToolBtn",
+            "enhanceBtn",
+            "singleImageViewer",
+            "upscaleMenu",
+            "upscaleModel",
+            "upscaleModelDialog",
+            "upscaleScale",
+            "upscaleSelectedModelDesc",
+            "upscaleSelectedModelName"
+        ],
+        "frontend/src/image-editor/heal-tool.ts": [
+            "blemishBrushSlider",
+            "blemishBrushValue",
+            "blemishOpacityValue",
+            "blemishSettingsMenu",
+            "blemishToolBtn",
+            "cropToolBtn"
+        ],
+        "frontend/src/image-editor/history.ts": [
+            "collage-tiles",
+            "collageCanvasContainer",
+            "collageHistory",
+            "collagePrompt",
+            "singleImageViewer",
+            "textLayersContainer",
+            "uploadedPhotosPreview"
+        ],
+        "frontend/src/image-editor/init.ts": [
+            "collage-panel",
+            "collage-tiles",
+            "collageAspect",
+            "collageBorder",
+            "collageCanvas",
+            "collageCanvasContainer",
+            "collageGutter",
+            "collageHistory",
+            "collagePrompt",
+            "collageRadius",
+            "collageSettingsBtn",
+            "collageSettingsMenu",
+            "collageUpload",
+            "gutterValue2",
+            "singleImageCanvas",
+            "singleImageViewer",
+            "textLayersContainer",
+            "toolbarColorCode",
+            "toolbarColorPicker",
+            "uploadedPhotosPreview"
+        ],
+        "frontend/src/image-editor/single-image.ts": [
+            "collage-tiles",
+            "collageCanvasContainer",
+            "collageQuickPanel",
+            "singleImageCanvas",
+            "singleImageViewer",
+            "templatesPanel",
+            "uploadedPhotosPreview"
+        ],
+        "frontend/src/image-editor/text-layer.ts": [
+            "colorCodeInput",
+            "colorMenuItem",
+            "colorSubmenu",
+            "fontList",
+            "fontMenuItem",
+            "fontSubmenu",
+            "presetColors",
+            "rainbowCheckbox",
+            "textColorToolbar",
+            "textContextMenu",
+            "textGradientPreview",
+            "textLayersContainer",
+            "toolbarColorCode",
+            "toolbarColorPicker",
+            "toolbarRainbowMode"
+        ],
+        "frontend/src/image-editor/upload.ts": [
+            "collagePrompt",
+            "singleImageViewer",
+            "uploadedPhotosPreview"
+        ],
+        "frontend/src/mxh/account-actions.ts": [
+            "apply-card-number-btn",
+            "change-card-number-modal",
+            "confirm-delete-btn",
+            "confirm-reset-btn",
+            "delete-card-modal",
+            "generic-account-edit-form",
+            "generic-account-modal",
+            "generic-display-name",
+            "generic-notes",
+            "generic-password",
+            "generic-phone",
+            "generic-reset-btn",
+            "generic-url",
+            "generic-username",
+            "move-account-confirm-btn",
+            "move-account-current-card",
+            "move-account-error",
+            "move-account-modal",
+            "move-account-name",
+            "move-account-target-card",
+            "mxh-addAccountModal",
+            "mxh-apply-view-mode-btn",
+            "mxh-cards-per-row",
+            "mxh-day",
+            "mxh-dynamic-style",
+            "mxh-month",
+            "mxh-password",
+            "mxh-phone",
+            "mxh-platform",
+            "mxh-save-account-btn",
+            "mxh-url",
+            "mxh-username",
+            "mxh-view-mode-modal",
+            "mxh-year",
+            "new-card-number",
+            "reset-card-modal",
+            "wechat-account-modal",
+            "wechat-apply-btn",
+            "wechat-card-name",
+            "wechat-date",
+            "wechat-email",
+            "wechat-nickname",
+            "wechat-notes",
+            "wechat-phone",
+            "wechat-reset-btn",
+            "wechat-status",
+            "wechat-username"
+        ],
+        "frontend/src/mxh/account-notices.ts": [
+            "mxh-submit-notice-btn",
+            "noticeDays",
+            "noticeModal",
+            "noticeNote",
+            "noticeTitle"
+        ],
+        "frontend/src/mxh/context-menu.ts": [
+            "card-context-menu",
+            "mxh-addAccountModal",
+            "mxh-background-context-menu",
+            "mxh-tool-pane",
+            "mxh-view-mode-modal",
+            "view-card2-check",
+            "view-card3-check",
+            "view-default-check"
+        ],
+        "frontend/src/mxh/filters.ts": [
+            "mxh-search-input"
+        ],
+        "frontend/src/mxh/flip-card.ts": [
+            "card-wrapper-${cardId}"
+        ],
+        "frontend/src/mxh/init.ts": [
+            "mxh-cards-per-row",
+            "mxh-dynamic-style",
+            "mxh-filter-btn",
+            "mxh-search-clear",
+            "mxh-search-group",
+            "mxh-search-input"
+        ],
+        "frontend/src/mxh/inline-edit.ts": [
+            "col-card-${normalizedCardId}",
+            "mxh-search-input"
+        ],
+        "frontend/src/mxh/modal-forms.ts": [
+            "mxh-addAccountModal",
+            "mxh-day",
+            "mxh-month",
+            "mxh-password",
+            "mxh-phone",
+            "mxh-platform",
+            "mxh-url",
+            "mxh-username",
+            "mxh-year",
+            "wechat-account-modal",
+            "wechat-date"
+        ],
+        "frontend/src/mxh/phone-history.ts": [
+            "btn-add-phone-history",
+            "btn-cancel-add-phone-history",
+            "btn-clear-phone-history",
+            "btn-confirm-add-phone-history",
+            "input-new-phone-history",
+            "phone-history-add-row",
+            "phone-history-list"
+        ],
+        "frontend/src/mxh/render.ts": [
+            "mxh-accounts-container",
+            "mxh-groups-nav",
+            "mxh-stats-accounts",
+            "mxh-stats-cards"
+        ],
+        "frontend/src/mxh/scan-history.ts": [
+            "btn-reset-scan-history",
+            "scan-history-list",
+            "scan-history-modal"
+        ],
+        "frontend/src/mxh.ts": [
+            "mxh-accounts-container",
+            "mxh-tool-pane"
+        ],
+        "frontend/src/notes.ts": [
+            "codeblock-confirm-delete-btn",
+            "codeblock-confirmDeleteModal",
+            "context-copy-image",
+            "detail-editable-full",
+            "detail-editable-right",
+            "image-modal-context-menu",
+            "note-card-context-menu",
+            "notes-addEditForm",
+            "notes-addEditModal",
+            "notes-addLinkModal",
+            "notes-addProfileModal",
+            "notes-config",
+            "notes-confirm-delete-btn",
+            "notes-confirmDeleteModal",
+            "notes-container",
+            "notes-content-editor",
+            "notes-context-menu",
+            "notes-copy-profile-id-btn",
+            "notes-copy-profile-password-btn",
+            "notes-delete-profile-btn",
+            "notes-detail-content",
+            "notes-detail-wrapper",
+            "notes-editId",
+            "notes-link-url",
+            "notes-list-wrapper",
+            "notes-modalTitle",
+            "notes-profile-content-editor",
+            "notes-profile-id",
+            "notes-profile-password",
+            "notes-save-link-btn",
+            "notes-save-profile-btn",
+            "notes-search-input",
+            "notes-tab-context-menu",
+            "notes-title-input",
+            "notes-tool-pane",
+            "np-imagePreview",
+            "np-imagePreviewModal",
+            "profile-images-container",
+            "profile-images-thumbnails",
+            "profile-span-context-menu",
+            "splitViewDropdown"
+        ],
+        "frontend/src/notespreview.ts": [
+            "btn-test-preview",
+            "preview"
+        ],
+        "frontend/src/script.ts": [
+            "liveToast",
+            "notes-container",
+            "notes-detail-content",
+            "toastBody",
+            "toastHeader",
+            "toastTitle"
+        ],
+        "frontend/src/settings.ts": [
+            "apply-mxh-refresh-btn",
+            "applyNotificationBtn",
+            "applyShutdownBtn",
+            "autoOpenDashboardSwitch",
+            "autoStartSwitch",
+            "btnEnableNotification",
+            "lastUpdated",
+            "mxh-refresh-interval-ms",
+            "notificationCountdown",
+            "notificationHours",
+            "notificationInputs",
+            "notificationMessage",
+            "notificationMinutes",
+            "notificationToggle",
+            "shutdownCountdown",
+            "shutdownHours",
+            "shutdownInputs",
+            "shutdownMinutes",
+            "shutdownToggle"
+        ],
+        "frontend/src/telegram.ts": [
+            "telegram-context-menu",
+            "telegram-tool-pane",
+            "tg-addSessionForm",
+            "tg-addSessionModal",
+            "tg-admin-delay-input",
+            "tg-admin-reply-switch",
+            "tg-check-live-btn-header",
+            "tg-checkLiveBtn",
+            "tg-completed-failed",
+            "tg-completed-success",
+            "tg-completed-total",
+            "tg-context-delete-session",
+            "tg-core-input",
+            "tg-delay-batch-input",
+            "tg-delay-session-input",
+            "tg-existing-groups-list",
+            "tg-group-session-select",
+            "tg-group-task-cards",
+            "tg-groupName",
+            "tg-joinGroupLinks",
+            "tg-joinGroupModal",
+            "tg-proxy-enabled",
+            "tg-proxy-list",
+            "tg-proxyModal",
+            "tg-runStopBtn",
+            "tg-save-proxy-btn",
+            "tg-saveGroupBtn",
+            "tg-saveJoinGroupConfigBtn",
+            "tg-saveSeedingGroupConfigBtn",
+            "tg-seedingAdminMessages",
+            "tg-seedingAdminSessionSelect",
+            "tg-seedingGroupLinks",
+            "tg-seedingGroupMessages",
+            "tg-seedingGroupModal",
+            "tg-seedingSilentSwitch",
+            "tg-session-tables-container",
+            "tg-sessionFiles",
+            "tg-sessions-table-body",
+            "tg-shuffleMessagesBtn",
+            "tg-status-failed-count",
+            "tg-status-progress-text",
+            "tg-status-success-count",
+            "tg-taskCompletedModal",
+            "tg-total-sessions-count",
+            "tg-uploadAdminSession"
+        ]
+    },
+    "COLOR_AUDIT": {
+        "inventory_file": "color_inventory.md",
+        "scan_scope": [
+            "app/static/css",
+            "app/templates",
+            "frontend/src",
+            "app/*.py"
+        ],
+        "external_bootstrap_cdn_included": false,
+        "last_scan_date": "2026-05-21",
+        "files_scanned": 82,
+        "exact_color_tokens": 372,
+        "base_colors_normalized": 261,
+        "total_color_occurrences": 1112,
+        "families": {
+            "black/near-black": 52,
+            "blue": 31,
+            "currentColor": 1,
+            "cyan/teal": 104,
+            "gray": 66,
+            "green": 14,
+            "other": 2,
+            "purple": 1,
+            "red": 12,
+            "transparent": 1,
+            "white/near-white": 48,
+            "yellow/orange": 40
+        }
     }
 }

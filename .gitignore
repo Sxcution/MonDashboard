@@ -73,10 +73,7 @@ tools/upscayl/
 .gemini/
 brain/
 
-# AI/Agent Specific Documentation
-project_structure.md
-naming_registry.json
-Rule.md
+# AI/Agent Scratch Documentation
 SKILL.md
 .agent/
 .agent_instincts/

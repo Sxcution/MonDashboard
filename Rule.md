@@ -1,88 +1,115 @@
-# GEMINI AGENT RULES - MON DASHBOARD
+# MON DASHBOARD AGENT RULES
 
-## I. DEBUGGING PROTOCOL
-1. **Interactive/Hardware Debug:**
-   - **Action:** Inject print logs into Flask routes or JavaScript console.log.
-   - **Execution:** Instruct user to run the app in their current IDE Terminal.
-   - **Constraint:** Do NOT ask user to open external cmd.exe unless unavoidable.
+Updated: 2026-05-21
 
-2. **Logic/Automated Debug:**
-   - **Action:** Create self-contained test scripts (e.g., `test_api.py`).
-   - **Execution:** Auto-run these scripts and analyze output yourself.
+## 1. Session Startup
 
-## II. WORKFLOW & VERIFICATION
-3. **Post-Implementation Verification:**
-   - **Action:** After ANY code modification, verify syntax and basic functionality.
-   - **Constraint:** NEVER ask user to run if you haven't verified it first.
+When the user says `Rule`, `/Rule`, or asks to read project rules:
 
-## III. CODING STANDARDS
-4. **Naming & Commenting Standards:**
-   - **Code Identifiers:** MUST use English, descriptive names (e.g., `btn_save_settings`).
-   - **Comments:** MUST be bilingual or Vietnamese for UI elements.
-   - **Consistency:** Use snake_case for Python, camelCase for JS.
+1. Read `Rule.md`.
+2. Read `project_structure.md`.
+3. Read `naming_registry.json`.
+4. Follow these rules for the rest of the session unless the user gives a newer direct instruction.
 
-5. **Naming Registry Protocol:**
-   - **Mandatory File:** `naming_registry.json` at project root.
-   - **Workflow:** READ first, UPDATE when adding new features.
+## 2. Required Project Documents
 
-## IV. ARCHITECTURE & FILE MANAGEMENT
-6. **Project Structure Protocol:**
-   - **Mandatory File:** `project_structure.md` at project root.
-   - **Workflow:** Update when creating/deleting files.
+The following files are project control documents and must stay at the repository root:
 
-## V. SESSION STARTUP PROTOCOL
-7. **Context Loading:**
-   - At session start, READ `project_structure.md` and `naming_registry.json`.
+- `Rule.md`: agent workflow, coding, verification, and documentation rules.
+- `project_structure.md`: current architecture and file ownership map.
+- `naming_registry.json`: UI IDs, route names, storage keys, commands, and important identifiers.
 
-## VI. UI & STYLING PROTOCOL (WEB)
-8. **Centralized Styling:**
-   - ALL CSS must reside in `static/css/` folder.
-   - Use Bootstrap 5 as primary framework.
-   - Avoid inline styles in HTML/Jinja templates.
+After any task that adds, removes, renames, or meaningfully changes a feature, file, route, UI ID, storage key, or generated bundle:
 
-9. **Input Field Standards:**
-   - **No Spinners:** Hide via CSS: `input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }`
+1. Update `project_structure.md` when the architecture or file map changes.
+2. Update `naming_registry.json` when identifiers, IDs, routes, storage keys, or public functions change.
+3. Update `README.md` only when user-facing setup, build, or feature documentation changes.
 
-10. **Notification & Dialog Standards:**
-    - **Custom Modals Only:** Use Bootstrap Modal for critical actions.
-    - **No Native Alerts:** NEVER use `alert()`, `confirm()`, `prompt()`.
+## 3. Current Architecture
 
-## VII. FLASK-SPECIFIC PROTOCOL
-11. **Route Organization:**
-    - Group routes by feature in blueprints under `app/routes/`.
-    - API routes MUST return JSON with consistent format: `{"success": bool, "data": {...}}`.
+Mon Dashboard is a Flask + SQLite dashboard with Bootstrap UI and TypeScript frontend source.
 
-12. **Template Standards:**
-    - Base template: `app/templates/base.html`
-    - Use Jinja2 macros for reusable components.
+- Flask app factory: `app/__init__.py`.
+- Root page routes: `app/routes.py`.
+- Feature blueprints: `app/*_routes.py` and `app/mxh_api.py`.
+- Database helper and migrations: `app/database.py`.
+- Base template: `app/templates/layouts/base.html`.
+- Shared navbar: `app/templates/partials/navbar.html`.
+- Page templates: `app/templates/*.html`.
+- CSS source: `app/static/css/*.css`.
+- TypeScript source of truth: `frontend/src/**/*.ts`.
+- Vite page entries: `frontend/vite/*-entry.ts`.
+- Classic JS emit: `app/static/js/`.
+- Vite bundles loaded by templates: `app/static/dist/*.bundle.js`.
+- Runtime data and SQLite DB: `data/`.
 
-13. **Database:**
-    - Use SQLite with SQLAlchemy ORM.
-    - Models in `app/models/`.
+The project does not currently use `app/routes/` folders or SQLAlchemy model classes in `app/models/`; do not invent those paths unless the user asks for a refactor.
 
-## VIII. AI REVIEW PACKAGING
-14. **Automatic Packaging:**
-    - **Trigger:** "đóng gói file .zip"
-    - **Output:** `AI_Review/{FeatureName}_{YYYYMMDD}.zip`
-    - **Include:** .py, .html, .css, .js, .json, .md files
-    - **Exclude:** node_modules, __pycache__, .db files, venv
+## 4. Editing Rules
 
-## IX. RULE COMMAND PROTOCOL
-15. **Rule Trigger Command:**
-    - **Trigger:** When user says "Rule", "/Rule", or "đọc Rule"
-    - **Immediate Action:** 
-      1. READ and ACKNOWLEDGE this `Rule.md` file
-      2. READ `project_structure.md` to understand current architecture
-      3. READ `naming_registry.json` to load existing variable names
-    - **Compliance:** STRICTLY follow all rules for the entire session
+- Prefer editing source files over generated files.
+- For TypeScript behavior, edit `frontend/src/**/*.ts`, then run `npm run build`.
+- Do not manually edit `app/static/dist/*.bundle.js` when a TypeScript source exists.
+- Do not manually edit `app/static/js/**/*.js` when it is emitted from TypeScript, except for confirming generated output after build.
+- Keep CSS in `app/static/css/`; avoid new inline styles in templates.
+- Use Bootstrap Modal for critical confirmations.
+- Do not use native `alert()`, `confirm()`, or `prompt()`.
+- Do not revert unrelated user changes in the worktree.
 
-16. **Post-Coding Documentation Update:**
-    - **Trigger:** After completing ANY coding task that adds new features/elements
-    - **Mandatory Updates:**
-      1. `project_structure.md`: Add new files, update descriptions
-      2. `naming_registry.json`: Add new IDs, button names, variables
-## X. ECC PERFORMANCE SYSTEM (Everything Claude Code)
-17. **ECC Rules Integration:**
-    - **Location:** `.agent/rules/`
-    - **Action:** ALWAYS adhere to the coding standards, patterns, and security guidelines defined in the `.agent/rules/` directory.
-    - **Priority:** In case of conflict, project-specific rules in this `Rule.md` take precedence, but ECC rules serve as the primary engineering standard.
+## 5. Naming Standards
+
+- Python identifiers: `snake_case`.
+- TypeScript/JavaScript identifiers: `camelCase`.
+- CSS classes and HTML IDs: descriptive kebab-case unless the existing file already uses another convention.
+- Code identifiers should be English.
+- User-facing Vietnamese text should be clear and consistent with the existing UI.
+- Register important IDs, route names, localStorage/sessionStorage keys, generated bundle names, and public global functions in `naming_registry.json`.
+
+## 6. UI Standards
+
+- Dashboard uses Bootstrap 5 dark theme.
+- Critical actions use compact Bootstrap modals.
+- Toasts use the global toast system unless a feature already has a local equivalent.
+- No browser-native confirmation dialogs.
+- Avoid adding new visual modes that leave dead code behind. If a feature is removed, remove its code path, CSS, registry entry, and docs.
+- Before palette cleanup, use `color_inventory.md` as the current color audit baseline.
+
+## 7. Verification
+
+After code changes, verify with the smallest useful set:
+
+```powershell
+npm run check:ts
+npm run build
+python -m compileall app
+```
+
+When frontend behavior changes and the Flask server is running, also run:
+
+```powershell
+npm run test:browser
+```
+
+For JSON changes:
+
+```powershell
+python -m json.tool naming_registry.json
+```
+
+## 8. Data Safety
+
+- Do not delete or modify user runtime data in `data/` unless explicitly requested.
+- Do not commit or package `node_modules/`, `__pycache__/`, DB files, logs, or uploaded runtime data.
+- When creating temporary test data through APIs, clean it up through the matching API when possible.
+
+## 9. AI Review Packaging
+
+If the user asks to package files for AI review:
+
+- Output folder: `AI_Review/{FeatureName}_{YYYYMMDD}.zip`.
+- Include relevant `.py`, `.html`, `.css`, `.js`, `.ts`, `.json`, and `.md` files.
+- Exclude `node_modules`, `__pycache__`, DB files, virtualenvs, logs, and runtime user data.
+
+## 10. Priority
+
+If `.agent/rules/` exists, follow it as supporting engineering guidance. If it conflicts with this file or the user's current instruction, this `Rule.md` and the user's current instruction take priority.
