@@ -1,37 +1,10 @@
-#telegram-tool-pane .sticky-top {
-            top: 0;
-            z-index: 1020;
-            background-color: var(--card-bg) !important;
-            padding: 0.25rem 0;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 1rem;
-      }
-
-      #telegram-tool-pane .main-tool-container .tab-content,
-      #telegram-tool-pane .main-tool-container .nav-pills {
-            background: none;
-            border: none;
-            padding: 0;
-      }
-
-      #telegram-tool-pane .nav-pills .nav-link {
-            color: var(--text-color);
-      }
-
-      #telegram-tool-pane .nav-pills .nav-link.active {
-            background-color: var(--primary-color);
-            color: #fff;
-      }
-
       #tg-session-tables-container .table-responsive {
             max-height: 75vh;
             overflow-y: auto;
       }
 
       .stat-card {
-            border: 1px solid #4b5563;
             padding: 0.75rem 1.25rem;
-            min-width: 320px;
       }
 
       #telegram-tool-pane .main-tool-container {
@@ -42,14 +15,9 @@
 
       #telegram-tool-pane .nav-pills {
             flex: 0 0 220px;
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            padding: 0.5rem !important;
-            background-color: var(--card-bg) !important;
       }
 
       #telegram-tool-pane .nav-pills .nav-link {
-            margin-bottom: 0.25rem;
             text-align: left;
       }
 
@@ -61,22 +29,6 @@
       #tg-group-task-cards .card {
             cursor: pointer;
             transition: all 0.2s ease-in-out;
-            border: 2px solid transparent;
-      }
-
-      #tg-group-task-cards .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-      }
-
-      #tg-group-task-cards .card.card-selected {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 15px rgba(0, 112, 243, 0.5);
-      }
-
-      .status-checking {
-            color: #17a2b8;
-            font-weight: 500;
       }
 
       .auto-seeding-time-input::-webkit-outer-spin-button,
@@ -88,6 +40,7 @@
       .auto-seeding-time-input[type=number] {
             -moz-appearance: textfield;
       }
+
 
 /* Generated from telegram.html inline style attributes */
 .telegram-inline-1 { border-top-color: #4b5563; }
@@ -270,4 +223,115 @@
             width: 100%;
             flex: 0 0 auto;
       }
+}
+
+/* Telegram Premium Button Overrides */
+#telegram-tool-pane .btn {
+      border: 1px solid var(--md-border, rgba(255, 255, 255, .10)) !important;
+      border-radius: var(--md-radius-sm, 8px) !important;
+      background: var(--md-surface-2, #18181b) !important;
+      color: var(--md-text, #f5f5f5) !important;
+      transition: all 0.15s ease-in-out !important;
+}
+
+#telegram-tool-pane .btn:hover {
+      border-color: var(--md-border-strong, rgba(255, 255, 255, .18)) !important;
+      background: rgba(255, 255, 255, .08) !important;
+      color: #ffffff !important;
+}
+
+#telegram-tool-pane .btn-primary {
+      border-color: rgba(56, 189, 248, .38) !important;
+      background: rgba(56, 189, 248, .16) !important;
+      color: #e0f2fe !important;
+}
+
+#telegram-tool-pane .btn-primary:hover {
+      border-color: rgba(56, 189, 248, .58) !important;
+      background: rgba(56, 189, 248, .26) !important;
+      color: #ffffff !important;
+}
+
+#telegram-tool-pane .btn-success {
+      border-color: rgba(7, 193, 96, .38) !important;
+      background: rgba(7, 193, 96, .16) !important;
+      color: #dcfce7 !important;
+}
+
+#telegram-tool-pane .btn-success:hover {
+      border-color: rgba(7, 193, 96, .58) !important;
+      background: rgba(7, 193, 96, .26) !important;
+      color: #ffffff !important;
+}
+
+#telegram-tool-pane .btn-danger {
+      border-color: rgba(239, 68, 68, .45) !important;
+      background: rgba(239, 68, 68, .16) !important;
+      color: #fecaca !important;
+}
+
+#telegram-tool-pane .btn-danger:hover {
+      border-color: rgba(239, 68, 68, .58) !important;
+      background: rgba(239, 68, 68, .26) !important;
+      color: #ffffff !important;
+}
+
+#telegram-tool-pane .btn-warning {
+      border-color: rgba(245, 158, 11, .38) !important;
+      background: rgba(245, 158, 11, .16) !important;
+      color: #fef3c7 !important;
+}
+
+#telegram-tool-pane .btn-warning:hover {
+      border-color: rgba(245, 158, 11, .58) !important;
+      background: rgba(245, 158, 11, .26) !important;
+      color: #ffffff !important;
+}
+
+#telegram-tool-pane .btn-info {
+      border-color: rgba(56, 189, 248, .38) !important;
+      background: rgba(56, 189, 248, .16) !important;
+      color: #e0f2fe !important;
+}
+
+#telegram-tool-pane .btn-info:hover {
+      border-color: rgba(56, 189, 248, .58) !important;
+      background: rgba(56, 189, 248, .26) !important;
+      color: #ffffff !important;
+}
+
+#telegram-tool-pane .btn-secondary {
+      border-color: var(--md-border, rgba(255, 255, 255, .10)) !important;
+      background: var(--md-surface-2, #18181b) !important;
+      color: var(--md-text-soft, #d4d4d8) !important;
+}
+
+#telegram-tool-pane .btn-secondary:hover {
+      border-color: var(--md-border-strong, rgba(255, 255, 255, .18)) !important;
+      background: rgba(255, 255, 255, .08) !important;
+      color: #ffffff !important;
+}
+
+#telegram-tool-pane .btn-outline-info {
+      border-color: rgba(56, 189, 248, .38) !important;
+      color: #e0f2fe !important;
+      background: transparent !important;
+}
+
+#telegram-tool-pane .btn-outline-info:hover {
+      border-color: rgba(56, 189, 248, .58) !important;
+      background: rgba(56, 189, 248, .16) !important;
+      color: #ffffff !important;
+}
+
+#telegram-tool-pane .btn-outline-primary {
+      border-color: rgba(56, 189, 248, .38) !important;
+      color: #e0f2fe !important;
+      background: transparent !important;
+}
+
+#telegram-tool-pane .btn-outline-primary:hover {
+      border-color: rgba(56, 189, 248, .58) !important;
+      background: rgba(56, 189, 248, .16) !important;
+      color: #ffffff !important;
 }

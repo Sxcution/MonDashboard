@@ -1357,12 +1357,12 @@
     /* Align with parent item */
     display: none;
     min-width: 150px;
-    background: #2c3340;
+    background: var(--md-panel, #141416);
     /* Slightly different color for distinction */
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     padding: 8px;
-    border: 1px solid #444a59;
+    border: 1px solid var(--md-border, rgba(255, 255, 255, 0.10));
     animation: fadeInMenu 0.1s;
 }
 
@@ -1456,7 +1456,7 @@
     position: absolute;
     left: 100%;
     top: -8px;
-    background: #2c3340;
+    background: var(--md-panel, #141416);
     padding: 8px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -1627,12 +1627,12 @@
 #detail-editable-full,
 #detail-editable-right,
 .split-pane {
-    background-color: #1a1a1a !important;
-    background: #1a1a1a !important;
+    background-color: var(--md-bg, #050608) !important;
+    background: var(--md-bg, #050608) !important;
 }
 
 #notes-container .card {
-    background-color: #141414 !important;
+    background-color: var(--md-card, #141416) !important;
 }
 
 /* ========================================

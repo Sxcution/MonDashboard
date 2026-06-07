@@ -1,7 +1,7 @@
 /* === Home Command Center Layout === */
 .home-command-center {
     min-height: calc(100dvh - 48px);
-    color: var(--dashboard-text, #f5f5f5);
+    color: var(--md-text, #f5f5f5);
     background:
         radial-gradient(circle at 18% 4%, rgba(255, 255, 255, 0.04), transparent 34rem),
         radial-gradient(circle at 82% 8%, rgba(255, 255, 255, 0.035), transparent 32rem),
@@ -43,7 +43,7 @@
 .home-section-kicker,
 .home-panel-kicker,
 .home-status-card span {
-    color: var(--dashboard-muted, #a7b1c2);
+    color: var(--md-muted, #9ca3af);
     font-size: 0.75rem;
     font-weight: 800;
     letter-spacing: 0;
@@ -70,7 +70,7 @@
 .home-hero-subtitle {
     max-width: 760px;
     margin: 0;
-    color: var(--dashboard-text-soft, #d4d4d8);
+    color: var(--md-text-soft, #d4d4d8);
     font-size: clamp(1.08rem, 1.9vw, 1.55rem);
     line-height: 1.6;
 }
@@ -91,7 +91,7 @@
 }
 
 .home-command-search:focus-within {
-    border-color: var(--dashboard-border-strong, rgba(255, 255, 255, 0.14));
+    border-color: var(--md-border-strong, rgba(255, 255, 255, 0.18));
     box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04), 0 20px 55px rgba(0, 0, 0, 0.32);
 }
 
@@ -155,7 +155,7 @@
     padding: 14px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    color: var(--dashboard-text, #f5f5f5);
+    color: var(--md-text, #f5f5f5);
     text-decoration: none;
     background: var(--md-card, #141416);
     transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
@@ -168,7 +168,7 @@
 .home-section-link:hover,
 .home-section-link:focus-visible {
     color: #ffffff;
-    border-color: var(--dashboard-border-strong, rgba(255, 255, 255, 0.14));
+    border-color: var(--md-border-strong, rgba(255, 255, 255, 0.18));
     background: rgba(255, 255, 255, 0.09);
     box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
     transform: translateY(-3px);
@@ -204,7 +204,7 @@
 .home-status-card small {
     display: block;
     margin-top: 5px;
-    color: var(--dashboard-muted, #a7b1c2);
+    color: var(--md-muted, #9ca3af);
     font-size: 0.82rem;
     line-height: 1.35;
 }
@@ -307,7 +307,7 @@
     padding: 8px 12px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
-    color: var(--dashboard-text-soft, #d4d4d8);
+    color: var(--md-text-soft, #d4d4d8);
     text-decoration: none;
     background: rgba(255, 255, 255, 0.05);
     transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
@@ -319,7 +319,7 @@
     flex-direction: column;
     min-height: 220px;
     padding: 18px;
-    color: var(--dashboard-text, #f5f5f5);
+    color: var(--md-text, #f5f5f5);
     text-decoration: none;
     transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
 }
@@ -394,7 +394,7 @@
 
 .home-chat-subtitle {
     max-width: 160px;
-    color: var(--dashboard-muted, #a7b1c2);
+    color: var(--md-muted, #9ca3af);
     font-size: 0.8rem;
     line-height: 1.15;
 }
@@ -433,7 +433,7 @@
 .home-hermes-chat .btn-new-chat,
 .home-hermes-chat .search-box input {
     border-color: rgba(255, 255, 255, 0.12) !important;
-    color: var(--dashboard-text, #f5f5f5);
+    color: var(--md-text, #f5f5f5);
     background: rgba(255, 255, 255, 0.055);
 }
 
@@ -445,12 +445,12 @@
 .home-hermes-chat .btn-new-chat:focus-visible,
 .home-hermes-chat .search-box input:focus {
     color: #ffffff;
-    border-color: var(--dashboard-border-strong, rgba(255, 255, 255, 0.14)) !important;
+    border-color: var(--md-border-strong, rgba(255, 255, 255, 0.18)) !important;
     background: rgba(255, 255, 255, 0.09);
 }
 
 .home-hermes-chat .message-content {
-    color: var(--dashboard-text, #f5f5f5);
+    color: var(--md-text, #f5f5f5);
 }
 
 .home-image-preview {
