@@ -19,9 +19,9 @@ Use these tokens as the source of truth:
 
 ```css
 :root {
-    --md-bg: #050608;
-    --md-bg-soft: #090b0f;
-    --md-header: #050608;
+    --md-bg: #020203;
+    --md-bg-soft: #050608;
+    --md-header: #020203;
     --md-surface: #11141a;
     --md-surface-2: #18181b;
     --md-card: #141416;

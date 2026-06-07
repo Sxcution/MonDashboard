@@ -1,8 +1,8 @@
 /* === Dashboard Theme Variables === */
 :root {
-    --md-bg: #050608;
-    --md-bg-soft: #090b0f;
-    --md-header: #050608;
+    --md-bg: #020203;
+    --md-bg-soft: #050608;
+    --md-header: #020203;
     --md-surface: #11141a;
     --md-surface-2: #18181b;
     --md-card: #141416;
@@ -72,7 +72,7 @@ body {
     background:
         radial-gradient(circle at 18% -8%, rgba(255, 255, 255, 0.045), transparent 30rem),
         radial-gradient(circle at 86% 0%, rgba(255, 255, 255, 0.032), transparent 34rem),
-        linear-gradient(180deg, #050608 0%, #090b0f 52%, #050608 100%) !important;
+        linear-gradient(180deg, #020203 0%, #050608 52%, #020203 100%) !important;
 }
 
 .dashboard-page-shell,

@@ -8,7 +8,7 @@ const dashboardTabLifecycles = {};
 let dashboardTabShellBound = false;
 let activeDashboardTabId = null;
 let dashboardSwitchToken = 0;
-const DASHBOARD_GRAPHITE_BG = '#050608';
+const DASHBOARD_GRAPHITE_BG = '#020203';
 function normalizeAssetUrl(url, base = window.location.href) {
     try {
         return new URL(url, base).href;
@@ -497,7 +497,7 @@ function initDashboardNavbar() {
 }
 function applySavedDashboardTheme() {
     const resetVersionKey = 'dashboardThemeResetVersion';
-    const resetVersion = 'graphite-theme-20260607';
+    const resetVersion = 'graphite-theme-20260608';
     if (localStorage.getItem(resetVersionKey) !== resetVersion || localStorage.getItem('dashboardThemeColor') !== DASHBOARD_GRAPHITE_BG) {
         localStorage.setItem('dashboardThemeColor', DASHBOARD_GRAPHITE_BG);
         localStorage.setItem(resetVersionKey, resetVersion);

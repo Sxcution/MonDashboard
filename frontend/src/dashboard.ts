@@ -19,7 +19,7 @@ const dashboardTabLifecycles: Record<string, DashboardTabLifecycle> = {};
 let dashboardTabShellBound = false;
 let activeDashboardTabId: string | null = null;
 let dashboardSwitchToken = 0;
-const DASHBOARD_GRAPHITE_BG = '#050608';
+const DASHBOARD_GRAPHITE_BG = '#020203';
 
 function normalizeAssetUrl(url: string, base = window.location.href) {
     try {
@@ -551,7 +551,7 @@ function initDashboardNavbar() {
 
 function applySavedDashboardTheme() {
     const resetVersionKey = 'dashboardThemeResetVersion';
-    const resetVersion = 'graphite-theme-20260607';
+    const resetVersion = 'graphite-theme-20260608';
     if (localStorage.getItem(resetVersionKey) !== resetVersion || localStorage.getItem('dashboardThemeColor') !== DASHBOARD_GRAPHITE_BG) {
         localStorage.setItem('dashboardThemeColor', DASHBOARD_GRAPHITE_BG);
         localStorage.setItem(resetVersionKey, resetVersion);

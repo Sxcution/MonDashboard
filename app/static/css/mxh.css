@@ -1166,7 +1166,7 @@
 #mxh-tool-pane,
 #mxh-tool-pane > .container-fluid,
 .mxh-page-shell {
-    background: var(--dashboard-bg, #050608) !important;
+    background: var(--dashboard-bg, #020203) !important;
     color: var(--dashboard-text, #f5f5f5);
 }
 

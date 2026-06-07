@@ -64,7 +64,7 @@
 #telegram-tool-pane {
       min-height: calc(100dvh - 56px);
       padding: 14px;
-      background: var(--md-bg, #050608) !important;
+      background: var(--md-bg, #020203) !important;
       color: var(--md-text, #f5f5f5);
 }
 
@@ -74,7 +74,7 @@
       margin: -14px -14px 14px;
       padding: 12px 14px;
       border-bottom: 1px solid var(--md-border, rgba(255, 255, 255, .10));
-      background: rgba(5, 6, 8, .94) !important;
+      background: rgba(2, 2, 3, .94) !important;
       backdrop-filter: blur(16px);
 }
 
@@ -142,7 +142,7 @@
 #telegram-tool-pane .form-select,
 #telegram-tool-pane .input-group-text {
       border-color: var(--md-border, rgba(255, 255, 255, .10)) !important;
-      background: var(--md-bg-soft, #090b0f) !important;
+      background: var(--md-bg-soft, #050608) !important;
       color: var(--md-text, #f5f5f5) !important;
 }
 
