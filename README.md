@@ -180,6 +180,9 @@ Không commit dữ liệu runtime/local:
 - `*.db`
 - `__pycache__/`
 - `node_modules/`
+- `tools/upscayl/`
+- `tools/realesrgan-ncnn-vulkan/`
+- `tools/opencv-superres/`
 
 Hiện repo vẫn giữ `app/static/js/` và `app/static/dist/*.bundle.js` vì template Flask đang load trực tiếp các output này.
 

@@ -25,6 +25,10 @@ build/
 data/
 logs/
 *.log
+*.session
+*.session-journal
+*.bak
+*.backup
 
 # Static uploads/images
 static/uploads/
@@ -63,7 +67,24 @@ Thumbs.db
 *.dll
 *.so
 *.dylib
+*.asar
+*.pak
+*.bin
+*.dat
+*.pb
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.engine
+*.mp4
+*.zip
+*.7z
+*.rar
 tools/upscayl/
+tools/realesrgan-ncnn-vulkan/
+tools/opencv-superres/
 
 # Cache
 .cache/

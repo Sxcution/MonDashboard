@@ -117,8 +117,12 @@ The current main areas are:
 | `data/uploaded_sessions/` | Telegram uploaded sessions. Runtime data. |
 | `data/notes_images/` | Uploaded Notes images. Runtime data. |
 | `data/collage_history/` and related image data | Image editor generated/runtime data. |
+| `tools/upscayl/` | Local Upscayl application payload. Ignored; do not upload to GitHub. |
+| `tools/realesrgan-ncnn-vulkan/` | Local RealESRGAN binary/models. Ignored; do not upload to GitHub. |
+| `tools/opencv-superres/` | Local OpenCV super-resolution models. Ignored; do not upload to GitHub. |
 
 Do not modify or delete `data/` unless the user explicitly asks.
+Do not commit local tool binaries/models; keep them installed locally and ignored by Git.
 
 ## Tests And Verification
 

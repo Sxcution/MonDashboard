@@ -1,5 +1,26 @@
 // MXH search/filter helpers.
 (function () {
+    function getNearbyPeopleHoursUntilActive(ctx, account, now) {
+        if (!account || account.platform !== 'wechat') return Number.POSITIVE_INFINITY;
+        if ((account.status || '').toLowerCase() === 'disabled') return Number.POSITIVE_INFINITY;
+        if (!ctx.isEligibleNearbyPeople(account)) return Number.POSITIVE_INFINITY;
+        if (!account.nearby_people_until) return 0;
+
+        const until = new Date(account.nearby_people_until);
+        if (isNaN(until.getTime())) return Number.POSITIVE_INFINITY;
+
+        return Math.max(0, ctx.calculateTimeDifferenceInHours(now, until));
+    }
+
+    function getNearestNearbyPeopleHours(ctx, accounts, now) {
+        let nearestHours = Number.POSITIVE_INFINITY;
+        accounts.forEach(account => {
+            const hoursUntilActive = getNearbyPeopleHoursUntilActive(ctx, account, now);
+            if (hoursUntilActive < nearestHours) nearestHours = hoursUntilActive;
+        });
+        return nearestHours;
+    }
+
     function applyQuickFilter(ctx, filterKey) {
         if (ctx.isRendering) return;
 
@@ -48,11 +69,17 @@
         const shouldDim = filterDims || viewDims || searchQuery.length > 0;
 
         let colsArray = Array.from(cols) as any[];
-        const shouldSort = (ctx.activeFilter === 'creation_date' || ctx.activeFilter === 'creation_date_newest');
+        const shouldSortByCreationDate = (ctx.activeFilter === 'creation_date' || ctx.activeFilter === 'creation_date_newest');
+        const shouldSortByNearbyPeople = ctx.activeFilter === 'nearby_people';
+        const shouldSort = shouldSortByCreationDate || shouldSortByNearbyPeople;
+        const now = new Date();
 
         colsArray.forEach(col => {
             const cardId = col.dataset.cardId;
             const accounts = ctx.mxhAccounts.filter(acc => String(acc.card_id) === String(cardId));
+            const nearestNearbyHours = shouldSortByNearbyPeople
+                ? getNearestNearbyPeopleHours(ctx, accounts, now)
+                : Number.POSITIVE_INFINITY;
 
             let isSearchMatch = true;
             if (searchQuery) {
@@ -108,7 +135,7 @@
                 } else if (ctx.activeFilter === 'need_hk') {
                     isFilterMatch = accounts.some(account => ctx.needsHongKongNumber(account));
                 } else if (ctx.activeFilter === 'nearby_people') {
-                    isFilterMatch = accounts.some(account => ctx.isNearbyPeopleActive(account));
+                    isFilterMatch = Number.isFinite(nearestNearbyHours);
                 }
             }
 
@@ -117,7 +144,7 @@
 
             col._isMatch = isMatch;
 
-            if (shouldSort) {
+            if (shouldSortByCreationDate) {
                 let dateVal = 0;
                 if (ctx.activeFilter === 'creation_date') {
                     let minTs = Infinity;
@@ -135,6 +162,10 @@
                     dateVal = (maxTs === -1) ? 0 : maxTs;
                 }
                 col._dateVal = dateVal;
+            } else if (shouldSortByNearbyPeople) {
+                col._nearbyPeopleVal = Number.isFinite(nearestNearbyHours)
+                    ? nearestNearbyHours
+                    : Number.MAX_SAFE_INTEGER;
             }
 
             const wrapper = col.querySelector('.mxh-card-wrapper');
@@ -153,6 +184,9 @@
 
         if (shouldSort) {
             colsArray.sort((a, b) => {
+                if (shouldSortByNearbyPeople) {
+                    return (a._nearbyPeopleVal - b._nearbyPeopleVal);
+                }
                 if (ctx.activeFilter === 'creation_date') {
                     return (a._dateVal - b._dateVal);
                 }

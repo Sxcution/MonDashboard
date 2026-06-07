@@ -33,24 +33,59 @@ type ChatSessionId = string | number | null;
 let currentSessionId: ChatSessionId = null;
 let providerSettings: ChatProviderSettings = {}; // Store settings for all providers
 
+const MODEL_DISPLAY_NAMES: Record<string, string> = {
+    'Hermes Agent': 'Hermes Agent',
+    'gpt-4o': 'GPT-4o',
+    'gpt-3.5-turbo': 'GPT-3.5',
+    'gemini-2.5-flash': 'Gemini 2.5 Flash',
+    'gemini-2.5-pro': 'Gemini 2.5 Pro'
+};
+
+function getSelectedModel(): SelectedModel {
+    try {
+        return JSON.parse(localStorage.getItem('selectedModel') || '{}') as SelectedModel;
+    } catch {
+        return {};
+    }
+}
+
+function setCurrentModelName(model: string) {
+    const modelNameEl = document.getElementById('current-model-name');
+    if (modelNameEl) modelNameEl.textContent = MODEL_DISPLAY_NAMES[model] || model;
+}
+
+function isHomeCommandCenter() {
+    return Boolean(document.querySelector('.home-command-center'));
+}
+
+function showChatNotice(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    const toast = (window as any).showToast;
+    if (typeof toast === 'function') {
+        toast(message, type);
+        return;
+    }
+    console[type === 'error' ? 'error' : 'log'](message);
+}
+
+async function confirmChatAction(message: string, title = 'Xác nhận') {
+    const confirmModal = (window as any).confirm;
+    if (typeof confirmModal !== 'function') return false;
+    const result = confirmModal(message, title);
+    return typeof result?.then === 'function' ? Boolean(await result) : Boolean(result);
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // Set default model if not already set
     if (!localStorage.getItem('selectedModel')) {
         localStorage.setItem('selectedModel', JSON.stringify({
-            provider: 'gemini',
-            model: 'gemini-2.5-flash'
+            provider: 'hermes',
+            model: 'Hermes Agent'
         }));
-        document.getElementById('current-model-name').textContent = 'Gemini 2.5 Flash';
+        setCurrentModelName('Hermes Agent');
     } else {
         // Restore selected model display
-        const selected = JSON.parse(localStorage.getItem('selectedModel'));
-        const displayNames = {
-            'gpt-4o': 'GPT-4o',
-            'gpt-3.5-turbo': 'GPT-3.5',
-            'gemini-2.5-flash': 'Gemini 2.5 Flash',
-            'gemini-2.5-pro': 'Gemini 2.5 Pro'
-        };
-        document.getElementById('current-model-name').textContent = displayNames[selected.model] || selected.model;
+        const selected = getSelectedModel();
+        setCurrentModelName(selected.model || 'Hermes Agent');
     }
 
     loadSessions();
@@ -119,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
         startNewChat();
         // Focus input is handled inside startNewChat, but let's ensure it
         const chatInput = document.getElementById('user-input') as HTMLTextAreaElement | null;
-        if (chatInput) chatInput.focus();
+        if (chatInput && !isHomeCommandCenter()) chatInput.focus();
     }, 500);
 
     // Initialize Tooltips
@@ -184,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Provider Change Listener
-    document.getElementById('ai-provider').addEventListener('change', function (e) {
+    document.getElementById('ai-provider')?.addEventListener('change', function (e) {
         updateSettingsUI((e.target as HTMLSelectElement).value);
     });
 
@@ -241,7 +276,7 @@ function showContextMenu(x: number, y: number, sessionId?: string) {
     menu.style.top = y + 'px';
     menu.innerHTML = `
         <div class="context-menu-item" data-chat-delete-session="${sessionId}">
-            <i class="bi bi-trash me-2"></i>Delete Chat
+            <i class="bi bi-trash me-2"></i>Xoá chat
         </div>
     `;
     menu.addEventListener('click', (event) => {
@@ -259,7 +294,7 @@ function hideContextMenu() {
 
 async function deleteChat(sessionId?: string) {
     if (!sessionId) return;
-    if (!confirm('Are you sure you want to delete this chat?')) return;
+    if (!(await confirmChatAction('Are you sure you want to delete this chat?'))) return;
 
     try {
         const response = await fetch(`/api/chat/delete_session/${sessionId}`, {
@@ -287,19 +322,25 @@ function toggleSidebar() {
 
 function selectModel(provider: string, model: string) {
     // Update display name
-    const displayNames: Record<string, string> = {
-        'gpt-4o': 'GPT-4o',
-        'gpt-3.5-turbo': 'GPT-3.5',
-        'gemini-2.5-flash': 'Gemini 2.5 Flash',
-        'gemini-2.5-pro': 'Gemini 2.5 Pro'
-    };
-
-    const displayName = displayNames[model] || model;
-    document.getElementById('current-model-name').textContent = displayName;
+    const displayName = MODEL_DISPLAY_NAMES[model] || model;
+    setCurrentModelName(model);
 
     // Update settings
-    (document.getElementById('ai-provider') as HTMLSelectElement).value = provider;
-    (document.getElementById('ai-model') as HTMLInputElement).value = model;
+    const providerInput = document.getElementById('ai-provider') as HTMLSelectElement | null;
+    const modelInput = document.getElementById('ai-model') as HTMLInputElement | null;
+    if (providerInput) providerInput.value = provider;
+    if (modelInput) modelInput.value = model;
+    providerSettings.provider = provider;
+
+    if (provider === 'hermes') {
+        providerSettings.hermes_model = model || 'Hermes Agent';
+    } else if (provider === 'gemini') {
+        providerSettings.gemini_model = model;
+    } else if (provider === 'openai') {
+        providerSettings.openai_model = model;
+    }
+
+    updateSettingsUI(provider);
 
     // Save to localStorage
     const settings = {
@@ -308,7 +349,7 @@ function selectModel(provider: string, model: string) {
     };
     localStorage.setItem('selectedModel', JSON.stringify(settings));
 
-    console.log(`Selected model: ${provider} - ${model}`);
+    console.log(`Selected model: ${provider} - ${displayName}`);
 }
 
 
@@ -324,7 +365,7 @@ async function loadSessions() {
                 const item = document.createElement('a');
                 item.href = '#';
                 item.className = 'chat-history-item';
-                item.textContent = session.title || 'New Chat';
+                item.textContent = session.title || 'Chat mới';
                 item.dataset.id = session.id;
                 item.onclick = (e) => {
                     e.preventDefault();
@@ -333,7 +374,7 @@ async function loadSessions() {
                 list.appendChild(item);
             });
         } else {
-            list.innerHTML = '<div class="text-center text-muted small mt-3">No history</div>';
+            list.innerHTML = '<div class="text-center text-muted small mt-3">Chưa có lịch sử</div>';
         }
     } catch (error) {
         console.error('Failed to load sessions:', error);
@@ -350,7 +391,12 @@ function startNewChat() {
                     <i class="bi bi-robot fs-1"></i>
                 </div>
             </div>
-            <h3 class="mb-4 fw-bold">Hello Sáº¿p</h3>
+            <h3 class="mb-3 fw-bold">Hermes sẵn sàng</h3>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                <button class="btn-suggestion" type="button" onclick="sendSuggestion('Tóm tắt dashboard hôm nay')">Tóm tắt dashboard</button>
+                <button class="btn-suggestion" type="button" onclick="sendSuggestion('Kiểm tra các ghi chú mới nhất')">Ghi chú mới</button>
+                <button class="btn-suggestion" type="button" onclick="sendSuggestion('Xem tình trạng Telegram')">Telegram</button>
+            </div>
         </div>
     `;
     // Center input when empty
@@ -479,8 +525,8 @@ async function sendMessage() {
     loadingRow.id = loadingId;
 
     // Get current model name for loading state
-    let currentModelName = 'ChatGPT';
-    const provider = providerSettings.provider || 'openai';
+    let currentModelName = 'Hermes Agent';
+    const provider = getSelectedModel().provider || providerSettings.provider || 'hermes';
     if (provider === 'openai') currentModelName = providerSettings.openai_model || 'GPT-3.5 Turbo';
     else if (provider === 'gemini') currentModelName = providerSettings.gemini_model || 'Gemini Pro';
 
@@ -498,13 +544,13 @@ async function sendMessage() {
 
     try {
         // Get selected model from localStorage
-        const selectedModel = JSON.parse(localStorage.getItem('selectedModel') || '{}') as SelectedModel;
+        const selectedModel = getSelectedModel();
 
         const payload: Record<string, unknown> = {
             message: message,
             session_id: currentSessionId,
-            provider: selectedModel.provider,
-            model: selectedModel.model
+            provider: selectedModel.provider || providerSettings.provider || 'hermes',
+            model: selectedModel.model || 'Hermes Agent'
         };
 
         if (imageToSend) {
@@ -539,8 +585,8 @@ async function sendMessage() {
 }
 
 async function clearAllChats() {
-    if (!confirm('Are you sure you want to delete all chat history?')) return;
-    alert('Feature coming soon!');
+    if (!(await confirmChatAction('Are you sure you want to delete all chat history?'))) return;
+    showChatNotice('Feature coming soon!', 'info');
 }
 
 // --- Smart Settings Logic ---
@@ -553,15 +599,22 @@ async function loadAISettings() {
             providerSettings = data.settings; // Store all settings
 
             // Set current provider
-            const currentProvider = providerSettings.provider || 'openai';
-            (document.getElementById('ai-provider') as HTMLSelectElement).value = currentProvider;
+            const currentProvider = getSelectedModel().provider || providerSettings.provider || 'hermes';
+            const providerInput = document.getElementById('ai-provider') as HTMLSelectElement | null;
+            if (providerInput) providerInput.value = currentProvider;
 
             // Load System Prompts
-            (document.getElementById('system-prompt-general') as HTMLTextAreaElement).value = providerSettings.system_prompt_general || '';
-            (document.getElementById('system-prompt-mxh') as HTMLTextAreaElement).value = providerSettings.system_prompt_mxh || '';
-            (document.getElementById('system-prompt-notes') as HTMLTextAreaElement).value = providerSettings.system_prompt_notes || '';
-            (document.getElementById('system-prompt-telegram') as HTMLTextAreaElement).value = providerSettings.system_prompt_telegram || '';
-            (document.getElementById('system-prompt-image') as HTMLTextAreaElement).value = providerSettings.system_prompt_image || '';
+            const promptFields: Record<string, string | undefined> = {
+                'system-prompt-general': providerSettings.system_prompt_general as string | undefined,
+                'system-prompt-mxh': providerSettings.system_prompt_mxh as string | undefined,
+                'system-prompt-notes': providerSettings.system_prompt_notes as string | undefined,
+                'system-prompt-telegram': providerSettings.system_prompt_telegram as string | undefined,
+                'system-prompt-image': providerSettings.system_prompt_image as string | undefined
+            };
+            Object.entries(promptFields).forEach(([id, value]) => {
+                const field = document.getElementById(id) as HTMLTextAreaElement | null;
+                if (field) field.value = value || '';
+            });
 
             updateSettingsUI(currentProvider);
             updateHeaderModelName(currentProvider);
@@ -571,10 +624,18 @@ async function loadAISettings() {
 
 function updateSettingsUI(provider: string) {
     // Load Key/Model based on provider
-    const apiKeyInput = document.getElementById('ai-api-key') as HTMLInputElement;
-    const modelInput = document.getElementById('ai-model') as HTMLInputElement;
+    const apiKeyInput = document.getElementById('ai-api-key') as HTMLInputElement | null;
+    const modelInput = document.getElementById('ai-model') as HTMLInputElement | null;
+    const apiKeyRow = document.getElementById('ai-api-key-row');
 
-    if (provider === 'openai') {
+    if (apiKeyRow) apiKeyRow.classList.toggle('d-none', provider === 'hermes');
+    if (!apiKeyInput || !modelInput) return;
+
+    if (provider === 'hermes') {
+        apiKeyInput.value = '';
+        modelInput.value = (providerSettings.hermes_model as string) || 'Hermes Agent';
+        modelInput.placeholder = 'Hermes Agent';
+    } else if (provider === 'openai') {
         apiKeyInput.value = providerSettings.openai_api_key || '';
         modelInput.value = providerSettings.openai_model || 'gpt-3.5-turbo';
         modelInput.placeholder = 'e.g. gpt-4o';
@@ -586,17 +647,18 @@ function updateSettingsUI(provider: string) {
 }
 
 function updateHeaderModelName(provider: string) {
-    const modelNameEl = document.getElementById('current-model-name');
     let modelName = '';
 
-    if (provider === 'openai') {
+    if (provider === 'hermes') {
+        modelName = (providerSettings.hermes_model as string) || 'Hermes Agent';
+    } else if (provider === 'openai') {
         modelName = providerSettings.openai_model || 'GPT-3.5 Turbo';
     } else if (provider === 'gemini') {
         modelName = providerSettings.gemini_model || 'Gemini 2.5 Flash';
     }
 
     if (!modelName) modelName = provider.charAt(0).toUpperCase() + provider.slice(1);
-    modelNameEl.textContent = modelName;
+    setCurrentModelName(modelName);
 }
 
 async function saveAISettings() {
@@ -625,6 +687,8 @@ async function saveAISettings() {
     } else if (provider === 'gemini') {
         providerSettings.gemini_api_key = apiKey;
         providerSettings.gemini_model = model;
+    } else if (provider === 'hermes') {
+        providerSettings.hermes_model = model || 'Hermes Agent';
     }
 
     try {
@@ -635,17 +699,18 @@ async function saveAISettings() {
         });
         const data = await response.json();
         if (data.success) {
-            alert('Settings saved!');
+            showChatNotice('Đã lưu cài đặt!', 'success');
             updateHeaderModelName(provider);
+            localStorage.setItem('selectedModel', JSON.stringify({ provider, model: model || 'Hermes Agent' }));
             const modal = bootstrap.Modal.getInstance(document.getElementById('aiSettingsModal'));
             modal?.hide();
-        } else { alert('Error: ' + data.error); }
-    } catch (error) { alert('Error: ' + error.message); }
+        } else { showChatNotice('Error: ' + data.error, 'error'); }
+    } catch (error) { showChatNotice('Error: ' + error.message, 'error'); }
 }
 
 // Clear Dashboard Cache
-function clearDashboardCache() {
-    if (confirm('Clear browser cache and reload? This will refresh all cached files.')) {
+async function clearDashboardCache() {
+    if (await confirmChatAction('Clear browser cache and reload? This will refresh all cached files.')) {
         // Clear localStorage (optional - keeps chat history in database)
         // localStorage.clear();
 

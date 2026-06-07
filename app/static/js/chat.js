@@ -2,25 +2,57 @@
 (function () {
     let currentSessionId = null;
     let providerSettings = {}; // Store settings for all providers
+    const MODEL_DISPLAY_NAMES = {
+        'Hermes Agent': 'Hermes Agent',
+        'gpt-4o': 'GPT-4o',
+        'gpt-3.5-turbo': 'GPT-3.5',
+        'gemini-2.5-flash': 'Gemini 2.5 Flash',
+        'gemini-2.5-pro': 'Gemini 2.5 Pro'
+    };
+    function getSelectedModel() {
+        try {
+            return JSON.parse(localStorage.getItem('selectedModel') || '{}');
+        }
+        catch {
+            return {};
+        }
+    }
+    function setCurrentModelName(model) {
+        const modelNameEl = document.getElementById('current-model-name');
+        if (modelNameEl)
+            modelNameEl.textContent = MODEL_DISPLAY_NAMES[model] || model;
+    }
+    function isHomeCommandCenter() {
+        return Boolean(document.querySelector('.home-command-center'));
+    }
+    function showChatNotice(message, type = 'info') {
+        const toast = window.showToast;
+        if (typeof toast === 'function') {
+            toast(message, type);
+            return;
+        }
+        console[type === 'error' ? 'error' : 'log'](message);
+    }
+    async function confirmChatAction(message, title = 'Xác nhận') {
+        const confirmModal = window.confirm;
+        if (typeof confirmModal !== 'function')
+            return false;
+        const result = confirmModal(message, title);
+        return typeof result?.then === 'function' ? Boolean(await result) : Boolean(result);
+    }
     document.addEventListener('DOMContentLoaded', function () {
         // Set default model if not already set
         if (!localStorage.getItem('selectedModel')) {
             localStorage.setItem('selectedModel', JSON.stringify({
-                provider: 'gemini',
-                model: 'gemini-2.5-flash'
+                provider: 'hermes',
+                model: 'Hermes Agent'
             }));
-            document.getElementById('current-model-name').textContent = 'Gemini 2.5 Flash';
+            setCurrentModelName('Hermes Agent');
         }
         else {
             // Restore selected model display
-            const selected = JSON.parse(localStorage.getItem('selectedModel'));
-            const displayNames = {
-                'gpt-4o': 'GPT-4o',
-                'gpt-3.5-turbo': 'GPT-3.5',
-                'gemini-2.5-flash': 'Gemini 2.5 Flash',
-                'gemini-2.5-pro': 'Gemini 2.5 Pro'
-            };
-            document.getElementById('current-model-name').textContent = displayNames[selected.model] || selected.model;
+            const selected = getSelectedModel();
+            setCurrentModelName(selected.model || 'Hermes Agent');
         }
         loadSessions();
         loadAISettings();
@@ -80,7 +112,7 @@
             startNewChat();
             // Focus input is handled inside startNewChat, but let's ensure it
             const chatInput = document.getElementById('user-input');
-            if (chatInput)
+            if (chatInput && !isHomeCommandCenter())
                 chatInput.focus();
         }, 500);
         // Initialize Tooltips
@@ -144,7 +176,7 @@
             }
         });
         // Provider Change Listener
-        document.getElementById('ai-provider').addEventListener('change', function (e) {
+        document.getElementById('ai-provider')?.addEventListener('change', function (e) {
             updateSettingsUI(e.target.value);
         });
         // Setup context menu for chat history
@@ -197,7 +229,7 @@
         menu.style.top = y + 'px';
         menu.innerHTML = `
         <div class="context-menu-item" data-chat-delete-session="${sessionId}">
-            <i class="bi bi-trash me-2"></i>Delete Chat
+            <i class="bi bi-trash me-2"></i>Xoá chat
         </div>
     `;
         menu.addEventListener('click', (event) => {
@@ -216,7 +248,7 @@
     async function deleteChat(sessionId) {
         if (!sessionId)
             return;
-        if (!confirm('Are you sure you want to delete this chat?'))
+        if (!(await confirmChatAction('Are you sure you want to delete this chat?')))
             return;
         try {
             const response = await fetch(`/api/chat/delete_session/${sessionId}`, {
@@ -242,24 +274,33 @@
     }
     function selectModel(provider, model) {
         // Update display name
-        const displayNames = {
-            'gpt-4o': 'GPT-4o',
-            'gpt-3.5-turbo': 'GPT-3.5',
-            'gemini-2.5-flash': 'Gemini 2.5 Flash',
-            'gemini-2.5-pro': 'Gemini 2.5 Pro'
-        };
-        const displayName = displayNames[model] || model;
-        document.getElementById('current-model-name').textContent = displayName;
+        const displayName = MODEL_DISPLAY_NAMES[model] || model;
+        setCurrentModelName(model);
         // Update settings
-        document.getElementById('ai-provider').value = provider;
-        document.getElementById('ai-model').value = model;
+        const providerInput = document.getElementById('ai-provider');
+        const modelInput = document.getElementById('ai-model');
+        if (providerInput)
+            providerInput.value = provider;
+        if (modelInput)
+            modelInput.value = model;
+        providerSettings.provider = provider;
+        if (provider === 'hermes') {
+            providerSettings.hermes_model = model || 'Hermes Agent';
+        }
+        else if (provider === 'gemini') {
+            providerSettings.gemini_model = model;
+        }
+        else if (provider === 'openai') {
+            providerSettings.openai_model = model;
+        }
+        updateSettingsUI(provider);
         // Save to localStorage
         const settings = {
             provider: provider,
             model: model
         };
         localStorage.setItem('selectedModel', JSON.stringify(settings));
-        console.log(`Selected model: ${provider} - ${model}`);
+        console.log(`Selected model: ${provider} - ${displayName}`);
     }
     async function loadSessions() {
         try {
@@ -272,7 +313,7 @@
                     const item = document.createElement('a');
                     item.href = '#';
                     item.className = 'chat-history-item';
-                    item.textContent = session.title || 'New Chat';
+                    item.textContent = session.title || 'Chat mới';
                     item.dataset.id = session.id;
                     item.onclick = (e) => {
                         e.preventDefault();
@@ -282,7 +323,7 @@
                 });
             }
             else {
-                list.innerHTML = '<div class="text-center text-muted small mt-3">No history</div>';
+                list.innerHTML = '<div class="text-center text-muted small mt-3">Chưa có lịch sử</div>';
             }
         }
         catch (error) {
@@ -299,7 +340,12 @@
                     <i class="bi bi-robot fs-1"></i>
                 </div>
             </div>
-            <h3 class="mb-4 fw-bold">Hello Sáº¿p</h3>
+            <h3 class="mb-3 fw-bold">Hermes sẵn sàng</h3>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                <button class="btn-suggestion" type="button" onclick="sendSuggestion('Tóm tắt dashboard hôm nay')">Tóm tắt dashboard</button>
+                <button class="btn-suggestion" type="button" onclick="sendSuggestion('Kiểm tra các ghi chú mới nhất')">Ghi chú mới</button>
+                <button class="btn-suggestion" type="button" onclick="sendSuggestion('Xem tình trạng Telegram')">Telegram</button>
+            </div>
         </div>
     `;
         // Center input when empty
@@ -418,8 +464,8 @@
         loadingRow.className = 'message-row ai'; // Add ai class
         loadingRow.id = loadingId;
         // Get current model name for loading state
-        let currentModelName = 'ChatGPT';
-        const provider = providerSettings.provider || 'openai';
+        let currentModelName = 'Hermes Agent';
+        const provider = getSelectedModel().provider || providerSettings.provider || 'hermes';
         if (provider === 'openai')
             currentModelName = providerSettings.openai_model || 'GPT-3.5 Turbo';
         else if (provider === 'gemini')
@@ -437,12 +483,12 @@
         chatMessages.scrollTop = chatMessages.scrollHeight;
         try {
             // Get selected model from localStorage
-            const selectedModel = JSON.parse(localStorage.getItem('selectedModel') || '{}');
+            const selectedModel = getSelectedModel();
             const payload = {
                 message: message,
                 session_id: currentSessionId,
-                provider: selectedModel.provider,
-                model: selectedModel.model
+                provider: selectedModel.provider || providerSettings.provider || 'hermes',
+                model: selectedModel.model || 'Hermes Agent'
             };
             if (imageToSend) {
                 payload.image = imageToSend;
@@ -476,9 +522,9 @@
         }
     }
     async function clearAllChats() {
-        if (!confirm('Are you sure you want to delete all chat history?'))
+        if (!(await confirmChatAction('Are you sure you want to delete all chat history?')))
             return;
-        alert('Feature coming soon!');
+        showChatNotice('Feature coming soon!', 'info');
     }
     // --- Smart Settings Logic ---
     async function loadAISettings() {
@@ -488,14 +534,23 @@
             if (data.success) {
                 providerSettings = data.settings; // Store all settings
                 // Set current provider
-                const currentProvider = providerSettings.provider || 'openai';
-                document.getElementById('ai-provider').value = currentProvider;
+                const currentProvider = getSelectedModel().provider || providerSettings.provider || 'hermes';
+                const providerInput = document.getElementById('ai-provider');
+                if (providerInput)
+                    providerInput.value = currentProvider;
                 // Load System Prompts
-                document.getElementById('system-prompt-general').value = providerSettings.system_prompt_general || '';
-                document.getElementById('system-prompt-mxh').value = providerSettings.system_prompt_mxh || '';
-                document.getElementById('system-prompt-notes').value = providerSettings.system_prompt_notes || '';
-                document.getElementById('system-prompt-telegram').value = providerSettings.system_prompt_telegram || '';
-                document.getElementById('system-prompt-image').value = providerSettings.system_prompt_image || '';
+                const promptFields = {
+                    'system-prompt-general': providerSettings.system_prompt_general,
+                    'system-prompt-mxh': providerSettings.system_prompt_mxh,
+                    'system-prompt-notes': providerSettings.system_prompt_notes,
+                    'system-prompt-telegram': providerSettings.system_prompt_telegram,
+                    'system-prompt-image': providerSettings.system_prompt_image
+                };
+                Object.entries(promptFields).forEach(([id, value]) => {
+                    const field = document.getElementById(id);
+                    if (field)
+                        field.value = value || '';
+                });
                 updateSettingsUI(currentProvider);
                 updateHeaderModelName(currentProvider);
             }
@@ -508,7 +563,17 @@
         // Load Key/Model based on provider
         const apiKeyInput = document.getElementById('ai-api-key');
         const modelInput = document.getElementById('ai-model');
-        if (provider === 'openai') {
+        const apiKeyRow = document.getElementById('ai-api-key-row');
+        if (apiKeyRow)
+            apiKeyRow.classList.toggle('d-none', provider === 'hermes');
+        if (!apiKeyInput || !modelInput)
+            return;
+        if (provider === 'hermes') {
+            apiKeyInput.value = '';
+            modelInput.value = providerSettings.hermes_model || 'Hermes Agent';
+            modelInput.placeholder = 'Hermes Agent';
+        }
+        else if (provider === 'openai') {
             apiKeyInput.value = providerSettings.openai_api_key || '';
             modelInput.value = providerSettings.openai_model || 'gpt-3.5-turbo';
             modelInput.placeholder = 'e.g. gpt-4o';
@@ -520,9 +585,11 @@
         }
     }
     function updateHeaderModelName(provider) {
-        const modelNameEl = document.getElementById('current-model-name');
         let modelName = '';
-        if (provider === 'openai') {
+        if (provider === 'hermes') {
+            modelName = providerSettings.hermes_model || 'Hermes Agent';
+        }
+        else if (provider === 'openai') {
             modelName = providerSettings.openai_model || 'GPT-3.5 Turbo';
         }
         else if (provider === 'gemini') {
@@ -530,7 +597,7 @@
         }
         if (!modelName)
             modelName = provider.charAt(0).toUpperCase() + provider.slice(1);
-        modelNameEl.textContent = modelName;
+        setCurrentModelName(modelName);
     }
     async function saveAISettings() {
         const provider = document.getElementById('ai-provider').value;
@@ -557,6 +624,9 @@
             providerSettings.gemini_api_key = apiKey;
             providerSettings.gemini_model = model;
         }
+        else if (provider === 'hermes') {
+            providerSettings.hermes_model = model || 'Hermes Agent';
+        }
         try {
             const response = await fetch('/api/chat/settings', {
                 method: 'POST',
@@ -565,22 +635,23 @@
             });
             const data = await response.json();
             if (data.success) {
-                alert('Settings saved!');
+                showChatNotice('Đã lưu cài đặt!', 'success');
                 updateHeaderModelName(provider);
+                localStorage.setItem('selectedModel', JSON.stringify({ provider, model: model || 'Hermes Agent' }));
                 const modal = bootstrap.Modal.getInstance(document.getElementById('aiSettingsModal'));
                 modal?.hide();
             }
             else {
-                alert('Error: ' + data.error);
+                showChatNotice('Error: ' + data.error, 'error');
             }
         }
         catch (error) {
-            alert('Error: ' + error.message);
+            showChatNotice('Error: ' + error.message, 'error');
         }
     }
     // Clear Dashboard Cache
-    function clearDashboardCache() {
-        if (confirm('Clear browser cache and reload? This will refresh all cached files.')) {
+    async function clearDashboardCache() {
+        if (await confirmChatAction('Clear browser cache and reload? This will refresh all cached files.')) {
             // Clear localStorage (optional - keeps chat history in database)
             // localStorage.clear();
             // Force hard reload to clear cache

@@ -1,15 +1,396 @@
 {% extends "layouts/base.html" %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}?v=hermes-chat-20260605-4">
 {% endblock %}
 
 {% block content %}
-<section class="home-clean-dashboard" aria-label="Home">
-    <form class="home-smart-search" role="search" action="#" method="get">
-        <span class="home-smart-search-icon"><i class="bi bi-search"></i></span>
-        <input type="search" name="q" autocomplete="off" spellcheck="false"
-            placeholder="Tim kiem nhanh trong dashboard...">
-    </form>
+<section class="home-command-center" aria-label="MonDashboard Command Center">
+    <div class="home-command-inner">
+        <section class="home-hero" aria-labelledby="home-hero-title">
+            <div class="home-hero-copy">
+                <div class="home-eyebrow">
+                    <span class="home-eyebrow-dot" aria-hidden="true"></span>
+                    <span>Private workspace</span>
+                    <span>Command Center</span>
+                </div>
+                <h1 id="home-hero-title">MonDashboard</h1>
+                <p class="home-hero-subtitle">
+                    A focused cockpit for notes, social accounts, image tools, Telegram sessions, and Hermes AI.
+                </p>
+
+                <form class="home-command-search" id="homeCommandSearch" role="search" autocomplete="off">
+                    <label class="visually-hidden" for="home-command-query">Search or ask Hermes</label>
+                    <i class="bi bi-search home-command-search-icon" aria-hidden="true"></i>
+                    <input id="home-command-query" type="search" spellcheck="false"
+                        placeholder="Ask Hermes or search your workspace...">
+                    <button class="btn home-command-submit" type="submit">
+                        <span>Run</span>
+                        <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
+                    </button>
+                </form>
+
+                <div class="home-quick-actions" aria-label="Quick actions">
+                    <a class="home-action-card" href="#hermes-chat-panel">
+                        <span class="home-action-icon home-action-ai"><i class="bi bi-stars"></i></span>
+                        <span>
+                            <strong>Ask Hermes</strong>
+                            <small>Summarize the dashboard</small>
+                        </span>
+                    </a>
+                    <a class="home-action-card" href="{{ url_for('notes') }}">
+                        <span class="home-action-icon home-action-notes"><i class="bi bi-journal-richtext"></i></span>
+                        <span>
+                            <strong>Open Notes</strong>
+                            <small>Capture and review</small>
+                        </span>
+                    </a>
+                    <a class="home-action-card" href="{{ url_for('mxh.mxh_page') }}">
+                        <span class="home-action-icon home-action-mxh"><i class="bi bi-share-fill"></i></span>
+                        <span>
+                            <strong>Check MXH</strong>
+                            <small>Accounts and groups</small>
+                        </span>
+                    </a>
+                    <a class="home-action-card" href="{{ url_for('telegram') }}">
+                        <span class="home-action-icon home-action-telegram"><i class="bi bi-telegram"></i></span>
+                        <span>
+                            <strong>Telegram</strong>
+                            <small>Sessions and tasks</small>
+                        </span>
+                    </a>
+                </div>
+            </div>
+
+            <aside class="home-hero-panel home-glass-card" aria-label="Workspace summary">
+                <div class="home-panel-top">
+                    <span class="home-panel-kicker">Workspace pulse</span>
+                    <span class="home-live-badge"><span aria-hidden="true"></span>Ready</span>
+                </div>
+                <div class="home-focus-ring" aria-hidden="true">
+                    <span>5</span>
+                    <small>modules</small>
+                </div>
+                <div class="home-panel-list">
+                    <div>
+                        <span>AI context</span>
+                        <strong>Notes + MXH + Telegram</strong>
+                    </div>
+                    <div>
+                        <span>Runtime</span>
+                        <strong>Local Flask dashboard</strong>
+                    </div>
+                    <div>
+                        <span>Mode</span>
+                        <strong>Private productivity</strong>
+                    </div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="home-status-grid" aria-label="Status and activity">
+            <article class="home-status-card home-glass-card">
+                <div class="home-status-icon"><i class="bi bi-hdd-network"></i></div>
+                <div>
+                    <span>System</span>
+                    <strong>Dashboard shell active</strong>
+                    <small>Navbar, modals, toast layer, and tab cache remain available.</small>
+                </div>
+            </article>
+            <article class="home-status-card home-glass-card">
+                <div class="home-status-icon"><i class="bi bi-lightning-charge"></i></div>
+                <div>
+                    <span>Activity</span>
+                    <strong>Quick routes ready</strong>
+                    <small>Jump directly into Notes, MXH, Image, Telegram, or Settings.</small>
+                </div>
+            </article>
+            <article class="home-status-card home-glass-card">
+                <div class="home-status-icon"><i class="bi bi-shield-check"></i></div>
+                <div>
+                    <span>Privacy</span>
+                    <strong>Local-first workspace</strong>
+                    <small>Designed as a personal command surface, not a public storefront.</small>
+                </div>
+            </article>
+        </section>
+
+        <section class="home-modules" aria-labelledby="home-modules-title">
+            <div class="home-section-heading">
+                <div>
+                    <span class="home-section-kicker">Core tools</span>
+                    <h2 id="home-modules-title">Launch modules</h2>
+                </div>
+                <a class="home-section-link" href="{{ url_for('settings.settings_page') }}">
+                    <i class="bi bi-sliders"></i>
+                    <span>Configure</span>
+                </a>
+            </div>
+
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-5 g-3">
+                <div class="col">
+                    <a class="home-module-card home-glass-card" href="{{ url_for('notes') }}">
+                        <span class="home-module-icon home-module-notes"><i class="bi bi-journal-richtext"></i></span>
+                        <span class="home-module-title">Notes</span>
+                        <span class="home-module-copy">Capture plans, details, and marked follow-ups.</span>
+                        <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="home-module-card home-glass-card" href="{{ url_for('mxh.mxh_page') }}">
+                        <span class="home-module-icon home-module-mxh"><i class="bi bi-share-fill"></i></span>
+                        <span class="home-module-title">MXH</span>
+                        <span class="home-module-copy">Manage social groups, accounts, filters, and state.</span>
+                        <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="home-module-card home-glass-card" href="{{ url_for('image.index') }}">
+                        <span class="home-module-icon home-module-image"><i class="bi bi-image-fill"></i></span>
+                        <span class="home-module-title">Image</span>
+                        <span class="home-module-copy">Open editing, collage, upscale, and visual utilities.</span>
+                        <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="home-module-card home-glass-card" href="{{ url_for('telegram') }}">
+                        <span class="home-module-icon home-module-telegram"><i class="bi bi-telegram"></i></span>
+                        <span class="home-module-title">Telegram</span>
+                        <span class="home-module-copy">Review sessions, proxies, tasks, and automations.</span>
+                        <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="home-module-card home-glass-card" href="{{ url_for('settings.settings_page') }}">
+                        <span class="home-module-icon home-module-settings"><i class="bi bi-gear-wide-connected"></i></span>
+                        <span class="home-module-title">Settings</span>
+                        <span class="home-module-copy">Tune startup, timers, refresh cadence, and notifications.</span>
+                        <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-hermes-chat home-glass-card" id="hermes-chat-panel" aria-label="Hermes Chat">
+            <div class="home-chat-dock-heading">
+                <div>
+                    <span class="home-section-kicker">Hermes AI</span>
+                    <h2>Assistant workspace</h2>
+                </div>
+                <a class="home-section-link" href="#home-hero-title">
+                    <i class="bi bi-arrow-up"></i>
+                    <span>Top</span>
+                </a>
+            </div>
+
+            <div class="chat-wrapper home-chat-wrapper d-flex">
+                <aside class="chat-sidebar home-chat-sidebar d-flex flex-column" id="chatSidebar" aria-label="Lịch sử chat">
+                    <div class="p-3 border-bottom border-secondary-subtle">
+                        <button class="btn-new-chat w-100 d-flex align-items-center justify-content-center gap-2"
+                            type="button" onclick="startNewChat()">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Chat mới</span>
+                        </button>
+                    </div>
+
+                    <div class="p-3">
+                        <div class="search-box">
+                            <i class="bi bi-search"></i>
+                            <input id="chatSearch" type="search" autocomplete="off" placeholder="Tìm lịch sử chat">
+                        </div>
+                    </div>
+
+                    <div class="chat-history-list custom-scrollbar flex-grow-1 overflow-auto pb-3" id="chatHistoryList">
+                        <div class="text-center text-muted small mt-3">Đang tải...</div>
+                    </div>
+                </aside>
+
+                <section class="chat-main home-chat-main d-flex flex-column flex-grow-1 position-relative"
+                    aria-label="Chatbot Hermes">
+                    <header class="chat-header home-chat-header d-flex align-items-center justify-content-between px-3">
+                        <div class="d-flex align-items-center gap-2 min-w-0">
+                            <button class="btn btn-sm btn-outline-secondary d-md-none" type="button" onclick="toggleSidebar()"
+                                aria-label="Mở lịch sử chat">
+                                <i class="bi bi-layout-sidebar"></i>
+                            </button>
+                            <div class="home-hermes-mark" aria-hidden="true">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="home-chat-title">Hermes</div>
+                                <div class="home-chat-subtitle text-truncate">Mon AI</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="dropdown">
+                                <button class="btn model-selector dropdown-toggle d-flex align-items-center gap-2"
+                                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-cpu"></i>
+                                    <span id="current-model-name">Hermes Agent</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button class="dropdown-item" type="button"
+                                            onclick="selectModel('hermes', 'Hermes Agent')">
+                                            Hermes Agent
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button class="dropdown-item" type="button"
+                                            onclick="selectModel('gemini', 'gemini-2.5-flash')">
+                                            Gemini 2.5 Flash
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" type="button"
+                                            onclick="selectModel('gemini', 'gemini-2.5-pro')">
+                                            Gemini 2.5 Pro
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" type="button" onclick="selectModel('openai', 'gpt-4o')">
+                                            GPT-4o
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-icon" type="button" data-bs-toggle="modal"
+                                data-bs-target="#aiSettingsModal" aria-label="Cài đặt chatbot">
+                                <i class="bi bi-sliders"></i>
+                            </button>
+                        </div>
+                    </header>
+
+                    <div id="chat-messages" class="chat-messages custom-scrollbar flex-grow-1 overflow-auto"></div>
+
+                    <div id="image-preview-container" class="home-image-preview d-none">
+                        <img id="image-preview" alt="Ảnh đính kèm">
+                        <button class="btn btn-sm btn-dark" type="button" onclick="clearImagePreview()"
+                            aria-label="Gỡ ảnh đính kèm">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+
+                    <div class="chat-input-container">
+                        <div class="chat-input-wrapper">
+                            <form id="chat-form" class="position-relative" autocomplete="off">
+                                <textarea id="user-input" class="form-control chat-textarea" rows="1"
+                                    placeholder="Nhắn cho Hermes..." spellcheck="false"></textarea>
+                                <div class="input-actions">
+                                    <button class="btn-icon" id="home-image-button" type="button" aria-label="Đính kèm ảnh">
+                                        <i class="bi bi-paperclip"></i>
+                                    </button>
+                                    <button class="btn-send" type="submit" aria-label="Gửi">
+                                        <i class="bi bi-arrow-up"></i>
+                                    </button>
+                                </div>
+                            </form>
+                            <input id="home-image-upload" class="d-none" type="file" accept="image/*">
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </div>
 </section>
+
+<div class="modal fade" id="aiSettingsModal" tabindex="-1" aria-labelledby="aiSettingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aiSettingsModalLabel">
+                    <i class="bi bi-sliders me-2"></i>Cài đặt chatbot
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="ai-provider">Provider</label>
+                        <select id="ai-provider" class="form-select">
+                            <option value="hermes">Hermes Agent</option>
+                            <option value="gemini">Gemini</option>
+                            <option value="openai">OpenAI</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label" for="ai-model">Model</label>
+                        <input id="ai-model" class="form-control" type="text" placeholder="Hermes Agent">
+                    </div>
+                    <div class="col-12" id="ai-api-key-row">
+                        <label class="form-label" for="ai-api-key">API key</label>
+                        <input id="ai-api-key" class="form-control" type="password" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" for="system-prompt-general">System prompt chung</label>
+                        <textarea id="system-prompt-general" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="system-prompt-mxh">MXH</label>
+                        <textarea id="system-prompt-mxh" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="system-prompt-notes">Notes</label>
+                        <textarea id="system-prompt-notes" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="system-prompt-telegram">Telegram</label>
+                        <textarea id="system-prompt-telegram" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="system-prompt-image">Image</label>
+                        <textarea id="system-prompt-image" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="saveAISettings()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}?v=hermes-chat-20260605-4"></script>
+<script>
+document.getElementById('homeCommandSearch')?.addEventListener('submit', function (event) {
+    event.preventDefault();
+    const commandInput = document.getElementById('home-command-query');
+    const chatInput = document.getElementById('user-input');
+    const query = commandInput?.value?.trim();
+    if (!query || !chatInput) return;
+    chatInput.value = query;
+    commandInput.value = '';
+    document.getElementById('hermes-chat-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.setTimeout(function () {
+        if (window.sendMessage) {
+            window.sendMessage();
+        }
+    }, 260);
+});
+
+document.getElementById('home-image-button')?.addEventListener('click', function () {
+    document.getElementById('home-image-upload')?.click();
+});
+
+document.getElementById('home-image-upload')?.addEventListener('change', function (event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (readerEvent) {
+        if (typeof readerEvent.target?.result === 'string' && window.showImagePreview) {
+            window.showImagePreview(readerEvent.target.result);
+        }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+});
+</script>
 {% endblock %}

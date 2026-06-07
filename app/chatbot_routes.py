@@ -4,7 +4,9 @@ import json
 import os
 import uuid
 import logging
+import subprocess
 from datetime import datetime
+from pathlib import Path
 from .database import get_db_connection
 from app.chatbot_tools import AVAILABLE_TOOLS
 
@@ -48,6 +50,66 @@ def get_context_data():
     conn.close()
     
     return f"{notes_text}\n\n{sessions_text}\n\n{accounts_text}"
+
+
+def get_default_hermes_root():
+    """Return the sibling Mon AI checkout when it exists."""
+    protect_root = Path(__file__).resolve().parents[1].parent
+    hermes_root = protect_root / 'Mon AI'
+    return hermes_root if hermes_root.exists() else None
+
+
+def format_history_for_hermes(history):
+    if not history:
+        return "(chưa có lịch sử)"
+    lines = []
+    for msg in history[-8:]:
+        role = "User" if msg.get("role") == "user" else "Assistant"
+        content = str(msg.get("content") or "").strip()
+        if content:
+            lines.append(f"{role}: {content}")
+    return "\n".join(lines) or "(chưa có lịch sử)"
+
+
+def call_hermes_agent(settings, full_system_prompt, history, user_message, model_name):
+    hermes_root = Path(settings.get('hermes_root') or '').expanduser() if settings.get('hermes_root') else get_default_hermes_root()
+    hermes_cmd = settings.get('hermes_command') or 'hermes'
+    timeout = int(settings.get('hermes_timeout_seconds') or 300)
+    recent_history = format_history_for_hermes(history[:-1])
+    prompt = f"""Bạn đang được gọi từ Mon Dashboard, tab Trang Chủ.
+Hãy trả lời bằng tiếng Việt, ngắn gọn, hữu ích, đúng tinh thần Hermes Agent.
+
+SYSTEM / DASHBOARD CONTEXT:
+{full_system_prompt}
+
+LỊCH SỬ GẦN ĐÂY:
+{recent_history}
+
+TIN NHẮN HIỆN TẠI:
+{user_message}
+"""
+
+    cmd = [hermes_cmd, '-z', prompt]
+    if model_name and model_name != 'Hermes Agent':
+        cmd[1:1] = ['--model', model_name]
+
+    env = os.environ.copy()
+    env.setdefault('PYTHONUTF8', '1')
+    result = subprocess.run(
+        cmd,
+        cwd=str(hermes_root) if hermes_root else None,
+        capture_output=True,
+        text=True,
+        encoding='utf-8',
+        errors='replace',
+        timeout=timeout,
+        env=env,
+    )
+    output = (result.stdout or '').strip()
+    if result.returncode != 0:
+        detail = (result.stderr or output or f"exit code {result.returncode}").strip()
+        raise RuntimeError(detail)
+    return output or "(Hermes không trả về nội dung.)"
 
 # --- API Endpoints ---
 
@@ -336,6 +398,9 @@ QUAN TRỌNG:
             api_key = settings.get('gemini_api_key', '')
             # Use request model if provided, otherwise use settings, default to gemini-2.5-flash
             model_name = (request_model if request_model else settings.get('gemini_model', 'gemini-2.5-flash')).strip()
+        elif provider == 'hermes':
+            api_key = 'local-hermes'
+            model_name = (request_model if request_model else settings.get('hermes_model', 'Hermes Agent')).strip()
 
         ai_response = ""
 
@@ -410,6 +475,25 @@ QUAN TRỌNG:
         
         while turn_count < max_turns:
             turn_count += 1
+
+            if provider == 'hermes':
+                if pil_image:
+                    ai_response = "Hermes trong Mon Dashboard hiện chưa nhận ảnh trực tiếp. Hãy gửi text trước, hoặc dùng Gemini/OpenAI nếu cần hỏi về ảnh."
+                    break
+                try:
+                    ai_response = call_hermes_agent(
+                        settings=settings,
+                        full_system_prompt=full_system_prompt,
+                        history=history,
+                        user_message=user_message,
+                        model_name=model_name,
+                    )
+                except subprocess.TimeoutExpired:
+                    ai_response = "Hermes chạy quá lâu và đã bị dừng. Thử hỏi ngắn hơn hoặc kiểm tra Mon AI."
+                except Exception as e:
+                    logger.exception("Hermes provider failed")
+                    ai_response = f"Hermes Error: {str(e)}"
+                break
             
             if not api_key:
                  ai_response = f"Please configure your API Key for {provider} in Settings."

@@ -1,75 +1,697 @@
-.home-clean-dashboard {
-    height: calc(100dvh - 51px);
-    max-height: calc(100dvh - 51px);
-    min-height: 0;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 18px 24px 0;
-    box-sizing: border-box;
-    overflow: hidden;
-    background: var(--dashboard-bg);
+/* === Home Command Center Layout === */
+.home-command-center {
+    min-height: calc(100dvh - 48px);
+    color: var(--dashboard-text, #f4f7fb);
+    background:
+        radial-gradient(circle at 18% 4%, rgba(0, 220, 190, 0.13), transparent 34rem),
+        radial-gradient(circle at 82% 8%, rgba(89, 150, 255, 0.14), transparent 32rem),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
 }
 
-.home-smart-search {
+.home-command-inner {
+    width: min(1440px, 100%);
+    margin: 0 auto;
+    padding: clamp(18px, 3vw, 42px);
+}
+
+.home-glass-card {
+    border: 1px solid var(--dashboard-glass-border, rgba(255, 255, 255, 0.12));
+    border-radius: 8px;
+    background: var(--dashboard-glass, rgba(19, 24, 34, 0.72));
+    box-shadow: var(--dashboard-shadow-soft, 0 22px 70px rgba(0, 0, 0, 0.32));
+    backdrop-filter: blur(18px);
+}
+
+.home-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+    gap: clamp(18px, 3vw, 34px);
+    align-items: stretch;
+    min-height: min(620px, calc(100dvh - 92px));
+}
+
+.home-hero-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 520px;
+}
+
+.home-eyebrow,
+.home-section-kicker,
+.home-panel-kicker,
+.home-status-card span {
+    color: var(--dashboard-muted, #a7b1c2);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.home-eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.home-eyebrow-dot,
+.home-live-badge span {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #31f2b9;
+    box-shadow: 0 0 20px rgba(49, 242, 185, 0.82);
+}
+
+.home-hero h1 {
+    max-width: 920px;
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(3.5rem, 9vw, 8.8rem);
+    font-weight: 900;
+    line-height: 0.88;
+}
+
+.home-hero-subtitle {
+    max-width: 720px;
+    margin: 22px 0 0;
+    color: var(--dashboard-text-soft, #d4dbea);
+    font-size: clamp(1rem, 1.55vw, 1.35rem);
+    line-height: 1.6;
+}
+
+/* === Hero Search And Actions === */
+.home-command-search {
     position: relative;
-    width: min(300px, 100%);
-    height: 44px;
-    min-height: 44px;
     display: flex;
     align-items: center;
-    border: 1px solid #444a59;
+    width: min(760px, 100%);
+    min-height: 62px;
+    margin-top: 32px;
+    padding: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 8px;
-    background-color: #2c303a;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background: rgba(6, 10, 18, 0.66);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 20px 55px rgba(0, 0, 0, 0.28);
 }
 
-.home-smart-search:focus-within {
-    border-color: #0dcaf0;
-    box-shadow: 0 0 0 1px rgba(13, 202, 240, 0.25);
+.home-command-search:focus-within {
+    border-color: rgba(72, 215, 255, 0.58);
+    box-shadow: 0 0 0 4px rgba(72, 215, 255, 0.12), 0 20px 55px rgba(0, 0, 0, 0.28);
 }
 
-.home-smart-search-icon {
-    position: absolute;
-    left: 10px;
-    color: #9ca3af;
-    pointer-events: none;
-    z-index: 2;
+.home-command-search-icon {
+    flex: 0 0 auto;
+    margin-left: 16px;
+    color: #7ddcff;
+    font-size: 1.15rem;
 }
 
-.home-smart-search:focus-within .home-smart-search-icon {
-    color: #0dcaf0;
-}
-
-.home-smart-search input {
-    width: 100%;
+.home-command-search input {
     min-width: 0;
+    flex: 1;
+    height: 44px;
     border: 0;
     outline: 0;
     background: transparent;
-    color: #e5e7eb;
-    padding: 7px 35px;
-    font-size: 0.875rem;
-    box-shadow: none;
+    color: #ffffff;
+    padding: 0 14px;
+    font-size: 1rem;
 }
 
-.home-smart-search input::placeholder {
-    color: #6b7280;
+.home-command-search input::placeholder {
+    color: rgba(219, 229, 242, 0.56);
 }
 
-body:has(.home-clean-dashboard),
-body:has(.home-clean-dashboard) #main-tab-content,
-body:has(.home-clean-dashboard) main,
-body:has(.home-clean-dashboard) .container-fluid {
+.home-command-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 94px;
+    height: 44px;
+    border: 0;
+    border-radius: 8px;
+    color: #06111a;
+    font-weight: 800;
+    background: linear-gradient(135deg, #9fffe1 0%, #60d7ff 100%);
+}
+
+.home-command-submit:hover,
+.home-command-submit:focus-visible {
+    color: #06111a;
+    filter: brightness(1.06);
+}
+
+.home-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    width: min(920px, 100%);
+    margin-top: 20px;
+}
+
+.home-action-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 82px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--dashboard-text, #f4f7fb);
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.055);
+    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.home-action-card:hover,
+.home-action-card:focus-visible,
+.home-module-card:hover,
+.home-module-card:focus-visible,
+.home-section-link:hover,
+.home-section-link:focus-visible {
+    color: #ffffff;
+    border-color: rgba(127, 224, 255, 0.5);
+    background: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+    transform: translateY(-3px);
+}
+
+.home-action-icon,
+.home-module-icon,
+.home-status-icon,
+.home-hermes-mark {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    color: #ffffff;
+}
+
+.home-action-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    font-size: 1rem;
+}
+
+.home-action-card strong,
+.home-module-title {
+    display: block;
+    color: #ffffff;
+    font-weight: 850;
+    line-height: 1.15;
+}
+
+.home-action-card small,
+.home-module-copy,
+.home-status-card small {
+    display: block;
+    margin-top: 5px;
+    color: var(--dashboard-muted, #a7b1c2);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.home-action-ai,
+.home-module-settings {
+    background: linear-gradient(135deg, #7ddcff, #b9fff1);
+    color: #06111a;
+}
+
+.home-action-notes,
+.home-module-notes {
+    background: linear-gradient(135deg, #2bd982, #1fbd9b);
+}
+
+.home-action-mxh,
+.home-module-mxh {
+    background: linear-gradient(135deg, #ff6f9e, #fb4d6f);
+}
+
+.home-action-telegram,
+.home-module-telegram {
+    background: linear-gradient(135deg, #36b7ff, #2478ff);
+}
+
+.home-module-image {
+    background: linear-gradient(135deg, #ffc759, #ff7a7a);
+}
+
+/* === Hero Summary Panel === */
+.home-hero-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 520px;
+    padding: clamp(20px, 3vw, 30px);
     overflow: hidden;
 }
 
-@media (max-width: 640px) {
-    .home-clean-dashboard {
-        height: calc(100dvh - 49px);
-        max-height: calc(100dvh - 49px);
-        padding: 14px 16px 0;
+.home-panel-top,
+.home-live-badge,
+.home-section-heading,
+.home-chat-dock-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.home-live-badge {
+    justify-content: center;
+    padding: 7px 10px;
+    border: 1px solid rgba(49, 242, 185, 0.28);
+    border-radius: 999px;
+    color: #caffef;
+    font-size: 0.78rem;
+    font-weight: 800;
+    background: rgba(49, 242, 185, 0.08);
+}
+
+.home-focus-ring {
+    width: min(260px, 72vw);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    align-self: center;
+    margin: 36px 0;
+    border-radius: 999px;
+    background:
+        radial-gradient(circle, rgba(255, 255, 255, 0.09) 0 45%, transparent 46%),
+        conic-gradient(from 28deg, #7ddcff, #31f2b9, #ffc759, #ff6f9e, #7ddcff);
+    box-shadow: 0 20px 70px rgba(31, 189, 155, 0.18);
+}
+
+.home-focus-ring span,
+.home-focus-ring small {
+    grid-area: 1 / 1;
+}
+
+.home-focus-ring span {
+    color: #ffffff;
+    font-size: 4.8rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.home-focus-ring small {
+    margin-top: 86px;
+    color: rgba(255, 255, 255, 0.72);
+    font-weight: 800;
+}
+
+.home-panel-list {
+    display: grid;
+    gap: 10px;
+}
+
+.home-panel-list div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 13px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.home-panel-list span {
+    color: var(--dashboard-muted, #a7b1c2);
+    font-size: 0.82rem;
+}
+
+.home-panel-list strong {
+    color: #ffffff;
+    font-size: 0.9rem;
+    text-align: right;
+}
+
+/* === Status Widgets And Modules === */
+.home-status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.home-status-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    min-height: 136px;
+    padding: 18px;
+}
+
+.home-status-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: rgba(125, 220, 255, 0.12);
+    border: 1px solid rgba(125, 220, 255, 0.22);
+    color: #92e4ff;
+    font-size: 1.1rem;
+}
+
+.home-status-card strong {
+    display: block;
+    margin-top: 4px;
+    color: #ffffff;
+    font-size: 1rem;
+}
+
+.home-modules,
+.home-hermes-chat {
+    margin-top: clamp(22px, 3vw, 34px);
+}
+
+.home-modules > .row {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.home-section-heading,
+.home-chat-dock-heading {
+    margin-bottom: 14px;
+}
+
+.home-section-heading h2,
+.home-chat-dock-heading h2 {
+    margin: 3px 0 0;
+    color: #ffffff;
+    font-size: clamp(1.35rem, 2vw, 2rem);
+    font-weight: 850;
+}
+
+.home-section-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: var(--dashboard-text-soft, #d4dbea);
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.05);
+    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.home-module-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+    padding: 18px;
+    color: var(--dashboard-text, #f4f7fb);
+    text-decoration: none;
+    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.home-module-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 26px;
+    border-radius: 999px;
+    font-size: 1.25rem;
+}
+
+.home-module-open {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.74);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+/* === Embedded Hermes Chat === */
+.home-hermes-chat {
+    padding: 18px;
+    overflow: hidden;
+}
+
+.home-chat-wrapper {
+    height: clamp(600px, 72dvh, 820px);
+    min-height: 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(5, 8, 14, 0.48) !important;
+    overflow: hidden;
+}
+
+.home-chat-sidebar {
+    flex: 0 0 280px;
+    background: rgba(6, 10, 18, 0.78) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.home-chat-main {
+    min-width: 0;
+    min-height: 0;
+    background: rgba(9, 14, 22, 0.48) !important;
+}
+
+.home-chat-header {
+    flex: 0 0 62px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.home-hermes-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #7ddcff 0%, #31f2b9 100%);
+    color: #06111a;
+}
+
+.home-chat-title {
+    color: #ffffff;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.home-chat-subtitle {
+    max-width: 160px;
+    color: var(--dashboard-muted, #a7b1c2);
+    font-size: 0.8rem;
+    line-height: 1.15;
+}
+
+.home-hermes-chat .chat-messages {
+    min-height: 0;
+    background: transparent !important;
+}
+
+.home-hermes-chat .chat-messages .empty-state {
+    margin-top: 0 !important;
+}
+
+.home-hermes-chat .chat-input-container,
+.home-hermes-chat .chat-input-container.centered {
+    position: relative !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 14px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(9, 14, 22, 0), rgba(9, 14, 22, 0.86) 32%) !important;
+}
+
+.home-hermes-chat .chat-input-wrapper {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.home-hermes-chat .model-selector,
+.home-hermes-chat .btn-icon,
+.home-hermes-chat .btn-new-chat,
+.home-hermes-chat .search-box input {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: var(--dashboard-text, #f4f7fb);
+    background: rgba(255, 255, 255, 0.055);
+}
+
+.home-hermes-chat .model-selector:hover,
+.home-hermes-chat .model-selector:focus-visible,
+.home-hermes-chat .btn-icon:hover,
+.home-hermes-chat .btn-icon:focus-visible,
+.home-hermes-chat .btn-new-chat:hover,
+.home-hermes-chat .btn-new-chat:focus-visible,
+.home-hermes-chat .search-box input:focus {
+    color: #ffffff;
+    border-color: rgba(127, 224, 255, 0.44) !important;
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.home-hermes-chat .message-content {
+    color: var(--dashboard-text, #f4f7fb);
+}
+
+.home-image-preview {
+    position: absolute;
+    left: 50%;
+    bottom: 92px;
+    z-index: 12;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    transform: translateX(-50%);
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(6, 10, 18, 0.92);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+}
+
+.home-image-preview img {
+    width: min(220px, 48vw);
+    max-height: 170px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+/* === Home Responsive States === */
+@media (max-width: 1180px) {
+    .home-hero {
+        grid-template-columns: 1fr;
+        min-height: 0;
+    }
+
+    .home-hero-copy,
+    .home-hero-panel {
+        min-height: auto;
+    }
+
+    .home-hero-copy {
+        padding-top: 26px;
+    }
+
+    .home-quick-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-status-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .home-command-inner {
+        padding: 16px;
+    }
+
+    .home-hero h1 {
+        font-size: clamp(2.2rem, 11.5vw, 4.8rem);
+        overflow-wrap: anywhere;
+    }
+
+    .home-command-search {
+        align-items: stretch;
+        min-height: 0;
+        padding: 8px;
+    }
+
+    .home-command-submit {
+        min-width: 48px;
+        padding: 0 12px;
+    }
+
+    .home-command-submit span {
+        display: none;
+    }
+
+    .home-quick-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .home-section-heading,
+    .home-chat-dock-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .home-hermes-chat {
+        padding: 12px;
+    }
+
+    .home-chat-wrapper {
+        height: 680px;
+        position: relative;
+    }
+
+    .home-chat-sidebar {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: min(82vw, 292px);
+        height: 100%;
+        transform: translateX(-105%);
+        transition: transform 220ms ease;
+        z-index: 25;
+    }
+
+    .home-chat-sidebar.show {
+        transform: translateX(0);
+        box-shadow: 18px 0 55px rgba(0, 0, 0, 0.34);
+    }
+
+    .home-chat-subtitle {
+        max-width: 110px;
+    }
+
+    .home-hermes-chat .model-selector {
+        max-width: 156px;
+        padding: 0.4rem 0.55rem;
+        gap: 0.35rem !important;
+        font-size: 0.85rem;
+    }
+
+    .home-hermes-chat .model-selector span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .home-chat-header {
+        padding-right: 0.5rem !important;
+        padding-left: 0.5rem !important;
+    }
+
+    .home-hermes-chat .model-selector {
+        max-width: 142px;
+        font-size: 0.78rem;
+    }
+
+    .home-hermes-chat .btn-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0.35rem;
+    }
+
+    .home-command-search input {
+        padding-right: 6px;
+        font-size: 0.92rem;
+    }
+
+    .home-panel-list div {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .home-panel-list strong {
+        text-align: left;
     }
 }
