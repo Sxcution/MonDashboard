@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@800;900&display=swap');
-
 /* === Home Command Center Layout === */
 .home-command-center {
     position: relative;
@@ -692,25 +690,28 @@
 
 /* === Module Launch Header Gradient Animation === */
 #home-modules-title {
-    font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
-    font-size: clamp(1.8rem, 3vw, 2.5rem);
-    font-weight: 850;
-    letter-spacing: -0.03em;
-    background: linear-gradient(90deg, #9b66ff 0%, #38bdf8 50%, #00e5ff 100%);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradient-text-flow 4s linear infinite;
-    display: inline-block;
+    display: block;
+    margin: 6px 0 0;
+    color: #ffffff;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: clamp(1.55rem, 2.2vw, 2rem);
+    font-weight: 760;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    animation: none;
 }
 
 @keyframes gradient-text-flow {
     0% {
         background-position: 0% 50%;
     }
+
     50% {
         background-position: 100% 50%;
     }
+
     100% {
         background-position: 0% 50%;
     }
