@@ -2,7 +2,7 @@
 :root {
     --md-bg: #020203;
     --md-bg-soft: #050608;
-    --md-header: #020203;
+    --md-header: #000000;
     --md-surface: #11141a;
     --md-surface-2: #18181b;
     --md-card: #141416;
@@ -110,7 +110,7 @@ main,
     margin: 0;
     padding: 4px 18px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(5, 6, 8, 0.88) !important;
+    background: #000000 !important;
     box-shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(18px);
 }

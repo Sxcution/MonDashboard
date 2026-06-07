@@ -12,80 +12,80 @@
             <div class="home-hero-copy">
                 <div class="home-eyebrow">
                     <span class="home-eyebrow-dot" aria-hidden="true"></span>
-                    <span>Private workspace</span>
-                    <span>Command Center</span>
+                    <span>Không gian làm việc riêng</span>
+                    <span>Trung tâm điều khiển</span>
                 </div>
                 <p class="home-hero-subtitle">
-                    A focused cockpit for notes, social accounts, image tools, Telegram sessions, and Hermes AI.
+                    Một khoang lái tập trung cho ghi chú, tài khoản mạng xã hội, công cụ hình ảnh, phiên Telegram và Trợ lý Hermes AI.
                 </p>
 
                 <form class="home-command-search" id="homeCommandSearch" role="search" autocomplete="off">
-                    <label class="visually-hidden" for="home-command-query">Search or ask Hermes</label>
+                    <label class="visually-hidden" for="home-command-query">Tìm kiếm hoặc hỏi Hermes</label>
                     <i class="bi bi-search home-command-search-icon" aria-hidden="true"></i>
                     <input id="home-command-query" type="search" spellcheck="false"
-                        placeholder="Ask Hermes or search your workspace...">
+                        placeholder="Hỏi Hermes hoặc tìm kiếm không gian làm việc của bạn...">
                     <button class="btn home-command-submit" type="submit">
-                        <span>Run</span>
+                        <span>Chạy</span>
                         <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
                     </button>
                 </form>
 
-                <div class="home-quick-actions" aria-label="Quick actions">
+                <div class="home-quick-actions" aria-label="Lối tắt nhanh">
                     <a class="home-action-card" href="#hermes-chat-panel">
                         <span class="home-action-icon home-action-ai"><i class="bi bi-stars"></i></span>
                         <span>
-                            <strong>Ask Hermes</strong>
-                            <small>Summarize the dashboard</small>
+                            <strong>Hỏi Hermes</strong>
+                            <small>Tóm tắt bảng điều khiển</small>
                         </span>
                     </a>
                     <a class="home-action-card" href="{{ url_for('notes') }}">
                         <span class="home-action-icon home-action-notes"><i class="bi bi-journal-richtext"></i></span>
                         <span>
-                            <strong>Open Notes</strong>
-                            <small>Capture and review</small>
+                            <strong>Mở Ghi chú</strong>
+                            <small>Ghi chép và xem lại</small>
                         </span>
                     </a>
                     <a class="home-action-card" href="{{ url_for('mxh.mxh_page') }}">
                         <span class="home-action-icon home-action-mxh"><i class="bi bi-share-fill"></i></span>
                         <span>
-                            <strong>Check MXH</strong>
-                            <small>Accounts and groups</small>
+                            <strong>Kiểm tra MXH</strong>
+                            <small>Tài khoản và hội nhóm</small>
                         </span>
                     </a>
                     <a class="home-action-card" href="{{ url_for('telegram') }}">
                         <span class="home-action-icon home-action-telegram"><i class="bi bi-telegram"></i></span>
                         <span>
                             <strong>Telegram</strong>
-                            <small>Sessions and tasks</small>
+                            <small>Phiên và tác vụ</small>
                         </span>
                     </a>
                 </div>
             </div>
         </section>
 
-        <section class="home-status-grid" aria-label="Status and activity">
+        <section class="home-status-grid" aria-label="Trạng thái và hoạt động">
             <article class="home-status-card home-glass-card">
                 <div class="home-status-icon"><i class="bi bi-hdd-network"></i></div>
                 <div>
-                    <span>System</span>
-                    <strong>Dashboard shell active</strong>
-                    <small>Navbar, modals, toast layer, and tab cache remain available.</small>
+                    <span>Hệ thống</span>
+                    <strong>Bảng điều khiển sẵn sàng</strong>
+                    <small>Thanh điều hướng, hộp thoại, thông báo và bộ nhớ đệm tab luôn sẵn sàng.</small>
                 </div>
             </article>
             <article class="home-status-card home-glass-card">
                 <div class="home-status-icon"><i class="bi bi-lightning-charge"></i></div>
                 <div>
-                    <span>Activity</span>
-                    <strong>Quick routes ready</strong>
-                    <small>Jump directly into Notes, MXH, Image, Telegram, or Settings.</small>
+                    <span>Hoạt động</span>
+                    <strong>Lối tắt đã sẵn sàng</strong>
+                    <small>Truy cập trực tiếp vào Ghi chú, MXH, Hình ảnh, Telegram hoặc Cài đặt.</small>
                 </div>
             </article>
             <article class="home-status-card home-glass-card">
                 <div class="home-status-icon"><i class="bi bi-shield-check"></i></div>
                 <div>
-                    <span>Privacy</span>
-                    <strong>Local-first workspace</strong>
-                    <small>Designed as a personal command surface, not a public storefront.</small>
+                    <span>Bảo mật</span>
+                    <strong>Không gian cục bộ</strong>
+                    <small>Được thiết kế làm trung tâm điều khiển cá nhân, không phải trang công cộng.</small>
                 </div>
             </article>
         </section>
@@ -93,12 +93,12 @@
         <section class="home-modules" aria-labelledby="home-modules-title">
             <div class="home-section-heading">
                 <div>
-                    <span class="home-section-kicker">Core tools</span>
-                    <h2 id="home-modules-title">Launch modules</h2>
+                    <span class="home-section-kicker">Công cụ cốt lõi</span>
+                    <h2 id="home-modules-title">Khởi chạy mô-đun</h2>
                 </div>
                 <a class="home-section-link" href="{{ url_for('settings.settings_page') }}">
                     <i class="bi bi-sliders"></i>
-                    <span>Configure</span>
+                    <span>Cấu hình</span>
                 </a>
             </div>
 
@@ -106,8 +106,8 @@
                 <div class="col">
                     <a class="home-module-card home-glass-card" href="{{ url_for('notes') }}">
                         <span class="home-module-icon home-module-notes"><i class="bi bi-journal-richtext"></i></span>
-                        <span class="home-module-title">Notes</span>
-                        <span class="home-module-copy">Capture plans, details, and marked follow-ups.</span>
+                        <span class="home-module-title">Ghi chú</span>
+                        <span class="home-module-copy">Ghi lại kế hoạch, chi tiết và đánh dấu việc cần theo dõi.</span>
                         <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
                     </a>
                 </div>
@@ -115,15 +115,15 @@
                     <a class="home-module-card home-glass-card" href="{{ url_for('mxh.mxh_page') }}">
                         <span class="home-module-icon home-module-mxh"><i class="bi bi-share-fill"></i></span>
                         <span class="home-module-title">MXH</span>
-                        <span class="home-module-copy">Manage social groups, accounts, filters, and state.</span>
+                        <span class="home-module-copy">Quản lý các nhóm xã hội, tài khoản, bộ lọc và trạng thái.</span>
                         <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
                     </a>
                 </div>
                 <div class="col">
                     <a class="home-module-card home-glass-card" href="{{ url_for('image.index') }}">
                         <span class="home-module-icon home-module-image"><i class="bi bi-image-fill"></i></span>
-                        <span class="home-module-title">Image</span>
-                        <span class="home-module-copy">Open editing, collage, upscale, and visual utilities.</span>
+                        <span class="home-module-title">Hình ảnh</span>
+                        <span class="home-module-copy">Mở chỉnh sửa, ghép ảnh, làm nét và các tiện ích ảnh.</span>
                         <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
                     </a>
                 </div>
@@ -131,15 +131,15 @@
                     <a class="home-module-card home-glass-card" href="{{ url_for('telegram') }}">
                         <span class="home-module-icon home-module-telegram"><i class="bi bi-telegram"></i></span>
                         <span class="home-module-title">Telegram</span>
-                        <span class="home-module-copy">Review sessions, proxies, tasks, and automations.</span>
+                        <span class="home-module-copy">Xem lại các phiên làm việc, proxy, tác vụ và tự động hóa.</span>
                         <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
                     </a>
                 </div>
                 <div class="col">
                     <a class="home-module-card home-glass-card" href="{{ url_for('settings.settings_page') }}">
                         <span class="home-module-icon home-module-settings"><i class="bi bi-gear-wide-connected"></i></span>
-                        <span class="home-module-title">Settings</span>
-                        <span class="home-module-copy">Tune startup, timers, refresh cadence, and notifications.</span>
+                        <span class="home-module-title">Cài đặt</span>
+                        <span class="home-module-copy">Điều chỉnh khởi động, bộ hẹn giờ, tần suất làm mới và thông báo.</span>
                         <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
                     </a>
                 </div>
@@ -150,11 +150,11 @@
             <div class="home-chat-dock-heading">
                 <div>
                     <span class="home-section-kicker">Hermes AI</span>
-                    <h2>Assistant workspace</h2>
+                    <h2>Không gian trợ lý</h2>
                 </div>
                 <a class="home-section-link" href="#hermes-chat-panel">
                     <i class="bi bi-arrow-up"></i>
-                    <span>Top</span>
+                    <span>Lên đầu</span>
                 </a>
             </div>
 
@@ -283,7 +283,7 @@
             <div class="modal-body">
                 <div class="row g-3 mb-3">
                     <div class="col-md-4">
-                        <label class="form-label" for="ai-provider">Provider</label>
+                        <label class="form-label" for="ai-provider">Nhà cung cấp</label>
                         <select id="ai-provider" class="form-select">
                             <option value="hermes">Hermes Agent</option>
                             <option value="gemini">Gemini</option>
@@ -291,11 +291,11 @@
                         </select>
                     </div>
                     <div class="col-md-8">
-                        <label class="form-label" for="ai-model">Model</label>
+                        <label class="form-label" for="ai-model">Mô hình</label>
                         <input id="ai-model" class="form-control" type="text" placeholder="Hermes Agent">
                     </div>
                     <div class="col-12" id="ai-api-key-row">
-                        <label class="form-label" for="ai-api-key">API key</label>
+                        <label class="form-label" for="ai-api-key">Khóa API</label>
                         <input id="ai-api-key" class="form-control" type="password" autocomplete="off">
                     </div>
                 </div>
