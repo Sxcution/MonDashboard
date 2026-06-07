@@ -1,20 +1,19 @@
 {% extends "layouts/base.html" %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}?v=20260607-graphite-theme-3">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}?v=20260607-command-center-fix">
 {% endblock %}
 
 {% block content %}
 <section class="home-command-center" aria-label="MonDashboard Command Center">
     <div class="home-command-inner">
-        <section class="home-hero" aria-labelledby="home-hero-title">
+        <section class="home-hero" aria-label="MonDashboard command hero">
             <div class="home-hero-copy">
                 <div class="home-eyebrow">
                     <span class="home-eyebrow-dot" aria-hidden="true"></span>
                     <span>Private workspace</span>
                     <span>Command Center</span>
                 </div>
-                <h1 id="home-hero-title">MonDashboard</h1>
                 <p class="home-hero-subtitle">
                     A focused cockpit for notes, social accounts, image tools, Telegram sessions, and Hermes AI.
                 </p>
@@ -61,31 +60,6 @@
                     </a>
                 </div>
             </div>
-
-            <aside class="home-hero-panel home-glass-card" aria-label="Workspace summary">
-                <div class="home-panel-top">
-                    <span class="home-panel-kicker">Workspace pulse</span>
-                    <span class="home-live-badge"><span aria-hidden="true"></span>Ready</span>
-                </div>
-                <div class="home-focus-ring" aria-hidden="true">
-                    <span>5</span>
-                    <small>modules</small>
-                </div>
-                <div class="home-panel-list">
-                    <div>
-                        <span>AI context</span>
-                        <strong>Notes + MXH + Telegram</strong>
-                    </div>
-                    <div>
-                        <span>Runtime</span>
-                        <strong>Local Flask dashboard</strong>
-                    </div>
-                    <div>
-                        <span>Mode</span>
-                        <strong>Private productivity</strong>
-                    </div>
-                </div>
-            </aside>
         </section>
 
         <section class="home-status-grid" aria-label="Status and activity">
@@ -177,7 +151,7 @@
                     <span class="home-section-kicker">Hermes AI</span>
                     <h2>Assistant workspace</h2>
                 </div>
-                <a class="home-section-link" href="#home-hero-title">
+                <a class="home-section-link" href="#hermes-chat-panel">
                     <i class="bi bi-arrow-up"></i>
                     <span>Top</span>
                 </a>

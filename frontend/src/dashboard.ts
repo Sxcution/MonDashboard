@@ -19,6 +19,7 @@ const dashboardTabLifecycles: Record<string, DashboardTabLifecycle> = {};
 let dashboardTabShellBound = false;
 let activeDashboardTabId: string | null = null;
 let dashboardSwitchToken = 0;
+const DASHBOARD_GRAPHITE_BG = '#050608';
 
 function normalizeAssetUrl(url: string, base = window.location.href) {
     try {
@@ -364,19 +365,9 @@ function showPlatformNotification(title, body, icon = "/static/favicon.ico") {
 }
 
 function openThemeColorPrompt() {
-    const currentColor = localStorage.getItem('dashboardThemeColor') || '#1a1d21';
-    const nextColor = prompt('Nhap ma mau theme dashboard, vi du #1a1d21', currentColor);
-    if (nextColor === null) return;
-
-    const normalized = nextColor.trim();
-    if (!/^#[0-9a-fA-F]{6}$/.test(normalized)) {
-        showToast('Ma mau khong hop le. Hay nhap dang #1a1d21.', 'error');
-        return;
-    }
-
-    localStorage.setItem('dashboardThemeColor', normalized);
-    document.documentElement.style.setProperty('--dashboard-bg', normalized);
-    showToast(`Da doi mau theme: ${normalized}`, 'success');
+    localStorage.setItem('dashboardThemeColor', DASHBOARD_GRAPHITE_BG);
+    document.documentElement.style.setProperty('--dashboard-bg', DASHBOARD_GRAPHITE_BG);
+    showToast('Da ap dung giao dien graphite.', 'success');
 }
 
 function handleDashboardImageNavClick(event: Event) {
@@ -560,16 +551,12 @@ function initDashboardNavbar() {
 
 function applySavedDashboardTheme() {
     const resetVersionKey = 'dashboardThemeResetVersion';
-    const resetVersion = 'restore-pre-sample-original-20260516';
-    if (localStorage.getItem(resetVersionKey) !== resetVersion) {
-        localStorage.setItem('dashboardThemeColor', '#1a1d21');
+    const resetVersion = 'graphite-theme-20260607';
+    if (localStorage.getItem(resetVersionKey) !== resetVersion || localStorage.getItem('dashboardThemeColor') !== DASHBOARD_GRAPHITE_BG) {
+        localStorage.setItem('dashboardThemeColor', DASHBOARD_GRAPHITE_BG);
         localStorage.setItem(resetVersionKey, resetVersion);
     }
-
-    const savedColor = localStorage.getItem('dashboardThemeColor');
-    if (savedColor && /^#[0-9a-fA-F]{6}$/.test(savedColor)) {
-        document.documentElement.style.setProperty('--dashboard-bg', savedColor);
-    }
+    document.documentElement.style.setProperty('--dashboard-bg', DASHBOARD_GRAPHITE_BG);
 }
 
 window.alert = showAlert;

@@ -1634,3 +1634,184 @@
 #notes-container .card {
     background-color: #141414 !important;
 }
+
+/* ========================================
+   MonDashboard Notes Refresh
+   Visual-only overrides: preserve Notes IDs, hooks, editor behavior, and context menus.
+   ======================================== */
+
+#notes-tool-pane {
+    background: var(--md-bg, #050608) !important;
+    color: var(--md-text, #f5f5f5);
+    padding: 14px;
+}
+
+#notes-tool-pane .notes-layout-container {
+    gap: 14px;
+    background: transparent !important;
+}
+
+#notes-list-wrapper,
+#notes-detail-wrapper {
+    border: 1px solid var(--md-border, rgba(255, 255, 255, .10));
+    border-radius: var(--md-radius-md, 12px);
+    background: var(--md-panel, #141416) !important;
+    box-shadow: var(--md-shadow-soft, 0 12px 32px rgba(0, 0, 0, .28));
+    padding: 12px;
+}
+
+#notes-detail-wrapper {
+    padding: 0;
+}
+
+#notes-search-input,
+#notes-tool-pane .form-control,
+#notes-tool-pane .form-select,
+#notes-title-input,
+#notes-content-editor,
+#notes-profile-content-editor {
+    border-color: var(--md-border, rgba(255, 255, 255, .10)) !important;
+    border-radius: var(--md-radius-sm, 8px) !important;
+    background: var(--md-bg-soft, #090b0f) !important;
+    color: var(--md-text, #f5f5f5) !important;
+}
+
+#notes-search-input:focus,
+#notes-tool-pane .form-control:focus,
+#notes-tool-pane .form-select:focus,
+#notes-title-input:focus,
+#notes-content-editor:focus,
+#notes-profile-content-editor:focus {
+    border-color: rgba(56, 189, 248, .45) !important;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, .10) !important;
+}
+
+#notes-container .card {
+    border: 1px solid var(--md-border, rgba(255, 255, 255, .10)) !important;
+    border-left: 4px solid rgba(56, 189, 248, .58) !important;
+    border-radius: var(--md-radius-sm, 8px) !important;
+    background: var(--md-card, #141416) !important;
+    color: var(--md-text, #f5f5f5) !important;
+    box-shadow: none !important;
+}
+
+#notes-container .card:hover {
+    transform: translateY(-2px) !important;
+    border-color: rgba(56, 189, 248, .44) !important;
+    border-left-color: var(--md-info, #38bdf8) !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .34), 0 0 0 1px rgba(56, 189, 248, .10) !important;
+}
+
+#notes-container .card .card-title {
+    color: var(--md-text, #f5f5f5) !important;
+}
+
+#notes-container .card .card-note-body,
+#notes-detail-placeholder,
+#notes-tool-pane .text-muted {
+    color: var(--md-muted, #9ca3af) !important;
+}
+
+.note-card-active {
+    border-color: rgba(56, 189, 248, .62) !important;
+    border-left-color: var(--md-info, #38bdf8) !important;
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, .25), 0 12px 28px rgba(0, 0, 0, .34) !important;
+}
+
+#notes-detail-panel,
+#notes-detail-panel .card-header,
+#notes-detail-content-wrapper,
+#detail-editable-full,
+#detail-editable-right,
+.split-pane {
+    border-color: var(--md-border, rgba(255, 255, 255, .10)) !important;
+    background: var(--md-card, #141416) !important;
+    color: var(--md-text, #f5f5f5) !important;
+}
+
+#notes-detail-panel {
+    border-radius: var(--md-radius-md, 12px) !important;
+    overflow: hidden;
+    box-shadow: var(--md-shadow-soft, 0 12px 32px rgba(0, 0, 0, .28));
+}
+
+#notes-detail-panel .card-header {
+    border-bottom: 1px solid var(--md-border, rgba(255, 255, 255, .10)) !important;
+}
+
+.split-divider {
+    background: linear-gradient(180deg, transparent, var(--md-info, #38bdf8), transparent) !important;
+}
+
+@media (max-width: 768px) {
+    .split-divider {
+        background: linear-gradient(90deg, transparent, var(--md-info, #38bdf8), transparent) !important;
+    }
+}
+
+.btn-split-view.active {
+    border-color: rgba(56, 189, 248, .45) !important;
+    background: rgba(56, 189, 248, .14) !important;
+    color: #e0f2fe !important;
+}
+
+.has-profile {
+    color: var(--md-info, #38bdf8) !important;
+    border-bottom-color: rgba(56, 189, 248, .65) !important;
+    background: rgba(56, 189, 248, .12) !important;
+}
+
+.has-profile:hover {
+    background: rgba(56, 189, 248, .18) !important;
+    text-shadow: none !important;
+}
+
+#detail-editable-full a {
+    color: var(--md-info, #38bdf8) !important;
+    text-shadow: none !important;
+}
+
+#detail-editable-full a:hover {
+    color: #7dd3fc !important;
+    text-shadow: none !important;
+}
+
+#notes-container,
+#notes-detail-content {
+    scrollbar-color: rgba(56, 189, 248, .65) rgba(255, 255, 255, .08);
+}
+
+#notes-container::-webkit-scrollbar-thumb,
+#notes-detail-content::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, .58);
+    border-color: var(--md-card, #141416);
+}
+
+.code-block-wrapper,
+#notes-content-editor div.code-block-wrapper,
+#notes-profile-content-editor div.code-block-wrapper,
+#detail-editable-full div.code-block-wrapper,
+#detail-editable-full div.code-block-wrapper.code-block-wrapper,
+#notes-content-editor div.code-block-wrapper.code-block-wrapper,
+#notes-profile-content-editor div.code-block-wrapper.code-block-wrapper {
+    border-color: var(--md-border-strong, rgba(255, 255, 255, .18)) !important;
+    background: var(--md-bg-soft, #090b0f) !important;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .08) !important;
+}
+
+.custom-context-menu,
+.custom-context-menu.show,
+.custom-context-menu .submenu,
+#notes-context-menu .color-palette {
+    border: 1px solid var(--md-border, rgba(255, 255, 255, .10)) !important;
+    border-radius: var(--md-radius-sm, 8px) !important;
+    background: var(--md-panel, #141416) !important;
+    color: var(--md-text, #f5f5f5) !important;
+    box-shadow: var(--md-shadow-soft, 0 12px 32px rgba(0, 0, 0, .28)) !important;
+}
+
+.custom-context-menu .menu-item:hover,
+.custom-context-menu .submenu .menu-item:hover {
+    background: rgba(255, 255, 255, .08) !important;
+    color: var(--md-info, #38bdf8) !important;
+}

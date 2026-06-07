@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/notes.css') }}?v=20260521-notes-list-only">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/notes.css') }}?v=20260607-md-refresh">
 {% endblock %}
 
 {% block content %}
@@ -186,7 +186,7 @@
 <div class="modal fade" id="codeblock-confirmDeleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Xác nhận xóa</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -268,7 +268,7 @@
 <div class="modal fade" id="notes-confirmDeleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered notes-delete-confirm-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Xác nhận xóa</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
