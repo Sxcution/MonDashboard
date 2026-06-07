@@ -1641,7 +1641,7 @@
    ======================================== */
 
 #notes-tool-pane {
-    background: var(--md-bg, #020203) !important;
+    background: transparent !important;
     color: var(--md-text, #f5f5f5);
     padding: 14px;
 }

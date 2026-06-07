@@ -559,6 +559,164 @@ function applySavedDashboardTheme() {
     document.documentElement.style.setProperty('--dashboard-bg', DASHBOARD_GRAPHITE_BG);
 }
 
+// === Global Background Starfield & Particles Effect ===
+function initGlobalParticles() {
+    const canvas = document.getElementById('dashboard-particles-canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let particles: Particle[] = [];
+    let animationId: number | null = null;
+    let isActive = true;
+
+    // Configuration
+    const maxParticles = 65;
+    const connectionDist = 110;
+    const colors = [
+        'rgba(255, 255, 255, ',   // White
+        'rgba(56, 189, 248, '     // Cyan
+    ];
+
+    function resizeCanvas() {
+        canvas!.width = window.innerWidth;
+        canvas!.height = window.innerHeight;
+    }
+
+    class Particle {
+        x!: number;
+        y!: number;
+        radius!: number;
+        vx!: number;
+        vy!: number;
+        colorBase!: string;
+        opacity!: number;
+        fadeSpeed!: number;
+        fadeDirection!: number;
+
+        constructor() {
+            this.reset(true);
+        }
+
+        reset(init = false) {
+            this.x = Math.random() * canvas!.width;
+            this.y = init ? Math.random() * canvas!.height : (Math.random() > 0.5 ? 0 : canvas!.height);
+            this.radius = 0.5 + Math.random() * 1.5;
+            this.vx = -0.12 + Math.random() * 0.24;
+            this.vy = -0.12 + Math.random() * 0.24;
+            this.colorBase = colors[Math.floor(Math.random() * colors.length)];
+            this.opacity = 0.15 + Math.random() * 0.5;
+            this.fadeSpeed = 0.003 + Math.random() * 0.007;
+            this.fadeDirection = Math.random() > 0.5 ? 1 : -1;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Shimmering stars opacity oscillation
+            this.opacity += this.fadeSpeed * this.fadeDirection;
+            if (this.opacity > 0.70) {
+                this.opacity = 0.70;
+                this.fadeDirection = -1;
+            } else if (this.opacity < 0.15) {
+                this.opacity = 0.15;
+                this.fadeDirection = 1;
+            }
+
+            // Wrap around edges
+            if (this.x < 0 || this.x > canvas!.width || this.y < 0 || this.y > canvas!.height) {
+                this.reset(false);
+            }
+        }
+
+        draw() {
+            ctx!.beginPath();
+            ctx!.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx!.fillStyle = this.colorBase + this.opacity + ')';
+            
+            // Add subtle glow to larger particles
+            if (this.radius > 1.2) {
+                ctx!.shadowColor = this.colorBase.includes('56') ? '#38bdf8' : '#ffffff';
+                ctx!.shadowBlur = this.radius * 3.5;
+            }
+            
+            ctx!.fill();
+            ctx!.shadowBlur = 0; // reset shadow blur
+        }
+    }
+
+    function initParticles() {
+        particles = [];
+        for (let i = 0; i < maxParticles; i++) {
+            particles.push(new Particle());
+        }
+    }
+
+    function drawConnections() {
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const p1 = particles[i];
+                const p2 = particles[j];
+                const dx = p1.x - p2.x;
+                const dy = p1.y - p2.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < connectionDist) {
+                    const alpha = (1 - dist / connectionDist) * 0.05;
+                    ctx!.beginPath();
+                    ctx!.moveTo(p1.x, p1.y);
+                    ctx!.lineTo(p2.x, p2.y);
+                    ctx!.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+                    ctx!.lineWidth = 0.5;
+                    ctx!.stroke();
+                }
+            }
+        }
+    }
+
+    function animate() {
+        if (!isActive) return;
+
+        ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+
+        for (const p of particles) {
+            p.update();
+            p.draw();
+        }
+
+        drawConnections();
+
+        animationId = requestAnimationFrame(animate);
+    }
+
+    // Initial load
+    resizeCanvas();
+    initParticles();
+    animate();
+
+    // Window resize handler
+    let resizeTimeout: any;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            resizeCanvas();
+            initParticles();
+        }, 150);
+    });
+
+    // Toggle animation activity based on page visibility
+    document.addEventListener('visibilitychange', () => {
+        isActive = document.visibilityState === 'visible';
+        if (isActive && !animationId) {
+            animate();
+        } else if (!isActive && animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+    });
+}
+
 window.alert = showAlert;
 window.confirm = showConfirm as any;
 window.showAlert = showAlert;
@@ -576,6 +734,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initDashboardContextMenu();
     initDashboardNavbar();
     initDashboardTabShell();
+    initGlobalParticles();
     document.querySelectorAll('[data-dashboard-nav="image"]').forEach(link => {
         link.addEventListener('click', handleDashboardImageNavClick);
     });
