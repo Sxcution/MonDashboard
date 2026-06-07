@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@800;900&display=swap');
+
 /* === Home Command Center Layout === */
 .home-command-center {
     position: relative;
@@ -7,12 +9,22 @@
     background: transparent !important;
 }
 
+.home-particles-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
 .home-command-inner {
     position: relative;
     z-index: 2;
     width: min(1440px, 100%);
     margin: 0 auto;
-    padding: clamp(6px, 1.5vw, 14px) clamp(18px, 3vw, 42px) clamp(18px, 3vw, 42px);
+    padding: clamp(24px, 3.5vw, 48px) clamp(18px, 3vw, 42px) clamp(18px, 3vw, 42px);
 }
 
 .home-glass-card {
@@ -26,8 +38,8 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    min-height: 320px;
-    padding: 20px 0 40px;
+    min-height: 200px;
+    padding: 0 0 16px;
 }
 
 .home-hero-copy {
@@ -57,14 +69,17 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 10px;
-    margin-bottom: 18px;
+    margin-bottom: 8px;
 }
 
 @keyframes blink-green {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 0.35;
         box-shadow: 0 0 4px rgba(34, 197, 94, 0.3);
     }
+
     50% {
         opacity: 1;
         box-shadow: 0 0 12px rgba(34, 197, 94, 0.9), 0 0 24px rgba(34, 197, 94, 0.5);
@@ -94,7 +109,7 @@
     align-items: center;
     width: min(760px, 100%);
     min-height: 62px;
-    margin-top: 32px;
+    margin-top: 8px;
     padding: 7px;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 8px;
@@ -105,6 +120,11 @@
 .home-command-search:focus-within {
     border-color: var(--md-border-strong, rgba(255, 255, 255, 0.18));
     box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04), 0 20px 55px rgba(0, 0, 0, 0.32);
+}
+
+.chat-open #homeCommandSearch,
+.chat-open .home-quick-actions {
+    display: none !important;
 }
 
 .home-command-search-icon {
@@ -153,10 +173,10 @@
 
 .home-quick-actions {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     width: min(920px, 100%);
-    margin-top: 20px;
+    margin-top: 12px;
 }
 
 .home-action-card {
@@ -246,12 +266,35 @@
     background: linear-gradient(135deg, #f59e0b, #ef4444);
 }
 
-.home-section-heading,
 .home-chat-dock-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
+}
+
+.home-section-heading {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 16px;
+}
+
+.home-section-heading .home-section-link {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.home-divider {
+    border: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: clamp(24px, 4vw, 42px) auto;
+    width: 100%;
 }
 
 /* === Status Widgets And Modules === */
@@ -292,7 +335,7 @@
     margin-top: clamp(22px, 3vw, 34px);
 }
 
-.home-modules > .row {
+.home-modules>.row {
     margin-right: 0;
     margin-left: 0;
 }
@@ -359,35 +402,65 @@
 
 /* === Embedded Hermes Chat === */
 .home-hermes-chat {
-    padding: 18px;
+    padding: 0;
     overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        margin-top 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        padding 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.4s ease,
+        box-shadow 0.4s ease;
+    transform-origin: top center;
+    max-height: 1200px;
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+.home-hermes-chat:not(.is-open) {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    transform: scale(0.96) translateY(-16px) !important;
+    pointer-events: none !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-color: transparent !important;
+    border-width: 0 !important;
+    box-shadow: none !important;
+}
+
+.home-hermes-chat:not(.is-open) * {
+    visibility: hidden !important;
 }
 
 .home-chat-wrapper {
     height: clamp(600px, 72dvh, 820px);
     min-height: 0;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--md-border, rgba(255, 255, 255, 0.1));
     border-radius: 8px;
-    background: rgba(5, 6, 8, 0.58) !important;
+    background: var(--md-card, #141416) !important;
+    box-shadow: var(--md-shadow-soft, 0 12px 32px rgba(0, 0, 0, 0.28)) !important;
     overflow: hidden;
 }
 
 .home-chat-sidebar {
     flex: 0 0 280px;
-    background: rgba(9, 11, 15, 0.86) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--md-surface, #11141a) !important;
+    border-right: 1px solid var(--md-border, rgba(255, 255, 255, 0.1));
 }
 
 .home-chat-main {
     min-width: 0;
     min-height: 0;
-    background: rgba(17, 20, 26, 0.5) !important;
+    background: transparent !important;
 }
 
 .home-chat-header {
     flex: 0 0 62px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.025);
+    border-bottom: 1px solid var(--md-border, rgba(255, 255, 255, 0.1));
+    background: rgba(255, 255, 255, 0.015);
 }
 
 .home-hermes-mark {
@@ -429,12 +502,12 @@
     width: 100% !important;
     max-width: none !important;
     padding: 14px !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    background: linear-gradient(180deg, rgba(9, 11, 15, 0), rgba(9, 11, 15, 0.9) 32%) !important;
+    border-top: 1px solid var(--md-border, rgba(255, 255, 255, 0.1));
+    background: transparent !important;
 }
 
 .home-hermes-chat .chat-input-wrapper {
-    border-color: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
     border-radius: 8px !important;
     background: rgba(255, 255, 255, 0.07) !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
@@ -444,7 +517,7 @@
 .home-hermes-chat .btn-icon,
 .home-hermes-chat .btn-new-chat,
 .home-hermes-chat .search-box input {
-    border-color: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
     color: var(--md-text, #f5f5f5);
     background: rgba(255, 255, 255, 0.055);
 }
@@ -499,7 +572,7 @@
     }
 
     .home-hero-copy {
-        padding-top: 26px;
+        padding-top: 8px;
     }
 
     .home-quick-actions {
@@ -535,10 +608,20 @@
         grid-template-columns: 1fr;
     }
 
-    .home-section-heading,
     .home-chat-dock-heading {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .home-section-heading {
+        align-items: center;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .home-section-heading .home-section-link {
+        position: static;
+        transform: none;
     }
 
     .home-hermes-chat {
@@ -605,4 +688,30 @@
         font-size: 0.92rem;
     }
 
+}
+
+/* === Module Launch Header Gradient Animation === */
+#home-modules-title {
+    font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-weight: 850;
+    letter-spacing: -0.03em;
+    background: linear-gradient(90deg, #9b66ff 0%, #38bdf8 50%, #00e5ff 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-text-flow 4s linear infinite;
+    display: inline-block;
+}
+
+@keyframes gradient-text-flow {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }

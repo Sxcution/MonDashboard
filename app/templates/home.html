@@ -12,12 +12,8 @@
             <div class="home-hero-copy">
                 <div class="home-eyebrow">
                     <span class="home-eyebrow-dot" aria-hidden="true"></span>
-                    <span>Không gian làm việc riêng</span>
-                    <span>Trung tâm điều khiển</span>
+                    <span>Workspace</span>
                 </div>
-                <p class="home-hero-subtitle">
-                    Bảng điều khiển riêng để quản lý ghi chú, tài khoản mạng xã hội, hình ảnh, phiên Telegram và trợ lý Hermes AI.
-                </p>
 
                 <form class="home-command-search" id="homeCommandSearch" role="search" autocomplete="off">
                     <label class="visually-hidden" for="home-command-query">Tìm kiếm hoặc hỏi Hermes</label>
@@ -25,41 +21,134 @@
                     <input id="home-command-query" type="search" spellcheck="false"
                         placeholder="Hỏi Hermes hoặc tìm kiếm trong không gian làm việc...">
                     <button class="btn home-command-submit" type="submit">
-                        <span>Chạy</span>
+                        <span>Gửi</span>
                         <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
                     </button>
                 </form>
 
-                <div class="home-quick-actions" aria-label="Lối tắt nhanh">
-                    <a class="home-action-card" href="#hermes-chat-panel">
-                        <span class="home-action-icon home-action-ai"><i class="bi bi-stars"></i></span>
-                        <span>
-                            <strong>Hỏi Hermes</strong>
-                            <small>Tóm tắt bảng điều khiển</small>
-                        </span>
-                    </a>
-                    <a class="home-action-card" href="{{ url_for('notes') }}">
-                        <span class="home-action-icon home-action-notes"><i class="bi bi-journal-richtext"></i></span>
-                        <span>
-                            <strong>Mở Ghi chú</strong>
-                            <small>Ghi chép và xem lại</small>
-                        </span>
-                    </a>
-                    <a class="home-action-card" href="{{ url_for('mxh.mxh_page') }}">
-                        <span class="home-action-icon home-action-mxh"><i class="bi bi-share-fill"></i></span>
-                        <span>
-                            <strong>Kiểm tra MXH</strong>
-                            <small>Tài khoản và hội nhóm</small>
-                        </span>
-                    </a>
-                    <a class="home-action-card" href="{{ url_for('telegram') }}">
-                        <span class="home-action-icon home-action-telegram"><i class="bi bi-telegram"></i></span>
-                        <span>
-                            <strong>Telegram</strong>
-                            <small>Phiên và tác vụ</small>
-                        </span>
-                    </a>
-                </div>
+<section class="home-hermes-chat" id="hermes-chat-panel" aria-label="Hermes Chat">
+
+            <div class="chat-wrapper home-chat-wrapper d-flex">
+                <aside class="chat-sidebar home-chat-sidebar d-flex flex-column" id="chatSidebar"
+                    aria-label="Lịch sử chat">
+                    <div class="p-3 border-bottom border-secondary-subtle">
+                        <button class="btn-new-chat w-100 d-flex align-items-center justify-content-center gap-2"
+                            type="button" onclick="startNewChat()">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Chat mới</span>
+                        </button>
+                    </div>
+
+                    <div class="p-3">
+                        <div class="search-box">
+                            <i class="bi bi-search"></i>
+                            <input id="chatSearch" type="search" autocomplete="off" placeholder="Tìm lịch sử chat">
+                        </div>
+                    </div>
+
+                    <div class="chat-history-list custom-scrollbar flex-grow-1 overflow-auto pb-3" id="chatHistoryList">
+                        <div class="text-center text-muted small mt-3">Đang tải...</div>
+                    </div>
+                </aside>
+
+                <section class="chat-main home-chat-main d-flex flex-column flex-grow-1 position-relative"
+                    aria-label="Chatbot Hermes">
+                    <header class="chat-header home-chat-header d-flex align-items-center justify-content-between px-3">
+                        <div class="d-flex align-items-center gap-2 min-w-0">
+                            <button class="btn btn-sm btn-outline-secondary d-md-none" type="button"
+                                onclick="toggleSidebar()" aria-label="Mở lịch sử chat">
+                                <i class="bi bi-layout-sidebar"></i>
+                            </button>
+                            <div class="home-hermes-mark" aria-hidden="true">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="home-chat-title">Hermes</div>
+                                <div class="home-chat-subtitle text-truncate">Mon AI</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="dropdown">
+                                <button class="btn model-selector dropdown-toggle d-flex align-items-center gap-2"
+                                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-cpu"></i>
+                                    <span id="current-model-name">Hermes Agent</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button class="dropdown-item" type="button"
+                                            onclick="selectModel('hermes', 'Hermes Agent')">
+                                            Hermes Agent
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" type="button"
+                                            onclick="selectModel('gemini', 'gemini-2.5-flash')">
+                                            Gemini 2.5 Flash
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" type="button"
+                                            onclick="selectModel('gemini', 'gemini-2.5-pro')">
+                                            Gemini 2.5 Pro
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" type="button"
+                                            onclick="selectModel('openai', 'gpt-4o')">
+                                            GPT-4o
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-icon" type="button" data-bs-toggle="modal"
+                                data-bs-target="#aiSettingsModal" aria-label="Cài đặt chatbot" title="Cài đặt chatbot">
+                                <i class="bi bi-sliders"></i>
+                            </button>
+                            <button class="btn btn-icon" type="button" id="btn-collapse-hermes"
+                                title="Thu gọn" aria-label="Thu gọn chatbot">
+                                <i class="bi bi-chevron-up"></i>
+                            </button>
+                        </div>
+                    </header>
+
+                    <div id="chat-messages" class="chat-messages custom-scrollbar flex-grow-1 overflow-auto"></div>
+
+                    <div id="image-preview-container" class="home-image-preview d-none">
+                        <img id="image-preview" alt="Ảnh đính kèm">
+                        <button class="btn btn-sm btn-dark" type="button" onclick="clearImagePreview()"
+                            aria-label="Gỡ ảnh đính kèm">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+
+                    <div class="chat-input-container">
+                        <div class="chat-input-wrapper">
+                            <form id="chat-form" class="position-relative" autocomplete="off">
+                                <textarea id="user-input" class="form-control chat-textarea" rows="1"
+                                    placeholder="Nhắn cho Hermes..." spellcheck="false"></textarea>
+                                <div class="input-actions">
+                                    <button class="btn-icon" id="home-image-button" type="button"
+                                        aria-label="Đính kèm ảnh">
+                                        <i class="bi bi-paperclip"></i>
+                                    </button>
+                                    <button class="btn-send" type="submit" aria-label="Gửi">
+                                        <i class="bi bi-arrow-up"></i>
+                                    </button>
+                                </div>
+                            </form>
+                            <input id="home-image-upload" class="d-none" type="file" accept="image/*">
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+
             </div>
         </section>
 
@@ -90,11 +179,15 @@
             </article>
         </section>
 
+        <!-- home_divider : Đường kẻ ngang ngăn cách nội dung -->
+        <hr class="home-divider">
+
         <section class="home-modules" aria-labelledby="home-modules-title">
+            <!-- home_section_heading : Tiêu đề phần Modules đã được căn giữa -->
             <div class="home-section-heading">
                 <div>
                     <span class="home-section-kicker">Công cụ cốt lõi</span>
-                    <h2 id="home-modules-title">Khởi chạy mô-đun</h2>
+                    <h2 id="home-modules-title">Khởi chạy Module</h2>
                 </div>
                 <a class="home-section-link" href="{{ url_for('settings.settings_page') }}">
                     <i class="bi bi-sliders"></i>
@@ -108,7 +201,6 @@
                         <span class="home-module-icon home-module-notes"><i class="bi bi-journal-richtext"></i></span>
                         <span class="home-module-title">Ghi chú</span>
                         <span class="home-module-copy">Ghi lại kế hoạch, chi tiết và đánh dấu việc cần theo dõi.</span>
-                        <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
                     </a>
                 </div>
                 <div class="col">
@@ -116,7 +208,6 @@
                         <span class="home-module-icon home-module-mxh"><i class="bi bi-share-fill"></i></span>
                         <span class="home-module-title">MXH</span>
                         <span class="home-module-copy">Quản lý các nhóm xã hội, tài khoản, bộ lọc và trạng thái.</span>
-                        <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
                     </a>
                 </div>
                 <div class="col">
@@ -124,7 +215,6 @@
                         <span class="home-module-icon home-module-image"><i class="bi bi-image-fill"></i></span>
                         <span class="home-module-title">Hình ảnh</span>
                         <span class="home-module-copy">Mở chỉnh sửa, ghép ảnh, làm nét và các tiện ích ảnh.</span>
-                        <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
                     </a>
                 </div>
                 <div class="col">
@@ -132,142 +222,21 @@
                         <span class="home-module-icon home-module-telegram"><i class="bi bi-telegram"></i></span>
                         <span class="home-module-title">Telegram</span>
                         <span class="home-module-copy">Xem lại các phiên làm việc, proxy, tác vụ và tự động hóa.</span>
-                        <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
                     </a>
                 </div>
                 <div class="col">
                     <a class="home-module-card home-glass-card" href="{{ url_for('settings.settings_page') }}">
-                        <span class="home-module-icon home-module-settings"><i class="bi bi-gear-wide-connected"></i></span>
+                        <span class="home-module-icon home-module-settings"><i
+                                class="bi bi-gear-wide-connected"></i></span>
                         <span class="home-module-title">Cài đặt</span>
-                        <span class="home-module-copy">Điều chỉnh khởi động, bộ hẹn giờ, tần suất làm mới và thông báo.</span>
-                        <span class="home-module-open"><i class="bi bi-arrow-up-right"></i></span>
+                        <span class="home-module-copy">Điều chỉnh khởi động, bộ hẹn giờ, tần suất làm mới và thông
+                            báo.</span>
                     </a>
                 </div>
             </div>
         </section>
 
-        <section class="home-hermes-chat home-glass-card" id="hermes-chat-panel" aria-label="Hermes Chat">
-            <div class="home-chat-dock-heading">
-                <div>
-                    <span class="home-section-kicker">Hermes AI</span>
-                    <h2>Không gian trợ lý</h2>
-                </div>
-                <a class="home-section-link" href="#hermes-chat-panel">
-                    <i class="bi bi-arrow-up"></i>
-                    <span>Lên đầu</span>
-                </a>
-            </div>
-
-            <div class="chat-wrapper home-chat-wrapper d-flex">
-                <aside class="chat-sidebar home-chat-sidebar d-flex flex-column" id="chatSidebar" aria-label="Lịch sử chat">
-                    <div class="p-3 border-bottom border-secondary-subtle">
-                        <button class="btn-new-chat w-100 d-flex align-items-center justify-content-center gap-2"
-                            type="button" onclick="startNewChat()">
-                            <i class="bi bi-plus-lg"></i>
-                            <span>Chat mới</span>
-                        </button>
-                    </div>
-
-                    <div class="p-3">
-                        <div class="search-box">
-                            <i class="bi bi-search"></i>
-                            <input id="chatSearch" type="search" autocomplete="off" placeholder="Tìm lịch sử chat">
-                        </div>
-                    </div>
-
-                    <div class="chat-history-list custom-scrollbar flex-grow-1 overflow-auto pb-3" id="chatHistoryList">
-                        <div class="text-center text-muted small mt-3">Đang tải...</div>
-                    </div>
-                </aside>
-
-                <section class="chat-main home-chat-main d-flex flex-column flex-grow-1 position-relative"
-                    aria-label="Chatbot Hermes">
-                    <header class="chat-header home-chat-header d-flex align-items-center justify-content-between px-3">
-                        <div class="d-flex align-items-center gap-2 min-w-0">
-                            <button class="btn btn-sm btn-outline-secondary d-md-none" type="button" onclick="toggleSidebar()"
-                                aria-label="Mở lịch sử chat">
-                                <i class="bi bi-layout-sidebar"></i>
-                            </button>
-                            <div class="home-hermes-mark" aria-hidden="true">
-                                <i class="bi bi-robot"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <div class="home-chat-title">Hermes</div>
-                                <div class="home-chat-subtitle text-truncate">Mon AI</div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="dropdown">
-                                <button class="btn model-selector dropdown-toggle d-flex align-items-center gap-2"
-                                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-cpu"></i>
-                                    <span id="current-model-name">Hermes Agent</span>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <button class="dropdown-item" type="button"
-                                            onclick="selectModel('hermes', 'Hermes Agent')">
-                                            Hermes Agent
-                                        </button>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <button class="dropdown-item" type="button"
-                                            onclick="selectModel('gemini', 'gemini-2.5-flash')">
-                                            Gemini 2.5 Flash
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <button class="dropdown-item" type="button"
-                                            onclick="selectModel('gemini', 'gemini-2.5-pro')">
-                                            Gemini 2.5 Pro
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <button class="dropdown-item" type="button" onclick="selectModel('openai', 'gpt-4o')">
-                                            GPT-4o
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
-                            <button class="btn btn-icon" type="button" data-bs-toggle="modal"
-                                data-bs-target="#aiSettingsModal" aria-label="Cài đặt chatbot">
-                                <i class="bi bi-sliders"></i>
-                            </button>
-                        </div>
-                    </header>
-
-                    <div id="chat-messages" class="chat-messages custom-scrollbar flex-grow-1 overflow-auto"></div>
-
-                    <div id="image-preview-container" class="home-image-preview d-none">
-                        <img id="image-preview" alt="Ảnh đính kèm">
-                        <button class="btn btn-sm btn-dark" type="button" onclick="clearImagePreview()"
-                            aria-label="Gỡ ảnh đính kèm">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </div>
-
-                    <div class="chat-input-container">
-                        <div class="chat-input-wrapper">
-                            <form id="chat-form" class="position-relative" autocomplete="off">
-                                <textarea id="user-input" class="form-control chat-textarea" rows="1"
-                                    placeholder="Nhắn cho Hermes..." spellcheck="false"></textarea>
-                                <div class="input-actions">
-                                    <button class="btn-icon" id="home-image-button" type="button" aria-label="Đính kèm ảnh">
-                                        <i class="bi bi-paperclip"></i>
-                                    </button>
-                                    <button class="btn-send" type="submit" aria-label="Gửi">
-                                        <i class="bi bi-arrow-up"></i>
-                                    </button>
-                                </div>
-                            </form>
-                            <input id="home-image-upload" class="d-none" type="file" accept="image/*">
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </section>
+        
     </div>
 </section>
 
@@ -335,38 +304,46 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/chat.js') }}?v=hermes-chat-20260605-4"></script>
 <script>
-document.getElementById('homeCommandSearch')?.addEventListener('submit', function (event) {
-    event.preventDefault();
-    const commandInput = document.getElementById('home-command-query');
-    const chatInput = document.getElementById('user-input');
-    const query = commandInput?.value?.trim();
-    if (!query || !chatInput) return;
-    chatInput.value = query;
-    commandInput.value = '';
-    document.getElementById('hermes-chat-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    window.setTimeout(function () {
-        if (window.sendMessage) {
-            window.sendMessage();
+    document.getElementById('homeCommandSearch')?.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const commandInput = document.getElementById('home-command-query');
+        const chatInput = document.getElementById('user-input');
+        const query = commandInput?.value?.trim();
+        if (!query || !chatInput) return;
+        chatInput.value = query;
+        commandInput.value = '';
+        if (window.openChatPanel) {
+            window.openChatPanel();
+        } else {
+            const chatPanel = document.getElementById('hermes-chat-panel');
+            if (chatPanel) {
+                chatPanel.classList.add('is-open');
+                document.querySelector('.home-hero-copy')?.classList.add('chat-open');
+            }
         }
-    }, 260);
-});
+        window.setTimeout(function () {
+            if (window.sendMessage) {
+                window.sendMessage();
+            }
+        }, 150);
+    });
 
-document.getElementById('home-image-button')?.addEventListener('click', function () {
-    document.getElementById('home-image-upload')?.click();
-});
+    document.getElementById('home-image-button')?.addEventListener('click', function () {
+        document.getElementById('home-image-upload')?.click();
+    });
 
-document.getElementById('home-image-upload')?.addEventListener('change', function (event) {
-    const file = event.target.files && event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function (readerEvent) {
-        if (typeof readerEvent.target?.result === 'string' && window.showImagePreview) {
-            window.showImagePreview(readerEvent.target.result);
-        }
-    };
-    reader.readAsDataURL(file);
-    event.target.value = '';
-});
+    document.getElementById('home-image-upload')?.addEventListener('change', function (event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (readerEvent) {
+            if (typeof readerEvent.target?.result === 'string' && window.showImagePreview) {
+                window.showImagePreview(readerEvent.target.result);
+            }
+        };
+        reader.readAsDataURL(file);
+        event.target.value = '';
+    });
 
 </script>
 {% endblock %}

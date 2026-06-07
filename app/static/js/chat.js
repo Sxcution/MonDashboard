@@ -40,6 +40,19 @@
         const result = confirmModal(message, title);
         return typeof result?.then === 'function' ? Boolean(await result) : Boolean(result);
     }
+    function openChatPanel() {
+        const chatPanel = document.getElementById('hermes-chat-panel');
+        if (chatPanel && !chatPanel.classList.contains('is-open')) {
+            chatPanel.classList.add('is-open');
+            document.querySelector('.home-hero-copy')?.classList.add('chat-open');
+            setTimeout(() => {
+                chatPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const chatInput = document.getElementById('user-input');
+                if (chatInput)
+                    chatInput.focus();
+            }, 100);
+        }
+    }
     document.addEventListener('DOMContentLoaded', function () {
         // Set default model if not already set
         if (!localStorage.getItem('selectedModel')) {
@@ -181,6 +194,22 @@
         });
         // Setup context menu for chat history
         setupChatHistoryContextMenu();
+        // --- Home Hermes Chat Collapse/Expand Logic ---
+        const chatPanel = document.getElementById('hermes-chat-panel');
+        const searchForm = document.getElementById('homeCommandSearch');
+        const collapseBtn = document.getElementById('btn-collapse-hermes');
+        if (collapseBtn) {
+            collapseBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (chatPanel) {
+                    chatPanel.classList.remove('is-open');
+                    document.querySelector('.home-hero-copy')?.classList.remove('chat-open');
+                    if (searchForm) {
+                        searchForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
+        }
     });
     // Image Preview Functions
     let currentImageBase64 = null;
@@ -665,6 +694,7 @@
             }
         }
     }
+    window.openChatPanel = openChatPanel;
     window.showImagePreview = showImagePreview;
     window.clearImagePreview = clearImagePreview;
     window.toggleSidebar = toggleSidebar;

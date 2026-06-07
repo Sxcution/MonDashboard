@@ -74,6 +74,19 @@ async function confirmChatAction(message: string, title = 'Xác nhận') {
     return typeof result?.then === 'function' ? Boolean(await result) : Boolean(result);
 }
 
+function openChatPanel() {
+    const chatPanel = document.getElementById('hermes-chat-panel');
+    if (chatPanel && !chatPanel.classList.contains('is-open')) {
+        chatPanel.classList.add('is-open');
+        document.querySelector('.home-hero-copy')?.classList.add('chat-open');
+        setTimeout(() => {
+            chatPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const chatInput = document.getElementById('user-input') as HTMLTextAreaElement | null;
+            if (chatInput) chatInput.focus();
+        }, 100);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // Set default model if not already set
     if (!localStorage.getItem('selectedModel')) {
@@ -225,6 +238,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Setup context menu for chat history
     setupChatHistoryContextMenu();
+
+    // --- Home Hermes Chat Collapse/Expand Logic ---
+    const chatPanel = document.getElementById('hermes-chat-panel');
+    const searchForm = document.getElementById('homeCommandSearch');
+    const collapseBtn = document.getElementById('btn-collapse-hermes');
+
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', (e: Event) => {
+            e.preventDefault();
+            if (chatPanel) {
+                chatPanel.classList.remove('is-open');
+                document.querySelector('.home-hero-copy')?.classList.remove('chat-open');
+                if (searchForm) {
+                    searchForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+    }
 });
 
 // Image Preview Functions
@@ -726,6 +757,7 @@ async function clearDashboardCache() {
     }
 }
 
+(window as any).openChatPanel = openChatPanel;
 (window as any).showImagePreview = showImagePreview;
 (window as any).clearImagePreview = clearImagePreview;
 (window as any).toggleSidebar = toggleSidebar;
