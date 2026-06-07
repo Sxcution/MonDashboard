@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="vi" data-bs-theme="dark">
-{% set global_asset_v = '20260518-toast-oneline' %}
+{% set global_asset_v = '20260607-graphite-theme-3' %}
 
 <head>
     <meta charset="utf-8">
@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ global_asset_v }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v={{ global_asset_v }}">
     {% block styles %}{% endblock %}
 </head>
 

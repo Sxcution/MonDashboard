@@ -39,9 +39,9 @@
   margin-top: -2px;
 }
 
-/* Stats panel: subtle cyber look */
+/* Stats panel: subtle graphite look */
 .mxh-stats-card {
-  background: rgba(44, 51, 64, 0.55);
+  background: rgba(17, 20, 26, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -74,13 +74,13 @@
 .stats-clickable:hover {
     background-color: rgba(255, 255, 255, 0.1);
     color: #fff !important;
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    text-shadow: none;
 }
 
 .active-stat-filter {
-    background-color: rgba(13, 110, 253, 0.3) !important; /* Bootstrap Primary 30% */
+    background-color: rgba(255, 255, 255, 0.08) !important;
     color: #fff !important;
     font-weight: bold;
-    border: 1px solid rgba(13, 110, 253, 0.5);
-    box-shadow: 0 0 8px rgba(13, 110, 253, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: none;
 }
