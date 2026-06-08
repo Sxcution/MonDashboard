@@ -314,3 +314,105 @@ function positionAllSubmenusForMenu(menu) {
         }
     });
 }
+/* === Alt + C Color Inspector === */
+(() => {
+    let enabled = false;
+    let currentHex = '';
+    const tip = document.createElement('div');
+    const box = document.createElement('div');
+    Object.assign(tip.style, {
+        position: 'fixed',
+        zIndex: '999999',
+        pointerEvents: 'none',
+        padding: '8px 10px',
+        borderRadius: '8px',
+        background: 'rgba(15,15,18,.95)',
+        color: '#fff',
+        font: '12px Consolas, monospace',
+        boxShadow: '0 8px 24px rgba(0,0,0,.35)',
+        whiteSpace: 'pre',
+        display: 'none',
+    });
+    Object.assign(box.style, {
+        position: 'fixed',
+        zIndex: '999998',
+        pointerEvents: 'none',
+        border: '1px solid #00E5FF',
+        boxShadow: '0 0 0 9999px rgba(0,0,0,.08)',
+        display: 'none',
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.appendChild(tip);
+        document.body.appendChild(box);
+    });
+    const toHex = (value) => {
+        const nums = value.match(/\d+/g);
+        if (!nums || nums.length < 3)
+            return value;
+        return '#' + nums.slice(0, 3).map(n => Number(n).toString(16).padStart(2, '0')).join('').toUpperCase();
+    };
+    const pickBestBg = (el) => {
+        let node = el;
+        while (node && node !== document.documentElement) {
+            const bg = getComputedStyle(node).backgroundColor;
+            if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent')
+                return bg;
+            node = node.parentElement;
+        }
+        return getComputedStyle(document.body).backgroundColor;
+    };
+    const update = (e) => {
+        if (!enabled)
+            return;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        if (!el || el === tip || el === box)
+            return;
+        const cs = getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        const bg = pickBestBg(el);
+        const fg = cs.color;
+        const bd = cs.borderTopColor;
+        const fill = cs.fill;
+        const stroke = cs.stroke;
+        currentHex = toHex(bg);
+        tip.textContent =
+            `Alt+C: ON | Click copy bg
+TAG: ${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.className ? '.' + String(el.className).trim().replace(/\s+/g, '.') : ''}
+bg:     ${toHex(bg)} ${bg}
+text:   ${toHex(fg)} ${fg}
+border: ${toHex(bd)} ${bd}
+fill:   ${fill}
+stroke: ${stroke}`;
+        tip.style.left = `${Math.min(e.clientX + 14, window.innerWidth - 320)}px`;
+        tip.style.top = `${Math.min(e.clientY + 14, window.innerHeight - 150)}px`;
+        tip.style.display = 'block';
+        box.style.left = `${rect.left}px`;
+        box.style.top = `${rect.top}px`;
+        box.style.width = `${rect.width}px`;
+        box.style.height = `${rect.height}px`;
+        box.style.display = 'block';
+    };
+    const hide = () => {
+        tip.style.display = 'none';
+        box.style.display = 'none';
+    };
+    document.addEventListener('keydown', (e) => {
+        if (e.altKey && e.key.toLowerCase() === 'c') {
+            e.preventDefault();
+            enabled = !enabled;
+            if (!enabled)
+                hide();
+            console.log(`[Color Inspector] ${enabled ? 'ON' : 'OFF'}`);
+        }
+    });
+    document.addEventListener('mousemove', update);
+    document.addEventListener('click', async (e) => {
+        if (!enabled || !currentHex)
+            return;
+        e.preventDefault();
+        e.stopPropagation();
+        await navigator.clipboard.writeText(currentHex);
+        tip.textContent += `\n\nCopied: ${currentHex}`;
+    }, true);
+    document.addEventListener('mouseleave', hide);
+})();

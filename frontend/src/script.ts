@@ -15,7 +15,7 @@ function showToast(message, type = 'success', title = 'Thông báo') {
     const toastHeader = document.getElementById('toastHeader');
     const toastTitle = document.getElementById('toastTitle');
     const toastBody = document.getElementById('toastBody');
-    
+
     if (!toastEl) {
         console.warn('Toast element not found!');
         return;
@@ -42,7 +42,7 @@ function showToast(message, type = 'success', title = 'Thông báo') {
     toastBody.textContent = `${labelMap[toastType]}: ${cleanMessage}`;
     toastEl.className = 'toast dashboard-toast';
     toastEl.classList.add(...classMap[toastType]);
-    
+
     // Show toast
     const toast = new bootstrap.Toast(toastEl, { delay: 2600 });
     toast.show();
@@ -59,36 +59,36 @@ function showToast(message, type = 'success', title = 'Thông báo') {
  * - Enter: Kích hoạt nút primary/danger trong modal
  * - Esc: Đóng modal (Bootstrap tự xử lý, nhưng có thể custom)
  */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Lắng nghe sự kiện khi modal được hiển thị
-    document.addEventListener('shown.bs.modal', function(event) {
+    document.addEventListener('shown.bs.modal', function (event) {
         const modal = event.target as HTMLElement;
-        
+
         // Tìm nút primary hoặc danger trong modal (ưu tiên danger cho modal xóa)
         const dangerBtn = modal.querySelector('.modal-footer .btn-danger');
         const primaryBtn = modal.querySelector('.modal-footer .btn-primary');
         const actionBtn = (dangerBtn || primaryBtn) as HTMLButtonElement | null;
-        
+
         // Handler cho phím Enter
-        const enterHandler = function(e) {
+        const enterHandler = function (e) {
             if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
                 // Không áp dụng nếu đang focus vào textarea
                 if (document.activeElement.tagName === 'TEXTAREA') {
                     return;
                 }
-                
+
                 e.preventDefault();
                 if (actionBtn && !actionBtn.disabled) {
                     actionBtn.click();
                 }
             }
         };
-        
+
         // Thêm event listener
         modal.addEventListener('keydown', enterHandler);
-        
+
         // Cleanup khi modal bị đóng
-        modal.addEventListener('hidden.bs.modal', function() {
+        modal.addEventListener('hidden.bs.modal', function () {
             modal.removeEventListener('keydown', enterHandler);
         }, { once: true });
     });
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function copyToClipboard(textToCopy) {
     try {
         await navigator.clipboard.writeText(textToCopy);
-        
+
         // 🔍 Tạo thông báo "Đã copy"
         const tempDiv = document.createElement('div');
         tempDiv.textContent = `Đã copy: ${textToCopy}`;
@@ -140,7 +140,7 @@ function processSmartTokens(container) {
         container,
         NodeFilter.SHOW_TEXT,
         {
-            acceptNode: function(node) {
+            acceptNode: function (node) {
                 // 🔍 Bỏ qua các node đã xử lý hoặc trong script/style
                 if (node.parentElement.closest('script, style, .smart-token')) {
                     return NodeFilter.FILTER_REJECT;
@@ -231,13 +231,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Xác định vùng chứa nội dung cho Notes
         const notesContainer = document.getElementById('notes-container');
         const notesDetailContent = document.getElementById('notes-detail-content');
-        
+
         // ⚠️ CHỈ chạy nếu tìm thấy Notes container
         if (!notesDetailContent && !notesContainer) {
             console.log('🔍 Smart Token: Notes container not found, skipping.');
             return;
         }
-        
+
         const containerToProcess = notesDetailContent || notesContainer;
 
         // Chạy hàm xử lý ban đầu
@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ❌ DISABLED MutationObserver - Notes đã có auto-detect riêng
         // MutationObserver gây conflict với auto-detect trong editor
         console.log('🔍 Smart Token: MutationObserver disabled (Notes has its own auto-detection).');
-        
+
         /* COMMENTED OUT TO PREVENT CONFLICTS
         // Observer để xử lý nội dung được load động (AJAX) trong Ghi chú
         if (window.MutationObserver) {
@@ -312,19 +312,19 @@ function positionContextMenuSmart(menu, x, y) {
 
     // Xem có đủ chỗ bên phải / bên dưới không
     const placeRight = (x + rect.width + MARGIN <= vw);
-    const placeDown  = (y + rect.height + MARGIN <= vh);
+    const placeDown = (y + rect.height + MARGIN <= vh);
 
     // Nếu không đủ chỗ thì lật qua trái / lật lên trên
     let left = placeRight ? (x + MARGIN) : (x - rect.width - MARGIN);
-    let top  = placeDown  ? (y + MARGIN) : (y - rect.height - MARGIN);
+    let top = placeDown ? (y + MARGIN) : (y - rect.height - MARGIN);
 
     // Clamp để menu không chọc lọt ra ngoài khi quá sát mép
     left = Math.min(Math.max(left, MARGIN), vw - rect.width - MARGIN);
-    top  = Math.min(Math.max(top , MARGIN), vh - rect.height - MARGIN);
+    top = Math.min(Math.max(top, MARGIN), vh - rect.height - MARGIN);
 
     // Ghi vị trí cuối
     menu.style.left = left + 'px';
-    menu.style.top  = top  + 'px';
+    menu.style.top = top + 'px';
 
     // Khôi phục trạng thái hiển thị trước đó
     menu.style.visibility = prevVis || '';
@@ -367,3 +367,118 @@ function positionAllSubmenusForMenu(menu) {
         }
     });
 }
+/* === Alt + C Color Inspector === */
+(() => {
+    let enabled = false;
+    let currentHex = '';
+
+    const tip = document.createElement('div');
+    const box = document.createElement('div');
+
+    Object.assign(tip.style, {
+        position: 'fixed',
+        zIndex: '999999',
+        pointerEvents: 'none',
+        padding: '8px 10px',
+        borderRadius: '8px',
+        background: 'rgba(15,15,18,.95)',
+        color: '#fff',
+        font: '12px Consolas, monospace',
+        boxShadow: '0 8px 24px rgba(0,0,0,.35)',
+        whiteSpace: 'pre',
+        display: 'none',
+    });
+
+    Object.assign(box.style, {
+        position: 'fixed',
+        zIndex: '999998',
+        pointerEvents: 'none',
+        border: '1px solid #00E5FF',
+        boxShadow: '0 0 0 9999px rgba(0,0,0,.08)',
+        display: 'none',
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.appendChild(tip);
+        document.body.appendChild(box);
+    });
+
+    const toHex = (value: string) => {
+        const nums = value.match(/\d+/g);
+        if (!nums || nums.length < 3) return value;
+        return '#' + nums.slice(0, 3).map(n => Number(n).toString(16).padStart(2, '0')).join('').toUpperCase();
+    };
+
+    const pickBestBg = (el: Element | null): string => {
+        let node: Element | null = el;
+        while (node && node !== document.documentElement) {
+            const bg = getComputedStyle(node).backgroundColor;
+            if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') return bg;
+            node = node.parentElement;
+        }
+        return getComputedStyle(document.body).backgroundColor;
+    };
+
+    const update = (e: MouseEvent) => {
+        if (!enabled) return;
+
+        const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+        if (!el || el === tip || el === box) return;
+
+        const cs = getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+
+        const bg = pickBestBg(el);
+        const fg = cs.color;
+        const bd = cs.borderTopColor;
+        const fill = cs.fill;
+        const stroke = cs.stroke;
+
+        currentHex = toHex(bg);
+
+        tip.textContent =
+            `Alt+C: ON | Click copy bg
+TAG: ${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.className ? '.' + String(el.className).trim().replace(/\s+/g, '.') : ''}
+bg:     ${toHex(bg)} ${bg}
+text:   ${toHex(fg)} ${fg}
+border: ${toHex(bd)} ${bd}
+fill:   ${fill}
+stroke: ${stroke}`;
+
+        tip.style.left = `${Math.min(e.clientX + 14, window.innerWidth - 320)}px`;
+        tip.style.top = `${Math.min(e.clientY + 14, window.innerHeight - 150)}px`;
+        tip.style.display = 'block';
+
+        box.style.left = `${rect.left}px`;
+        box.style.top = `${rect.top}px`;
+        box.style.width = `${rect.width}px`;
+        box.style.height = `${rect.height}px`;
+        box.style.display = 'block';
+    };
+
+    const hide = () => {
+        tip.style.display = 'none';
+        box.style.display = 'none';
+    };
+
+    document.addEventListener('keydown', (e) => {
+        if (e.altKey && e.key.toLowerCase() === 'c') {
+            e.preventDefault();
+            enabled = !enabled;
+            if (!enabled) hide();
+            console.log(`[Color Inspector] ${enabled ? 'ON' : 'OFF'}`);
+        }
+    });
+
+    document.addEventListener('mousemove', update);
+
+    document.addEventListener('click', async (e) => {
+        if (!enabled || !currentHex) return;
+        e.preventDefault();
+        e.stopPropagation();
+        await navigator.clipboard.writeText(currentHex);
+        tip.textContent += `\n\nCopied: ${currentHex}`;
+    }, true);
+
+    document.addEventListener('mouseleave', hide);
+})();
