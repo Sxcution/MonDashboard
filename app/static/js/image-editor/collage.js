@@ -393,7 +393,10 @@ function setCollageQuickPanelVisible(visible) {
         closeCollagePopovers();
 }
 function closeCollagePopovers() {
-    document.querySelectorAll('.collage-popover.is-open').forEach(menu => menu.classList.remove('is-open'));
+    document.querySelectorAll('.collage-popover.is-open').forEach(menu => {
+        menu.querySelectorAll('input, textarea').forEach(input => input.blur());
+        menu.classList.remove('is-open');
+    });
     document.querySelectorAll('.collage-quick-item.is-open').forEach(button => button.classList.remove('is-open'));
 }
 function updateCollageQuickPanelValues() {

@@ -2,6 +2,7 @@
     .notes-layout-container {
         display: flex;
         gap: 1rem;
+        justify-content: center;
     }
 
     #notes-list-wrapper {
@@ -20,14 +21,14 @@
     }
 
     #notes-detail-wrapper.visible {
-        width: 66.666667%;
+        width: 75%;
         transform: translateX(0);
         opacity: 1;
         visibility: visible;
     }
 
     #notes-list-wrapper.shrunk {
-        width: 33.333333%;
+        width: 25%;
     }
 
     /* Notes list */
@@ -813,6 +814,7 @@
     /* Nền màu khung nội dung ghi chú */
     padding: 1rem;
     border-radius: 0.5rem;
+    justify-content: center;
 }
 
 #notes-list-wrapper {
@@ -831,16 +833,16 @@
 }
 
 #notes-detail-wrapper.visible {
-    width: 66.666667%;
-    /* Panel now takes up 2/3 of the space */
+    width: 75%;
+    /* Panel now takes up 3/4 of the space */
     transform: translateX(0);
     opacity: 1;
     visibility: visible;
 }
 
 #notes-list-wrapper.shrunk {
-    width: 33.333333%;
-    /* List now takes up 1/3 of the space */
+    width: 25%;
+    /* List now takes up 1/4 of the space */
 }
 
 /* Notes list: cards are in a single vertical list */
@@ -1082,8 +1084,7 @@
     /* Search takes full width of the shrunk panel */
     margin: 0;
     /* Remove center alignment */
-    transform: translateX(-1%);
-    /* Move left by a smaller amount to stay visible */
+    transform: none;
 }
 
 /* Notes Detail Panel Styles */
@@ -1542,7 +1543,7 @@
     align-content: flex-start;
     padding-right: 0.35rem;
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 224, 255, 0.7) rgba(255, 255, 255, 0.08);
+    scrollbar-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.08);
     -webkit-overflow-scrolling: touch;
 }
 
@@ -1556,13 +1557,13 @@
 }
 
 #notes-container::-webkit-scrollbar-thumb {
-    background: rgba(0, 224, 255, 0.65);
+    background: rgba(255, 255, 255, 0.25);
     border: 2px solid #1a1a1a;
     border-radius: 999px;
 }
 
 #notes-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 224, 255, 0.9);
+    background: rgba(255, 255, 255, 0.4);
 }
 
 #notes-detail-panel {
@@ -1620,15 +1621,19 @@
 
 /* Notes page background moved from global style.css */
 #notes-tool-pane,
-#notes-tool-pane .notes-layout-container,
+#notes-tool-pane .notes-layout-container {
+    background-color: var(--md-bg, #020203) !important;
+    background: var(--md-bg, #020203) !important;
+}
+
 #notes-detail-panel,
 #notes-detail-panel .card-header,
 #notes-detail-content-wrapper,
 #detail-editable-full,
 #detail-editable-right,
 .split-pane {
-    background-color: var(--md-bg, #020203) !important;
-    background: var(--md-bg, #020203) !important;
+    background-color: transparent !important;
+    background: transparent !important;
 }
 
 #notes-container .card {
@@ -1651,17 +1656,42 @@
     background: transparent !important;
 }
 
-#notes-list-wrapper,
-#notes-detail-wrapper {
+.notes-main-panel {
     border: 1px solid var(--md-border, rgba(255, 255, 255, .10));
     border-radius: var(--md-radius-md, 12px);
     background: var(--md-panel, #141416) !important;
     box-shadow: var(--md-shadow-soft, 0 12px 32px rgba(0, 0, 0, .28));
-    padding: 12px;
+    padding: 16px;
+    height: 100%;
+    box-sizing: border-box;
+    max-width: 1300px;
+    width: 100%;
+    margin: 0 auto;
 }
 
+#notes-list-wrapper,
 #notes-detail-wrapper {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
     padding: 0;
+}
+
+#notes-detail-panel {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.notes-panel-divider {
+    width: 1px;
+    background: var(--md-border, rgba(255, 255, 255, .10));
+    align-self: stretch;
+    margin: 0 16px;
+}
+
+#notes-list-wrapper:not(.shrunk) + .notes-panel-divider {
+    display: none;
 }
 
 #notes-search-input,
@@ -1687,19 +1717,19 @@
 }
 
 #notes-container .card {
-    border: 1px solid var(--md-border, rgba(255, 255, 255, .10)) !important;
-    border-left: 4px solid rgba(56, 189, 248, .58) !important;
-    border-radius: var(--md-radius-sm, 8px) !important;
-    background: var(--md-card, #141416) !important;
+    border: none !important;
+    border-bottom: 1px solid var(--md-border, rgba(255, 255, 255, .10)) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
     color: var(--md-text, #f5f5f5) !important;
     box-shadow: none !important;
 }
 
 #notes-container .card:hover {
-    transform: translateY(-2px) !important;
-    border-color: rgba(56, 189, 248, .44) !important;
-    border-left-color: var(--md-info, #38bdf8) !important;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, .34), 0 0 0 1px rgba(56, 189, 248, .10) !important;
+    background: transparent !important;
+    border-bottom-color: var(--md-border, rgba(255, 255, 255, .10)) !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 #notes-container .card .card-title {
@@ -1713,9 +1743,9 @@
 }
 
 .note-card-active {
-    border-color: rgba(56, 189, 248, .62) !important;
-    border-left-color: var(--md-info, #38bdf8) !important;
-    box-shadow: 0 0 0 1px rgba(56, 189, 248, .25), 0 12px 28px rgba(0, 0, 0, .34) !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    border-bottom-color: var(--md-muted, #9ca3af) !important;
+    box-shadow: none !important;
 }
 
 #notes-detail-panel,
@@ -1778,12 +1808,12 @@
 
 #notes-container,
 #notes-detail-content {
-    scrollbar-color: rgba(56, 189, 248, .65) rgba(255, 255, 255, .08);
+    scrollbar-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, .08);
 }
 
 #notes-container::-webkit-scrollbar-thumb,
 #notes-detail-content::-webkit-scrollbar-thumb {
-    background: rgba(56, 189, 248, .58);
+    background: rgba(255, 255, 255, 0.25);
     border-color: var(--md-card, #141416);
 }
 
@@ -1814,4 +1844,17 @@
 .custom-context-menu .submenu .menu-item:hover {
     background: rgba(255, 255, 255, .08) !important;
     color: var(--md-info, #38bdf8) !important;
+}
+
+#notes-container .card-body {
+    padding: 6px 0 !important;
+}
+
+#detail-editable-full {
+    padding: 8px 0 !important;
+}
+
+#notes-search-input:focus {
+    border-color: var(--md-border-strong, rgba(255, 255, 255, .18)) !important;
+    box-shadow: none !important;
 }

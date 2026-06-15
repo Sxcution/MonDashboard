@@ -219,7 +219,7 @@
                 position: absolute;
                 top: 2px;
                 right: -8px;
-                background-color: #dc3545;
+                background-color: #07c160;
                 color: white;
                 border-radius: 50%;
                 width: 20px;
@@ -229,7 +229,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                box-shadow: 0 0 8px #dc354540;
+                box-shadow: 0 0 8px #07c16040;
                 animation: pulse 2s infinite;
                 z-index: 10;
             `;

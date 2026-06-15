@@ -84,3 +84,57 @@
     border: 1px solid rgba(255, 255, 255, 0.14);
     box-shadow: none;
 }
+
+/* Platform section grouping styling */
+.mxh-platform-section {
+    position: relative;
+}
+
+.mxh-platform-section-title {
+    color: var(--md-text-soft);
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding-left: 0;
+    margin-top: 1.5rem;
+}
+
+.mxh-platform-section-title i {
+    font-size: 1.1rem;
+}
+
+.mxh-platform-divider {
+    border: 0;
+    height: 1px;
+    background: var(--md-border);
+    margin: 1.8rem 0;
+    opacity: 0.75;
+}
+
+/* Modal Stacking Z-Index Overrides */
+#mxh-addAccountModal {
+    z-index: 27001 !important;
+}
+
+#mxh-addPlatformModal {
+    z-index: 28001 !important;
+}
+
+/* Default parent backdrop (first backdrop) - scoped only to MXH add account modal */
+body:has(#mxh-addAccountModal.show) .modal-backdrop {
+    z-index: 27000 !important;
+}
+
+/* Child backdrop (second backdrop when stacked) - scoped only to MXH add platform modal */
+body:has(#mxh-addPlatformModal.show) .modal-backdrop + .modal-backdrop {
+    z-index: 28000 !important;
+}
+
+/* WeChat Anniversary (1Y) Badge Color Override */
+.mxh-badge-anniversary {
+    background: #07c160 !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 0 8px rgba(7, 193, 96, 0.4) !important;
+}

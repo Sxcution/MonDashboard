@@ -146,24 +146,7 @@ if (mxhAccountsContainer) {
 
 function trySetDefaultPlatform() {
     if (_mxhDefaultPlatformSet) return false;
-
-    // Nếu user đã chọn trước đó thì không auto override
-    if (activeGroupId !== null) {
-        _mxhDefaultPlatformSet = true;
-        return false;
-    }
-
-    const wechatGroup = mxhGroups.find(g => String(g.name || '').toLowerCase() === 'wechat')
-        || mxhGroups.find(g => String(g.name || '').toLowerCase().includes('wechat'));
-
-    if (wechatGroup) {
-        activeGroupId = wechatGroup.id;
-        _mxhDefaultPlatformSet = true;
-        renderGroupsNav();
-        return true;
-    }
-
-    // Không có WeChat group => thôi, giữ "Tất cả" (set 1 lần để tránh giật)
+    activeGroupId = null; // Mặc định hiển thị Lọc tất cả
     _mxhDefaultPlatformSet = true;
     return false;
 }

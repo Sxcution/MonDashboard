@@ -202,6 +202,42 @@
                 col.style.order = index;
             });
         }
+        // Show/hide platform sections and dividers based on card matching
+        const platformSections = ctx.document.querySelectorAll('.mxh-platform-section');
+        platformSections.forEach((section) => {
+            const sectionCards = Array.from(section.querySelectorAll('.mxh-card-col'));
+            const hasVisibleCard = sectionCards.some(col => col._isMatch);
+            if (hasVisibleCard) {
+                section.style.display = '';
+                const nextDiv = section.nextElementSibling;
+                if (nextDiv && nextDiv.classList.contains('mxh-platform-divider')) {
+                    nextDiv.style.display = '';
+                }
+            }
+            else {
+                section.style.display = 'none';
+                const nextDiv = section.nextElementSibling;
+                if (nextDiv && nextDiv.classList.contains('mxh-platform-divider')) {
+                    nextDiv.style.display = 'none';
+                }
+            }
+        });
+        // Hide trailing dividers
+        const dividers = Array.from(ctx.document.querySelectorAll('.mxh-platform-divider'));
+        dividers.forEach((div) => {
+            let hasVisibleSectionAfter = false;
+            let el = div.nextElementSibling;
+            while (el) {
+                if (el.classList.contains('mxh-platform-section') && el.style.display !== 'none') {
+                    hasVisibleSectionAfter = true;
+                    break;
+                }
+                el = el.nextElementSibling;
+            }
+            if (!hasVisibleSectionAfter) {
+                div.style.display = 'none';
+            }
+        });
     }
     window.MXHFilters = {
         applyQuickFilter,

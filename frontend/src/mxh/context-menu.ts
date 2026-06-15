@@ -143,13 +143,13 @@
                 <div class="mxh-menu-item has-submenu wechat-only">
                     <span><i class="bi bi-qr-code me-2"></i>Quét WeChat</span>
                     <div class="mxh-submenu">
-                        <div class="mxh-menu-item" data-action="scan-wechat">
+                        <div class="mxh-menu-item mxh-menu-success" data-action="scan-wechat">
                             <i class="bi bi-check-circle me-2"></i>Đã Quét
                         </div>
                         <div class="mxh-menu-item" data-action="scan-history">
                             <i class="bi bi-clock-history me-2"></i>Lịch Sử Quét
                         </div>
-                        <div class="mxh-menu-item" data-action="reset-scan">
+                        <div class="mxh-menu-item mxh-menu-warning" data-action="reset-scan">
                             <i class="bi bi-arrow-counterclockwise me-2"></i>Reset Lượt Quét
                         </div>
                     </div>
@@ -157,7 +157,7 @@
                 ` : ''}
 
                 <!-- 6. Thông báo -->
-                <div class="mxh-menu-item" data-action="${hasNotice ? 'cancel-notice' : 'toggle-notice'}">
+                <div class="mxh-menu-item ${hasNotice ? 'mxh-menu-danger' : 'mxh-menu-warning'}" data-action="${hasNotice ? 'cancel-notice' : 'toggle-notice'}">
                     ${hasNotice
                         ? '<i class="bi bi-bell-slash-fill me-2"></i>Hủy Thông Báo'
                         : '<i class="bi bi-bell me-2"></i>Thông Báo'}

@@ -442,7 +442,10 @@ function setCollageQuickPanelVisible(visible: boolean): void {
 }
 
 function closeCollagePopovers(): void {
-    document.querySelectorAll<HTMLElement>('.collage-popover.is-open').forEach(menu => menu.classList.remove('is-open'));
+    document.querySelectorAll<HTMLElement>('.collage-popover.is-open').forEach(menu => {
+        menu.querySelectorAll<HTMLInputElement>('input, textarea').forEach(input => input.blur());
+        menu.classList.remove('is-open');
+    });
     document.querySelectorAll<HTMLElement>('.collage-quick-item.is-open').forEach(button => button.classList.remove('is-open'));
 }
 

@@ -145,7 +145,7 @@
                         <div class="col-auto"><div class="vr image-inline-4"></div></div>
 
                         <div class="col-auto position-relative">
-                            <button class="btn btn-outline-primary btn-sm" data-image-action="toggleUpscaleMenu" id="enhanceBtn" title="Phóng to/làm nét bằng Upscayl">
+                            <button class="btn btn-image-primary btn-sm" data-image-action="toggleUpscaleMenu" id="enhanceBtn" title="Phóng to/làm nét bằng Upscayl">
                                 <i class="bi bi-stars me-1"></i>Làm Nét
                             </button>
                             <div class="image-ai-upscale-menu" id="upscaleMenu">
@@ -168,14 +168,23 @@
                             </div>
                         </div>
 
+                        <div class="col-auto">
+                            <button class="btn btn-image-info btn-sm" data-image-action="removeWatermark" id="removeWatermarkBtn" title="Xoá watermark Gemini của ảnh">
+                                <i class="bi bi-shield-check me-1"></i>Remove Watermark
+                            </button>
+                        </div>
+
                         <div class="col-auto"><div class="vr image-inline-4"></div></div>
 
                         <!-- Save & Clear Buttons -->
                         <div class="col-auto ms-auto">
+                            <button class="btn btn-image-copy btn-sm me-2" data-image-action="copyCanvasToClipboard" title="Copy ảnh hiện tại vào clipboard">
+                                <i class="bi bi-clipboard me-1"></i>Copy
+                            </button>
                             <button class="btn btn-info btn-sm me-2" data-image-action="saveCollage">
                                 <i class="bi bi-save me-1"></i>Lưu
                             </button>
-                            <button class="btn btn-secondary btn-sm" data-image-action="clearCollage">
+                            <button class="btn btn-image-secondary btn-sm" data-image-action="clearCollage">
                                 <i class="bi bi-x-circle me-1"></i>Xoá hết
                             </button>
                         </div>
@@ -201,6 +210,20 @@
                         <div id="collageHistory" class="d-flex flex-column gap-2">
                             <!-- History items will be generated here -->
                             <small class="text-muted text-center py-3 image-inline-28">Chưa có ảnh đã lưu</small>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT SIDEBAR - Thư Mục Ảnh (Cloned History) -->
+                    <div id="imageFolderPanel" class="image-inline-24-right">
+                        <div class="image-inline-25">
+                            <div class="image-inline-26">
+                                <i class="bi bi-folder2-open"></i>
+                                <span>Thư Mục Ảnh</span>
+                                <button type="button" class="btn btn-sm btn-outline-info ms-2 py-0 px-1 border-0" id="btnOpenFolderModal" style="line-height: 1; font-size: 1rem; font-weight: bold; vertical-align: middle;" title="Chọn thư mục">+</button>
+                            </div>
+                        </div>
+                        <div id="imageFolderHistory" class="d-flex flex-column gap-2">
+                            <!-- Items will be generated here -->
                         </div>
                     </div>
 
@@ -525,6 +548,32 @@
     <div class="image-inline-53">Chọn font chữ</div>
     <div id="fontList">
         <!-- Will be populated by JS -->
+    </div>
+</div>
+
+
+<!-- Modal Nhập Đường Dẫn Thư Mục -->
+<div class="modal fade md-modal" id="imageFolderInputModal" tabindex="-1" aria-labelledby="imageFolderInputModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--md-panel); border: 1px solid var(--md-border); border-radius: var(--md-radius-md); color: var(--md-text);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--md-border);">
+                <h5 class="modal-title" id="imageFolderInputModalLabel" style="font-weight: 800;">
+                    <i class="bi bi-folder-plus me-2" style="color: var(--md-info);"></i>Chọn Thư Mục Ảnh
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="imageFolderPathInput" class="form-label" style="font-weight: 600;">Đường dẫn thư mục:</label>
+                    <input type="text" class="form-control text-white" id="imageFolderPathInput" placeholder="VD: C:\Users\Mon\Pictures" style="background: var(--md-bg-soft); border: 1px solid var(--md-border); color: var(--md-text); border-radius: var(--md-radius-sm);">
+                    <div class="form-text" style="color: var(--md-muted);">Nhập đường dẫn tuyệt đối đến thư mục chứa ảnh trên máy tính của bạn.</div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--md-border);">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="height: 34px; border-radius: 8px;">Hủy</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnConfirmFolderPath" style="height: 34px; border-radius: 8px; background: linear-gradient(135deg, var(--md-info), var(--md-blue)); border: none;">Xác nhận</button>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -87,6 +87,10 @@
         "input_cards_per_row": "mxh-cards-per-row",
         "btn_apply_view_mode": "mxh-apply-view-mode-btn",
         "modal_add_account": "mxh-addAccountModal",
+        "btn_add_platform": "mxh-btn-add-platform",
+        "modal_add_platform": "mxh-addPlatformModal",
+        "input_new_platform_name": "mxh-new-platform-name",
+        "btn_save_platform": "mxh-save-platform-btn",
         "input_add_username": "mxh-username",
         "select_add_platform": "mxh-platform",
         "input_add_password": "mxh-password",
@@ -143,6 +147,7 @@
         "storage_refresh_interval": "mxh_refresh_interval_ms"
     },
     "UI_NOTES": {
+        "main_panel": "notes-main-panel",
         "tab_pane": "notes-tool-pane",
         "wrapper_list": "notes-list-wrapper",
         "wrapper_detail": "notes-detail-wrapper",
@@ -287,6 +292,7 @@
         "radio_method_telea": "methodTelea",
         "btn_enhance": "enhanceBtn",
         "btn_save": "saveCollage",
+        "btn_copy_clipboard": "copyCanvasToClipboard",
         "btn_clear": "clearCollage",
         "panel_history": "historyPanel",
         "container_history": "collageHistory",
@@ -315,7 +321,14 @@
         "upscale_menu": "upscaleMenu",
         "upscale_model_dialog": "upscaleModelDialog",
         "upscale_model": "upscaleModel",
-        "upscale_scale": "upscaleScale"
+        "upscale_scale": "upscaleScale",
+        "btn_remove_watermark": "removeWatermarkBtn",
+        "panel_folder": "imageFolderPanel",
+        "container_folder_history": "imageFolderHistory",
+        "btn_open_folder_modal": "btnOpenFolderModal",
+        "modal_folder_input": "imageFolderInputModal",
+        "input_folder_path": "imageFolderPathInput",
+        "btn_confirm_folder_path": "btnConfirmFolderPath"
     },
     "PROJECT_DOCS": {
         "rules": "Rule.md",
@@ -414,7 +427,8 @@
         "telegram_last_selected_task": "tg_lastSelectedTask",
         "image_edit_cache": "stool_edit_image_cache",
         "image_collage_cache": "stool_collage_images_cache",
-        "image_collage_history": "stool_collage_history"
+        "image_collage_history": "stool_collage_history",
+        "mxh_custom_platforms": "mxh_custom_platforms"
     },
     "SESSION_STORAGE_KEYS": {
         "chat_current_session": "currentSessionId",
@@ -538,6 +552,36 @@
             },
             {
                 "path": "/image/api/upscale_image",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/image/api/remove_watermark_dialog",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/image/api/list-subfolders",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/image/api/serve-file",
+                "methods": [
+                    "GET"
+                ]
+            },
+            {
+                "path": "/image/api/open-folder-explorer",
+                "methods": [
+                    "POST"
+                ]
+            },
+            {
+                "path": "/image/api/delete-file",
                 "methods": [
                     "POST"
                 ]

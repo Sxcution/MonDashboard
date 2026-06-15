@@ -243,13 +243,43 @@ def save_collage():
         image_file = request.files['image']
         image_count = request.form.get('imageCount', 0)
         layout = request.form.get('layout', 'unknown')
+        target_folder = request.form.get('targetFolder')
+        filename = request.form.get('filename')
         
         # Generate unique ID
         collage_id = str(uuid.uuid4())
         
-        # Save image
-        image_path = os.path.join(COLLAGE_HISTORY_DIR, f'{collage_id}.png')
-        image_file.save(image_path)
+        saved_on_pc = False
+        saved_path = ''
+        
+        # If target folder is provided and valid, save directly to user's PC folder
+        if target_folder and os.path.exists(target_folder) and os.path.isdir(target_folder):
+            if not filename:
+                date_str = datetime.now().strftime("%d%m%Y")
+                filename = f"Image{date_str}.png"
+            filename = os.path.basename(filename)
+            base_name, ext = os.path.splitext(filename)
+            pc_save_path = os.path.join(target_folder, filename)
+            
+            # Avoid overwriting existing files
+            counter = 1
+            while os.path.exists(pc_save_path):
+                pc_save_path = os.path.join(target_folder, f"{base_name}_{counter}{ext}")
+                counter += 1
+                
+            image_file.save(pc_save_path)
+            
+            # Copy to history
+            history_image_path = os.path.join(COLLAGE_HISTORY_DIR, f'{collage_id}.png')
+            import shutil
+            shutil.copy2(pc_save_path, history_image_path)
+            
+            saved_on_pc = True
+            saved_path = pc_save_path
+        else:
+            # Save image to history
+            image_path = os.path.join(COLLAGE_HISTORY_DIR, f'{collage_id}.png')
+            image_file.save(image_path)
         
         # Load existing history
         history = []
@@ -275,7 +305,9 @@ def save_collage():
         
         return jsonify({
             'success': True,
-            'id': collage_id
+            'id': collage_id,
+            'saved_on_pc': saved_on_pc,
+            'saved_path': saved_path
         })
         
     except Exception as e:
@@ -381,6 +413,8 @@ def object_remove():
 
         mask = mask.point(lambda px: 255 if px > 10 else 0)
         result = lama(image, mask)
+        if result.size != image.size:
+            result = result.crop((0, 0, image.size[0], image.size[1]))
         return _send_pil_png(result.convert('RGB'))
     except Exception as e:
         logger.exception("Object remove failed")
@@ -435,3 +469,311 @@ def upscale_image():
     except Exception as e:
         logger.exception("Upscale failed")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@image_bp.route('/api/remove_watermark_dialog', methods=['POST'])
+def remove_watermark_dialog():
+    """Run Gemini Watermark Remover CLI on selected files or trigger native file selection dialog if none provided."""
+    try:
+        import sys
+        
+        # Check if file paths are passed in request body
+        req_data = {}
+        try:
+            req_data = request.get_json(silent=True) or {}
+        except Exception:
+            pass
+            
+        file_paths = req_data.get("file_paths", [])
+        
+        # If no file paths provided, open native file dialog
+        if not file_paths:
+            script = """
+import tkinter as tk
+from tkinter import filedialog
+import json
+import sys
+
+root = tk.Tk()
+root.withdraw()
+root.attributes('-topmost', True)
+file_paths = filedialog.askopenfilenames(
+    title="Chọn ảnh để xoá Watermark",
+    filetypes=[("Image Files", "*.png *.jpg *.jpeg *.webp *.bmp *.gif *.tiff")]
+)
+print(json.dumps({"file_paths": list(file_paths)}))
+root.destroy()
+"""
+            # Use python.exe instead of pythonw.exe to ensure stdout is captured correctly on Windows
+            python_exe = sys.executable
+            if python_exe.lower().endswith("pythonw.exe"):
+                python_exe = python_exe.lower().replace("pythonw.exe", "python.exe")
+
+            res = subprocess.run(
+                [python_exe, "-c", script],
+                capture_output=True,
+                text=True,
+                timeout=120
+            )
+            
+            if res.returncode != 0:
+                return jsonify({'success': False, 'error': f'Dialog process failed: {res.stderr}'}), 500
+            
+            try:
+                dialog_data = json.loads(res.stdout.strip())
+            except Exception as e:
+                return jsonify({'success': False, 'error': f'Failed to parse dialog output: {res.stdout}'}), 500
+                
+            file_paths = dialog_data.get("file_paths", [])
+            
+        if not file_paths:
+            return jsonify({'success': False, 'error': 'Không có file nào được chọn'}), 400
+            
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        gwr_path = os.path.join(project_root, 'tools', 'Gemini-watermark-remover', 'bin', 'gwr.mjs')
+        if not os.path.exists(gwr_path):
+            return jsonify({'success': False, 'error': f'Không tìm thấy công cụ GWR tại: {gwr_path}'}), 500
+            
+        date_str = datetime.now().strftime("%d%m%Y")
+        processed_files = []
+        errors = []
+        
+        for input_path in file_paths:
+            if not os.path.exists(input_path):
+                errors.append(f"File không tồn tại: {input_path}")
+                continue
+                
+            dir_name = os.path.dirname(input_path)
+            base_name_with_ext = os.path.basename(input_path)
+            _, ext = os.path.splitext(base_name_with_ext)
+            
+            output_filename = f"RemovedW{date_str}{ext}"
+            output_path = os.path.join(dir_name, output_filename)
+            
+            # Avoid overwriting existing files or other files processed in the same batch
+            counter = 1
+            while os.path.exists(output_path):
+                output_filename = f"RemovedW{date_str}_{counter}{ext}"
+                output_path = os.path.join(dir_name, output_filename)
+                counter += 1
+            
+            gwr_cmd = ["node", gwr_path, "remove", input_path, "--output", output_path]
+            
+            process_res = subprocess.run(
+                gwr_cmd,
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                errors='replace'
+            )
+            
+            if process_res.returncode != 0:
+                err_msg = process_res.stderr.strip() or f"GWR process failed with exit code {process_res.returncode}"
+                errors.append(f"Lỗi khi xử lý {base_name}: {err_msg}")
+            elif not os.path.exists(output_path):
+                errors.append(f"File kết quả không được tạo ra cho {base_name}")
+            else:
+                processed_files.append({
+                    'input_path': input_path,
+                    'output_path': output_path,
+                    'output_filename': output_filename
+                })
+                
+        if not processed_files and errors:
+            return jsonify({'success': False, 'error': "; ".join(errors)}), 500
+            
+        return jsonify({
+            'success': True,
+            'processed': processed_files,
+            'errors': errors
+        })
+        
+    except Exception as e:
+        logger.exception("Watermark removal failed")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@image_bp.route('/api/select-image-dialog', methods=['POST'])
+def select_image_dialog():
+    """Trigger native file selection dialog to select images and return absolute paths."""
+    try:
+        import sys
+        script = """
+import tkinter as tk
+from tkinter import filedialog
+import json
+import sys
+
+root = tk.Tk()
+root.withdraw()
+root.attributes('-topmost', True)
+file_paths = filedialog.askopenfilenames(
+    title="Chọn ảnh",
+    filetypes=[("Image Files", "*.png *.jpg *.jpeg *.webp *.bmp *.gif *.tiff")]
+)
+print(json.dumps({"file_paths": list(file_paths)}))
+root.destroy()
+"""
+        python_exe = sys.executable
+        if python_exe.lower().endswith("pythonw.exe"):
+            python_exe = python_exe.lower().replace("pythonw.exe", "python.exe")
+
+        res = subprocess.run(
+            [python_exe, "-c", script],
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        
+        if res.returncode != 0:
+            return jsonify({'success': False, 'error': f'Dialog process failed: {res.stderr}'}), 500
+        
+        try:
+            dialog_data = json.loads(res.stdout.strip())
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Failed to parse dialog output: {res.stdout}'}), 500
+            
+        file_paths = dialog_data.get("file_paths", [])
+        return jsonify({
+            'success': True,
+            'file_paths': file_paths
+        })
+    except Exception as e:
+        logger.exception("Select image failed")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+
+@image_bp.route('/api/list-subfolders', methods=['GET'])
+def list_subfolders():
+    """List subfolders and image/video files for a given PC path"""
+    try:
+        path = request.args.get('path', '')
+        if not path:
+            return jsonify({'success': False, 'error': 'Đường dẫn không được để trống'}), 400
+        
+        if not os.path.exists(path):
+            return jsonify({'success': False, 'error': f'Đường dẫn không tồn tại: {path}'}), 400
+            
+        if not os.path.isdir(path):
+            return jsonify({'success': False, 'error': 'Đường dẫn không phải là thư mục'}), 400
+            
+        subfolders = []
+        files = []
+        
+        # Allowed extensions
+        image_extensions = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.tiff'}
+        video_extensions = {'.mp4', '.mov', '.avi', '.mkv', '.webm', '.flv', '.wmv'}
+        
+        for name in os.listdir(path):
+            full_path = os.path.join(path, name)
+            if os.path.isdir(full_path):
+                if not name.startswith('.'):
+                    subfolders.append({
+                        'name': name,
+                        'path': full_path
+                    })
+            elif os.path.isfile(full_path):
+                _, ext = os.path.splitext(name)
+                ext = ext.lower()
+                if ext in image_extensions:
+                    files.append({
+                        'name': name,
+                        'path': full_path,
+                        'type': 'image'
+                    })
+                elif ext in video_extensions:
+                    files.append({
+                        'name': name,
+                        'path': full_path,
+                        'type': 'video'
+                    })
+        
+        # Sort subfolders alphabetically, sort files by modified time descending
+        subfolders.sort(key=lambda x: x['name'].lower())
+        files.sort(key=lambda x: os.path.getmtime(x['path']), reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'path': path,
+            'subfolders': subfolders,
+            'files': files
+        })
+    except Exception as e:
+        logger.exception("Failed to list subfolders")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@image_bp.route('/api/serve-file', methods=['GET'])
+def serve_file():
+    """Serve a local image or video file by its absolute path"""
+    try:
+        file_path = request.args.get('path', '')
+        if not file_path:
+            return jsonify({'success': False, 'error': 'Đường dẫn không được để trống'}), 400
+            
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'error': 'File không tồn tại'}), 404
+            
+        if not os.path.isfile(file_path):
+            return jsonify({'success': False, 'error': 'Đường dẫn không phải là file'}), 400
+            
+        _, ext = os.path.splitext(file_path)
+        ext = ext.lower()
+        allowed_extensions = {
+            # Images
+            '.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.tiff',
+            # Videos
+            '.mp4', '.mov', '.avi', '.mkv', '.webm', '.flv', '.wmv'
+        }
+        if ext not in allowed_extensions:
+            return jsonify({'success': False, 'error': 'Định dạng file không được hỗ trợ'}), 403
+            
+        return send_file(file_path)
+    except Exception as e:
+        logger.exception("Failed to serve file")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@image_bp.route('/api/open-folder-explorer', methods=['POST'])
+def open_folder_explorer():
+    """Open a local directory on Windows File Explorer"""
+    try:
+        data = request.get_json() or {}
+        folder_path = data.get('path', '')
+        if not folder_path:
+            return jsonify({'success': False, 'error': 'Đường dẫn trống'}), 400
+        if not os.path.exists(folder_path):
+            return jsonify({'success': False, 'error': 'Thư mục không tồn tại'}), 404
+        if not os.path.isdir(folder_path):
+            return jsonify({'success': False, 'error': 'Đường dẫn không phải là thư mục'}), 400
+        
+        # Open in Windows Explorer
+        os.startfile(folder_path)
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.exception("Failed to open folder explorer")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@image_bp.route('/api/delete-file', methods=['POST'])
+def delete_file():
+    """Delete a local file on the disk"""
+    try:
+        data = request.get_json() or {}
+        file_path = data.get('path', '')
+        if not file_path:
+            return jsonify({'success': False, 'error': 'Đường dẫn file trống'}), 400
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'error': 'File không tồn tại'}), 404
+        if os.path.isdir(file_path):
+            return jsonify({'success': False, 'error': 'Đường dẫn là thư mục, không thể xoá'}), 400
+            
+        os.remove(file_path)
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.exception("Failed to delete file")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+

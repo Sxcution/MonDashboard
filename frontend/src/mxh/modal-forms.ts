@@ -103,11 +103,126 @@
         });
     }
 
+    function updatePlatformDropdown(doc) {
+        const platformSelect = doc.getElementById('mxh-platform');
+        if (!platformSelect) return;
+
+        // Reset to default (wechat only)
+        platformSelect.innerHTML = `
+            <option value="">Chọn nền tảng...</option>
+            <option value="wechat">WeChat</option>
+        `;
+
+        // Read custom platforms from localStorage
+        let customPlatforms = [];
+        try {
+            customPlatforms = JSON.parse(localStorage.getItem('mxh_custom_platforms') || '[]');
+        } catch (e) {
+            console.error('Error loading custom platforms:', e);
+        }
+
+        // Add them to select list
+        customPlatforms.forEach(p => {
+            const val = String(p.value || p.name || '').toLowerCase().trim();
+            const lbl = String(p.name || '').trim();
+            if (val && val !== 'wechat') {
+                const opt = doc.createElement('option');
+                opt.value = val;
+                opt.textContent = lbl;
+                platformSelect.appendChild(opt);
+            }
+        });
+    }
+
+    function bindCustomPlatformHandler(doc) {
+        const addBtn = doc.getElementById('mxh-btn-add-platform');
+        const saveBtn = doc.getElementById('mxh-save-platform-btn');
+        const inputField = doc.getElementById('mxh-new-platform-name');
+        const addPlatformModalEl = doc.getElementById('mxh-addPlatformModal');
+
+        if (!addBtn || !saveBtn || !inputField || !addPlatformModalEl) return;
+
+        // Populate dropdown initially
+        updatePlatformDropdown(doc);
+
+        addBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            inputField.value = '';
+            
+            // Show the platform modal
+            const modal = (window as any).bootstrap.Modal.getOrCreateInstance(addPlatformModalEl);
+            modal.show();
+        });
+
+        saveBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const platformName = inputField.value.trim();
+            if (!platformName) {
+                if (typeof (window as any).showToast === 'function') {
+                    (window as any).showToast('Tên nền tảng không được để trống!', 'error');
+                } else {
+                    alert('Tên nền tảng không được để trống!');
+                }
+                return;
+            }
+
+            const platformValue = platformName.toLowerCase();
+
+            // Load existing
+            let customPlatforms = [];
+            try {
+                customPlatforms = JSON.parse(localStorage.getItem('mxh_custom_platforms') || '[]');
+            } catch (err) {
+                customPlatforms = [];
+            }
+
+            // Check duplicate
+            const exists = platformValue === 'wechat' || customPlatforms.some(p => String(p.value || p.name || '').toLowerCase() === platformValue);
+            if (exists) {
+                if (typeof (window as any).showToast === 'function') {
+                    (window as any).showToast('Nền tảng này đã tồn tại!', 'warning');
+                } else {
+                    alert('Nền tảng này đã tồn tại!');
+                }
+                return;
+            }
+
+            // Save new platform
+            customPlatforms.push({
+                name: platformName,
+                value: platformValue
+            });
+
+            localStorage.setItem('mxh_custom_platforms', JSON.stringify(customPlatforms));
+
+            // Update dropdown
+            updatePlatformDropdown(doc);
+
+            // Set value to the new platform in add account modal
+            const platformSelect = doc.getElementById('mxh-platform');
+            if (platformSelect) {
+                platformSelect.value = platformValue;
+            }
+
+            // Close child modal
+            const modal = (window as any).bootstrap.Modal.getInstance(addPlatformModalEl);
+            if (modal) modal.hide();
+
+            if (typeof (window as any).showToast === 'function') {
+                (window as any).showToast('Đã thêm nền tảng mới!', 'success');
+            }
+        });
+    }
+
     function init(ctx) {
         const doc = ctx.document || document;
         bindAddAccountDefaults(doc);
         bindWechatDateDefault(doc);
         bindWechatDateFormatter(doc);
+        bindCustomPlatformHandler(doc);
     }
 
     window.MXHModalForms = {

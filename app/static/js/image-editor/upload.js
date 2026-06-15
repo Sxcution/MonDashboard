@@ -58,6 +58,10 @@ function processUploadedFiles(files) {
     if (typeof resetObjectRemoveState === 'function') {
         resetObjectRemoveState();
     }
+    textLayers = [];
+    const textContainer = document.getElementById('textLayersContainer');
+    if (textContainer)
+        textContainer.innerHTML = '';
     collageImages = [];
     imageOffsets = [];
     imagePositions = [];

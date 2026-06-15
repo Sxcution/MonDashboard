@@ -653,6 +653,20 @@
             await ctx.loadMXHData(false);
         }
     });
+    const genericForm = document.getElementById('generic-account-edit-form');
+    if (genericForm) {
+        genericForm.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (e.target.tagName === 'TEXTAREA')
+                    return;
+                e.preventDefault();
+                const applyBtn = document.getElementById('generic-apply-btn');
+                if (applyBtn) {
+                    applyBtn.click();
+                }
+            }
+        });
+    }
     document.getElementById('generic-account-edit-form').addEventListener('submit', async (e) => {
         e.preventDefault(); // Prevent default form submission (browser refresh)
         if (!ctx.currentContextAccountId)

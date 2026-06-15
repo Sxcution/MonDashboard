@@ -119,7 +119,7 @@ def smart_delete_account_or_card(any_id: int):
 
 @mxh_bp.route("")
 def mxh_page():
-    return render_template("mxh.html", title="Mạng Xã Hội")
+    return render_template("mxh.html", title="Quản lí tài khoản")
 
 
 @mxh_bp.route("/api/groups", methods=["GET", "POST"])

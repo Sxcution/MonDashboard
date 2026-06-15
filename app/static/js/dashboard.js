@@ -407,7 +407,7 @@ function initDashboardNavbar() {
                 items += `<li><a class="dropdown-item" href="#"><i class="bi bi-journal-gear me-2"></i>Cai dat Ghi chu</a></li>`;
                 break;
             case 'mxh':
-                items += `<li><a class="dropdown-item" href="#"><i class="bi bi-share-gear me-2"></i>Cai dat MXH</a></li>`;
+                items += `<li><a class="dropdown-item" href="#"><i class="bi bi-share-gear me-2"></i>Cai dat Quan li tai khoan</a></li>`;
                 break;
             case 'image':
                 items += `<li><a class="dropdown-item" href="#"><i class="bi bi-image-gear me-2"></i>Cai dat Image</a></li>`;

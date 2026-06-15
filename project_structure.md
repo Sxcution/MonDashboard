@@ -1,6 +1,6 @@
 # Mon Dashboard Project Structure
 
-Updated: 2026-05-21
+Updated: 2026-06-14 (Added Thư Mục Ảnh Explorer context menu, sorting files by newest, fixed Canvas caret leak, user selection CSS, canvas copy to clipboard, save directly to PC folder, controls color sync, and removed toasts on canvas load)
 
 ## Overview
 
@@ -44,7 +44,7 @@ The current main areas are:
 | `app/notes_routes.py` | Notes API under `/notes/api/*`, sounds, and uploaded note images. |
 | `app/mxh_routes.py` | MXH page and main MXH API routes under `/mxh`. |
 | `app/mxh_api.py` | Additional MXH API routes under `/mxh/api`. |
-| `app/image_routes.py` | Image page and image API routes under `/image`. |
+| `app/image_routes.py` | Image page, image API routes under `/image`, and Gemini Watermark Remover integration. |
 | `app/telegram_routes.py` | Telegram API routes under `/telegram/api`. |
 | `app/telegram_workers.py` | Telegram task worker helpers. |
 | `app/automatic_routes.py` | Automatic seeding API under `/automatic/api`. |

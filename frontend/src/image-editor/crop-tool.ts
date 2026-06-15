@@ -655,3 +655,63 @@ async function applyUpscale(): Promise<void> {
     }
 }
 
+async function removeWatermark(): Promise<void> {
+    const btn = document.getElementById('removeWatermarkBtn') as HTMLButtonElement | null;
+    if (!btn) return;
+
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...';
+
+    try {
+        // Find all selected file items in the subfolder history explorer
+        const selectedElements = document.querySelectorAll('#imageFolderHistory .selected-item');
+        const selectedPaths: string[] = [];
+        selectedElements.forEach(item => {
+            const path = (item as HTMLElement).dataset.filePath;
+            const type = (item as HTMLElement).dataset.itemType;
+            if (path && (type === 'image' || type === 'video')) {
+                selectedPaths.push(path);
+            }
+        });
+
+        const payload: any = {};
+        if (selectedPaths.length > 0) {
+            payload.file_paths = selectedPaths;
+        }
+
+        const response = await fetch('/image/api/remove_watermark_dialog', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Xoá watermark lỗi');
+        }
+
+        const count = data.processed ? data.processed.length : 0;
+        if (count === 1) {
+            showToast(`Đã xoá watermark thành công! File lưu tại: ${data.processed[0].output_path}`, 'success');
+        } else {
+            showToast(`Đã xoá thành công watermark cho ${count} ảnh!`, 'success');
+        }
+
+        // Refresh the file explorer if a folder is opened
+        const currentPath = localStorage.getItem('current_image_folder_opened');
+        if (currentPath && typeof (window as any).fetchAndRenderSubfolders === 'function') {
+            (window as any).fetchAndRenderSubfolders(currentPath);
+        }
+    } catch (error) {
+        console.error('Remove watermark error:', error);
+        showToast('Xoá watermark lỗi: ' + (error instanceof Error ? error.message : String(error)), 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+}
+
+

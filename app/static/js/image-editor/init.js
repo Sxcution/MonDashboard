@@ -61,8 +61,21 @@ function initImageEditorCore() {
                 e.stopPropagation();
                 return false;
             });
+            area.addEventListener('mousedown', () => {
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                    document.activeElement.blur();
+                }
+            });
         }
     });
+    // Blur any active input immediately on mousedown in the capture phase (before stopPropagation/preventDefault)
+    document.addEventListener('mousedown', (e) => {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+            if (e.target !== document.activeElement) {
+                document.activeElement.blur();
+            }
+        }
+    }, { capture: true, passive: true });
     const settingsBtn = document.getElementById('collageSettingsBtn');
     const settingsMenu = document.getElementById('collageSettingsMenu');
     if (settingsBtn && settingsMenu) {
@@ -107,6 +120,10 @@ function initImageEditorCore() {
     restoreCachedImages();
     // Load history from localStorage
     loadCollageHistoryFromStorage();
+    // Initialize Thư Mục Ảnh panel
+    if (typeof initImageFolderPanel === 'function') {
+        initImageFolderPanel();
+    }
     registerImageDashboardLifecycle();
 }
 function restoreCachedImages() {
@@ -266,7 +283,7 @@ function drawSingleImageTextLayer(ctx, layer) {
     }
     drawTextLayerAt(ctx, layer, x, y, layer.fontSize * Math.min(scaleX, scaleY));
 }
-async function saveCollage() {
+async function generateActiveCanvas() {
     const tilesContainer = document.getElementById('collage-tiles');
     const singleViewer = document.getElementById('singleImageViewer');
     const isSingleImageMode = Boolean(singleViewer &&
@@ -279,85 +296,60 @@ async function saveCollage() {
         getComputedStyle(tilesContainer).display !== 'none' &&
         collageImages.length > 0);
     if (!isSingleImageMode && !isCollageMode) {
-        showToast('Tạo ảnh trước khi lưu', 'warning');
-        return;
+        return null;
     }
-    try {
-        if (isSingleImageMode) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = singleImageCanvas.width;
-            canvas.height = singleImageCanvas.height;
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(singleImageCanvas, 0, 0);
-            for (const layer of textLayers) {
-                drawSingleImageTextLayer(ctx, layer);
-            }
-            const blob = await imageCanvasToBlob(canvas);
-            const link = document.createElement('a');
-            link.download = `image-${Date.now()}.png`;
-            link.href = URL.createObjectURL(blob);
-            link.click();
-            URL.revokeObjectURL(link.href);
-            const formData = new FormData();
-            formData.append('image', blob, 'image.png');
-            formData.append('imageCount', '1');
-            formData.append('layout', 'single');
-            formData.append('thumbnails', canvas.toDataURL('image/png'));
-            if (window.ImageApi) {
-                await window.ImageApi.saveCollage(formData);
-                showToast('Đã lưu ảnh', 'success');
-                return;
-            }
-            const response = await fetch('/image/api/save-collage', {
-                method: 'POST',
-                body: formData
-            });
-            showToast(response.ok ? 'Đã lưu ảnh' : 'Đã tải ảnh, nhưng chưa lưu được vào lịch sử', response.ok ? 'success' : 'warning');
-            return;
+    if (isSingleImageMode) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = singleImageCanvas.width;
+        canvas.height = singleImageCanvas.height;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(singleImageCanvas, 0, 0);
+        for (const layer of textLayers) {
+            drawSingleImageTextLayer(ctx, layer);
         }
-        // Get settings
-        const gutter = parseInt(document.getElementById('collageGutter').value);
-        const radius = parseInt(document.getElementById('collageRadius').value);
-        const borderWidth = parseInt(document.getElementById('collageBorder').value);
+        return canvas;
+    }
+    else {
+        const gutterVal = document.getElementById('collageGutter');
+        const radiusVal = document.getElementById('collageRadius');
+        const borderVal = document.getElementById('collageBorder');
+        const gutter = gutterVal ? parseInt(gutterVal.value) : 0;
+        const radius = radiusVal ? parseInt(radiusVal.value) : 0;
+        const borderWidth = borderVal ? parseInt(borderVal.value) : 0;
         const borderColor = collageGetFill('border');
         const backgroundColor = collageGetFill('background');
-        const aspect = document.getElementById('collageAspect').value || '1:1';
+        const aspectVal = document.getElementById('collageAspect');
+        const aspect = (aspectVal ? aspectVal.value : '1:1') || '1:1';
         const [arW, arH] = aspect.split(':').map(Number);
         const layout = layoutTemplates.find(l => l.id === selectedLayout);
-        // Create high-res canvas following the selected aspect ratio
+        if (!layout)
+            return null;
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const longSide = 1080;
         canvas.width = arW >= arH ? longSide : Math.round(longSide * (arW / arH));
         canvas.height = arH >= arW ? longSide : Math.round(longSide * (arH / arW));
-        // Fill background
         ctx.fillStyle = collageCreateCanvasFill(ctx, backgroundColor, 0, 0, canvas.width, canvas.height);
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        // Set high quality rendering
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        // Calculate grid
-        const padding = gutter * 1.5; // Scale gutter for 1080
+        const padding = gutter * 1.5;
         const availableW = canvas.width - padding * 2;
         const availableH = canvas.height - padding * 2;
         const cellW = availableW / layout.cols;
         const cellH = availableH / layout.rows;
         const gap = gutter * 1.5;
-        // Draw each image
         for (let i = 0; i < Math.min(collageImages.length, layout.cells.length); i++) {
             const [col, row, colSpan, rowSpan] = layout.cells[i];
             const img = collageImages[i];
             const pos = imagePositions[i] || { x: 50, y: 50 };
-            // Calculate position and size
             const x = padding + col * cellW + (col > 0 ? gap * col : 0);
             const y = padding + row * cellH + (row > 0 ? gap * row : 0);
             const w = cellW * colSpan - (colSpan > 1 ? gap : 0);
             const h = cellH * rowSpan - (rowSpan > 1 ? gap : 0);
-            // Save context
             ctx.save();
-            // Clip with rounded corners
             if (radius > 0) {
                 const r = radius * 1.5;
                 ctx.beginPath();
@@ -373,19 +365,16 @@ async function saveCollage() {
                 ctx.closePath();
                 ctx.clip();
             }
-            // Draw image with object-fit: cover logic
             const imgAspect = img.width / img.height;
             const targetAspect = w / h;
             let drawW, drawH, drawX, drawY;
             if (imgAspect > targetAspect) {
-                // Image wider than target
                 drawH = h;
                 drawW = img.width * (h / img.height);
                 drawX = x - (drawW - w) * (pos.x / 100);
                 drawY = y;
             }
             else {
-                // Image taller than target
                 drawW = w;
                 drawH = img.height * (w / img.width);
                 drawX = x;
@@ -393,7 +382,6 @@ async function saveCollage() {
             }
             ctx.drawImage(img, drawX, drawY, drawW, drawH);
             ctx.restore();
-            // Draw border
             if (borderWidth > 0) {
                 ctx.strokeStyle = collageCreateCanvasFill(ctx, borderColor, x, y, w, h);
                 ctx.lineWidth = borderWidth * 1.5;
@@ -417,48 +405,145 @@ async function saveCollage() {
                 }
             }
         }
-        // Draw text layers
         for (const layer of textLayers) {
             drawCanvasTextLayer(ctx, layer, canvas.width, canvas.height);
         }
-        const blob = await imageCanvasToBlob(canvas);
-        // 1. Download to user's computer
-        const link = document.createElement('a');
-        link.download = `collage-${Date.now()}.png`;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-        URL.revokeObjectURL(link.href);
-        // 2. Save thumbnail to server
-        const formData = new FormData();
-        formData.append('image', blob, 'collage.png');
-        formData.append('imageCount', String(collageImages.length));
-        formData.append('layout', selectedLayout || '');
-        // Include thumbnails of original images
-        for (let i = 0; i < collageImages.length; i++) {
-            formData.append('thumbnails', collageImages[i].src);
-        }
-        if (window.ImageApi) {
-            await window.ImageApi.saveCollage(formData);
-            // History is now managed via localStorage, no need to reload
-            showToast('Đã lưu ảnh', 'success');
+        return canvas;
+    }
+}
+async function saveCollage() {
+    try {
+        const canvas = await generateActiveCanvas();
+        if (!canvas) {
+            showToast('Tạo ảnh trước khi lưu', 'warning');
             return;
         }
-        const response = await fetch('/image/api/save-collage', {
-            method: 'POST',
-            body: formData
-        });
-        if (response.ok) {
-            await response.json();
-            // History is now managed via localStorage, no need to reload
-            showToast('Đã lưu ảnh', 'success');
+        const tilesContainer = document.getElementById('collage-tiles');
+        const singleViewer = document.getElementById('singleImageViewer');
+        const isSingleImageMode = Boolean(singleViewer &&
+            getComputedStyle(singleViewer).display !== 'none' &&
+            singleImageCanvas &&
+            singleImageCanvas.width > 0 &&
+            singleImageCanvas.height > 0 &&
+            collageImages.length === 1);
+        // Determine target PC folder if any
+        let targetFolder = null;
+        let filename = null;
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        const dateStr = `${day}${month}${year}`;
+        const currentOpenedFilePath = window.currentOpenedFilePath;
+        if (currentOpenedFilePath) {
+            // Get parent folder of current opened file
+            const lastSlash = Math.max(currentOpenedFilePath.lastIndexOf('\\'), currentOpenedFilePath.lastIndexOf('/'));
+            if (lastSlash > 0) {
+                targetFolder = currentOpenedFilePath.substring(0, lastSlash);
+                filename = `Image${dateStr}.png`;
+            }
         }
         else {
-            showToast('Đã tải ảnh, nhưng chưa lưu được vào lịch sử', 'warning');
+            // Fallback to currently browsed folder in explorer panel
+            const currentFolderOpened = localStorage.getItem('current_image_folder_opened');
+            if (currentFolderOpened) {
+                targetFolder = currentFolderOpened;
+                filename = `Image${dateStr}.png`;
+            }
+        }
+        const blob = await imageCanvasToBlob(canvas);
+        const formData = new FormData();
+        formData.append('image', blob, isSingleImageMode ? 'image.png' : 'collage.png');
+        formData.append('imageCount', String(collageImages.length));
+        formData.append('layout', isSingleImageMode ? 'single' : (selectedLayout || ''));
+        if (targetFolder) {
+            formData.append('targetFolder', targetFolder);
+            formData.append('filename', filename || '');
+        }
+        // Include thumbnails
+        if (isSingleImageMode) {
+            formData.append('thumbnails', canvas.toDataURL('image/png'));
+        }
+        else {
+            for (let i = 0; i < collageImages.length; i++) {
+                formData.append('thumbnails', collageImages[i].src);
+            }
+        }
+        let savedOnPc = false;
+        let savedPath = '';
+        if (window.ImageApi) {
+            const res = await window.ImageApi.saveCollage(formData);
+            savedOnPc = res.saved_on_pc;
+            savedPath = res.saved_path;
+        }
+        else {
+            const response = await fetch('/image/api/save-collage', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                const data = await response.json();
+                savedOnPc = data.saved_on_pc;
+                savedPath = data.saved_path;
+            }
+        }
+        if (savedOnPc) {
+            // Show toast stating it was saved locally on PC, don't trigger download
+            const lastSlash = Math.max(savedPath.lastIndexOf('\\'), savedPath.lastIndexOf('/'));
+            const folderOnly = lastSlash > 0 ? savedPath.substring(0, lastSlash) : savedPath;
+            showToast(`Đã lưu trực tiếp vào thư mục PC: ${folderOnly}`, 'success');
+            // Reload the folder to show new file if current folder matches targetFolder
+            const currentFolderOpened = localStorage.getItem('current_image_folder_opened');
+            if (currentFolderOpened && targetFolder && currentFolderOpened.replace(/[\\/]+$/, '').toLowerCase() === targetFolder.replace(/[\\/]+$/, '').toLowerCase()) {
+                if (typeof window.fetchAndRenderSubfolders === 'function') {
+                    window.fetchAndRenderSubfolders(currentFolderOpened);
+                }
+                else if (typeof fetchAndRenderSubfolders === 'function') {
+                    fetchAndRenderSubfolders(currentFolderOpened);
+                }
+            }
+        }
+        else {
+            // Trigger browser download default
+            const link = document.createElement('a');
+            link.download = isSingleImageMode ? `image-${Date.now()}.png` : `collage-${Date.now()}.png`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+            showToast('Đã tải ảnh về', 'success');
         }
     }
     catch (error) {
         console.error('Save error:', error);
         showToast('Lưu ảnh lỗi: ' + (error instanceof Error ? error.message : String(error)), 'danger');
+    }
+}
+async function copyCanvasToClipboard() {
+    try {
+        const canvas = await generateActiveCanvas();
+        if (!canvas) {
+            showToast('Tạo ảnh trước khi copy', 'warning');
+            return;
+        }
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                showToast('Không thể tạo dữ liệu ảnh để copy', 'danger');
+                return;
+            }
+            try {
+                const item = new ClipboardItem({ 'image/png': blob });
+                await navigator.clipboard.write([item]);
+                showToast('Đã copy ảnh vào clipboard', 'success');
+            }
+            catch (err) {
+                console.error('Clipboard write error:', err);
+                showToast('Trình duyệt không hỗ trợ copy ảnh trực tiếp', 'warning');
+            }
+        }, 'image/png');
+    }
+    catch (e) {
+        console.error('Copy error:', e);
+        showToast('Lỗi khi copy ảnh: ' + e.message, 'danger');
     }
 }
 // OLD SERVER-BASED HISTORY FUNCTIONS (DEPRECATED - Now using localStorage)
@@ -659,6 +744,9 @@ function showCollageContextMenu(event, id) {
     if (!id)
         return;
     event.preventDefault();
+    if (typeof window.hideAllContextMenus === 'function') {
+        window.hideAllContextMenus();
+    }
     const existing = document.querySelector('.context-menu');
     if (existing)
         existing.remove();
@@ -724,7 +812,9 @@ function bindImageTemplateActions() {
         saveCollage,
         clearCollage,
         clearAllHistory,
-        deleteCurrentTextLayer
+        deleteCurrentTextLayer,
+        removeWatermark,
+        copyCanvasToClipboard
     };
     const inputActions = {
         updateBlemishBrushSize,

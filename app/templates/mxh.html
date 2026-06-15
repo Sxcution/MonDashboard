@@ -115,9 +115,14 @@
     <div class="modal fade" id="mxh-addAccountModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-plus-lg me-2"></i>Thêm Tài Khoản MXH</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header d-flex align-items-center justify-content-between">
+                    <h5 class="modal-title mb-0"><i class="bi bi-plus-lg me-2"></i>Thêm Tài Khoản</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm md-btn md-btn-primary py-1" id="mxh-btn-add-platform">
+                            <i class="bi bi-plus-circle me-1"></i>+ Nền tảng
+                        </button>
+                        <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                 </div>
                 <div class="modal-body">
                     <div class="row mb-2">
@@ -130,13 +135,7 @@
                             <label for="mxh-platform" class="form-label mb-1">Nền Tảng</label>
                             <select class="form-select form-select-sm" id="mxh-platform" required>
                                 <option value="">Chọn nền tảng...</option>
-                                <option value="facebook">Facebook</option>
-                                <option value="instagram">Instagram</option>
-                                <option value="twitter">Twitter</option>
-                                <option value="zalo">Zalo</option>
                                 <option value="wechat">WeChat</option>
-                                <option value="telegram">Telegram</option>
-                                <option value="whatsapp">WhatsApp</option>
                             </select>
                         </div>
                     </div>
@@ -155,7 +154,7 @@
                     <div class="row mb-2">
                         <div class="col-md-6">
                             <label for="mxh-url" class="form-label mb-1">URL (tùy chọn)</label>
-                            <input type="url" class="form-control form-control-sm" id="mxh-url"
+                            <input type="text" class="form-control form-control-sm" id="mxh-url"
                                 placeholder="https://...">
                         </div>
                         <div class="col-md-6">
@@ -311,6 +310,18 @@
                     <div class="modal-body">
                         <div class="row mb-2">
                             <div class="col-md-6">
+                                <label for="generic-display-name" class="form-label mb-1">Tên người dùng</label>
+                                <input type="text" class="form-control form-control-sm" id="generic-display-name"
+                                    placeholder="Nhập tên người dùng...">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="generic-phone" class="form-label mb-1">Số điện thoại</label>
+                                <input type="text" class="form-control form-control-sm" id="generic-phone"
+                                    placeholder="Nhập số điện thoại...">
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-6">
                                 <label for="generic-username" class="form-label mb-1">Tên đăng nhập</label>
                                 <input type="text" class="form-control form-control-sm" id="generic-username"
                                     placeholder="Nhập tên đăng nhập...">
@@ -322,18 +333,8 @@
                             </div>
                         </div>
                         <div class="mb-2">
-                            <label for="generic-display-name" class="form-label mb-1">Tên người dùng</label>
-                            <input type="text" class="form-control form-control-sm" id="generic-display-name"
-                                placeholder="Nhập tên người dùng...">
-                        </div>
-                        <div class="mb-2">
-                            <label for="generic-phone" class="form-label mb-1">Số điện thoại</label>
-                            <input type="text" class="form-control form-control-sm" id="generic-phone"
-                                placeholder="Nhập số điện thoại...">
-                        </div>
-                        <div class="mb-2">
                             <label for="generic-url" class="form-label mb-1">URL</label>
-                            <input type="url" class="form-control form-control-sm" id="generic-url"
+                            <input type="text" class="form-control form-control-sm" id="generic-url"
                                 placeholder="Nhập URL...">
                         </div>
                         <div class="mb-2">
@@ -549,6 +550,29 @@
                         <!-- History items will be here -->
                         <div class="text-center text-muted small py-3">Đang tải...</div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Platform Modal (Child Modal) -->
+    <div class="modal fade" id="mxh-addPlatformModal" tabindex="-1" aria-hidden="true" style="z-index: 28001;">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Thêm Nền Tảng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="mxh-new-platform-name" class="form-label mb-1">Tên Nền Tảng</label>
+                        <input type="text" class="form-control form-control-sm" id="mxh-new-platform-name" 
+                            placeholder="Nhập tên nền tảng (ví dụ: Zalo, TikTok...)" required autocomplete="off">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Huỷ</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="mxh-save-platform-btn">Xác Nhận</button>
                 </div>
             </div>
         </div>

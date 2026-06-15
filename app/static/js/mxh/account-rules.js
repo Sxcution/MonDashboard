@@ -236,8 +236,8 @@
                 const totalHours = calculateTimeDifferenceInHours(createdDate, now);
                 const totalDays = Math.floor(totalHours / 24);
                 if (totalDays >= 365) {
-                    const isHK = /^\+?852/.test(account.phone || '');
-                    return isHK ? 'mxh-border-green' : 'mxh-border-white';
+                    // Bỏ viền neon trắng (VN) và xanh lá cây (HK) đối với các tài khoản trên 1 năm tuổi
+                    return '';
                 }
             }
         }

@@ -10,7 +10,7 @@
         }
 
         if (badgeInfo.needHongKong > 0) {
-            return `<span class="badge ms-2 mxh-dynamic-badge" data-mxh-bg="#ffffff" data-mxh-fg="#000" data-mxh-border="1px solid #000">${badgeInfo.total}</span>`;
+            return `<span class="badge ms-2 mxh-dynamic-badge" data-mxh-bg="#07c160" data-mxh-fg="#fff" data-mxh-border="1px solid rgba(255,255,255,.2)">${badgeInfo.total}</span>`;
         }
 
         return `<span class="badge ms-2 mxh-dynamic-badge" data-mxh-bg="${escapeHtml(fallbackColor || '#6c757d')}" data-mxh-fg="#fff" data-mxh-border="1px solid rgba(255,255,255,.25)">${badgeInfo.total}</span>`;
@@ -281,7 +281,20 @@
                                     data-field="wechat_nickname"
                                     data-account-id="${account.id}"
                                     title="Click để chỉnh sửa">@ ${(account.wechat_nickname && account.wechat_nickname !== '.') ? account.wechat_nickname : '...'}</small>
-                                ` : ''}
+                                ` : `
+                                <small
+                                    contenteditable="true"
+                                    class="editable-field text-muted mxh-editable-line"
+                                    data-field="login_username"
+                                    data-account-id="${account.id}"
+                                    title="Click để chỉnh sửa">👤 ${(account.login_username && account.login_username !== '.') ? account.login_username : '...'}</small>
+                                <small
+                                    contenteditable="true"
+                                    class="editable-field text-muted mxh-editable-line"
+                                    data-field="login_password"
+                                    data-account-id="${account.id}"
+                                    title="Click để chỉnh sửa">🔑 ${(account.login_password && account.login_password !== '.') ? account.login_password : '...'}</small>
+                                `}
                                 <small
                                     contenteditable="true"
                                     class="editable-field text-muted mxh-editable-line"
@@ -485,61 +498,93 @@
                 return;
             }
 
-            const allCardGroups = {};
+            // Group cards by platform
+            const platformCards = {};
             tabAccounts.forEach(acc => {
+                const platform = String(acc.platform || 'unknown').toLowerCase();
                 const cardId = acc.card_id;
-                if (!allCardGroups[cardId]) allCardGroups[cardId] = [];
-                allCardGroups[cardId].push(acc);
+                if (!platformCards[platform]) platformCards[platform] = {};
+                if (!platformCards[platform][cardId]) platformCards[platform][cardId] = [];
+                platformCards[platform][cardId].push(acc);
             });
 
-            let html = '<div class="row g-2">';
-
-            const sortedCardIds = Object.keys(allCardGroups).sort((a, b) => {
-                const nameA = parseInt(allCardGroups[a][0].card_name, 10) || Infinity;
-                const nameB = parseInt(allCardGroups[b][0].card_name, 10) || Infinity;
-                return nameA - nameB;
+            // Sort platforms: WeChat first, then others alphabetically
+            const sortedPlatforms = Object.keys(platformCards).sort((a, b) => {
+                if (a === 'wechat') return -1;
+                if (b === 'wechat') return 1;
+                return a.localeCompare(b);
             });
 
-            sortedCardIds.forEach(cardId => {
-                const accounts = allCardGroups[cardId];
-                const state = ctx.getCardState(Number(cardId));
-                let activeAccount = null;
+            let html = '<div class="mxh-platforms-wrapper">';
 
-                if (state.activeAccountId !== null) {
-                    activeAccount = accounts.find(acc => acc.id === state.activeAccountId);
-                }
+            sortedPlatforms.forEach((platform, index) => {
+                const cardGroups = platformCards[platform];
+                const cardIds = Object.keys(cardGroups).sort((a, b) => {
+                    const nameA = parseInt(cardGroups[a][0].card_name, 10) || Infinity;
+                    const nameB = parseInt(cardGroups[b][0].card_name, 10) || Infinity;
+                    return nameA - nameB;
+                });
 
-                if (!activeAccount) {
-                    if (ctx.activeViewFilter === 'card2' && accounts.length >= 2) {
-                        activeAccount = accounts[1];
-                    } else if (ctx.activeViewFilter === 'card3' && accounts.length >= 3) {
-                        activeAccount = accounts[2];
-                    }
-                }
-
-                if (!activeAccount) {
-                    activeAccount = accounts.find(a => a.is_primary) || accounts[0];
-                }
-
-                const isWeChat = activeAccount.platform === 'wechat';
+                const platformDisplayName = platform.charAt(0).toUpperCase() + platform.slice(1);
 
                 html += `
-                    <div class="col mxh-card-col" data-card-id="${cardId}" id="col-card-${cardId}">
-                        <div class="mxh-card-wrapper mxh-card-wrapper-position ${state.isFlipped ? 'flipped' : ''} ${isWeChat ? 'wechat-tall' : ''}"
-                             id="card-wrapper-${cardId}">
-                            ${ctx.getCardBadge(activeAccount, accounts)}
-                            <div class="mxh-filter-overlay mxh-filter-overlay-hidden">
-                                <div class="mxh-filter-overlay-inner">
+                    <div class="mxh-platform-section mb-4" data-platform="${platform}">
+                        <h6 class="mxh-platform-section-title d-flex align-items-center gap-2 mb-3 px-1">
+                            <i class="bi ${ctx.getPlatformIconClass(platform)} mxh-dynamic-color" data-mxh-color="${ctx.getPlatformColor(platform)}"></i>
+                            <span class="fw-bold text-uppercase tracking-wider" style="font-size: 0.85rem; color: var(--md-text-soft);">${platformDisplayName}</span>
+                            <span class="badge bg-secondary-subtle text-muted rounded-pill px-2" style="font-size: 0.7rem;">${cardIds.length}</span>
+                        </h6>
+                        <div class="row g-2">
+                `;
+
+                cardIds.forEach(cardId => {
+                    const accounts = cardGroups[cardId];
+                    const state = ctx.getCardState(Number(cardId));
+                    let activeAccount = null;
+
+                    if (state.activeAccountId !== null) {
+                        activeAccount = accounts.find(acc => acc.id === state.activeAccountId);
+                    }
+
+                    if (!activeAccount) {
+                        if (ctx.activeViewFilter === 'card2' && accounts.length >= 2) {
+                            activeAccount = accounts[1];
+                        } else if (ctx.activeViewFilter === 'card3' && accounts.length >= 3) {
+                            activeAccount = accounts[2];
+                        }
+                    }
+
+                    if (!activeAccount) {
+                        activeAccount = accounts.find(a => a.is_primary) || accounts[0];
+                    }
+
+                    const isWeChat = activeAccount.platform === 'wechat';
+
+                    html += `
+                        <div class="col mxh-card-col" data-card-id="${cardId}" id="col-card-${cardId}">
+                            <div class="mxh-card-wrapper mxh-card-wrapper-position ${state.isFlipped ? 'flipped' : ''} ${isWeChat ? 'wechat-tall' : ''}"
+                                 id="card-wrapper-${cardId}">
+                                ${ctx.getCardBadge(activeAccount, accounts)}
+                                <div class="mxh-filter-overlay mxh-filter-overlay-hidden">
                                     <div class="mxh-filter-x">×</div>
                                     <div class="mxh-filter-none">None</div>
                                 </div>
+                                <div class="mxh-card-inner">
+                                    ${renderCardFace(ctx, activeAccount, accounts, 'front')}
+                                </div>
                             </div>
-                            <div class="mxh-card-inner">
-                                ${renderCardFace(ctx, activeAccount, accounts, 'front')}
-                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
                         </div>
                     </div>
                 `;
+
+                if (index < sortedPlatforms.length - 1) {
+                    html += `<hr class="mxh-platform-divider my-4">`;
+                }
             });
 
             html += '</div>';

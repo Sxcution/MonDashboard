@@ -98,34 +98,38 @@
 
 {# --- PHẦN GIAO DIỆN CHÍNH (ĐÃ SỬA LẠI CHO ĐÚNG) --- #}
 <div class="tab-pane fade show active" id="notes-tool-pane" role="tabpanel">
-    <div class="notes-layout-container">
+    <div id="notes-main-panel" class="notes-main-panel">
+        <div class="notes-layout-container">
 
-        <div id="notes-list-wrapper">
-            <div class="d-flex justify-content-start align-items-center mb-2">
-                <div class="position-relative notes-search-container notes-search-width">
-                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 notes-search-icon"></i>
-                    <input type="text" class="form-control ps-5 notes-search-input-rounded" id="notes-search-input" spellcheck="false"
-                        placeholder="Tìm kiếm ghi chú..." >
-                </div>
-            </div>
-            <div id="notes-container" class="row" spellcheck="false">
-                {# Ghi chú sẽ được render ở đây bằng JavaScript #}
-            </div>
-        </div>
-
-        <div id="notes-detail-wrapper">
-            <div id="notes-detail-panel" class="card h-100">
-                <div class="card-header">
-                    {# Header sẽ được cập nhật bằng JavaScript #}
-                </div>
-                <div class="card-body" id="notes-detail-content-wrapper">
-                    <div class="text-center text-muted p-3 h-100 d-flex flex-column justify-content-center align-items-center"
-                        id="notes-detail-placeholder">
-                        <i class="bi bi-arrow-left-circle notes-back-icon"></i>
-                        <h6 class="mt-2">Chọn một ghi chú để xem</h6>
+            <div id="notes-list-wrapper">
+                <div class="d-flex justify-content-start align-items-center mb-2">
+                    <div class="position-relative notes-search-container notes-search-width">
+                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 notes-search-icon"></i>
+                        <input type="text" class="form-control ps-5 notes-search-input-rounded" id="notes-search-input" spellcheck="false"
+                            placeholder="Tìm kiếm ghi chú..." >
                     </div>
-                    <div id="notes-detail-content" class="d-none">
-                        {# Nội dung chi tiết sẽ được render ở đây #}
+                </div>
+                <div id="notes-container" class="row" spellcheck="false">
+                    {# Ghi chú sẽ được render ở đây bằng JavaScript #}
+                </div>
+            </div>
+
+            <div class="notes-panel-divider"></div>
+
+            <div id="notes-detail-wrapper">
+                <div id="notes-detail-panel" class="card h-100">
+                    <div class="card-header">
+                        {# Header sẽ được cập nhật bằng JavaScript #}
+                    </div>
+                    <div class="card-body" id="notes-detail-content-wrapper">
+                        <div class="text-center text-muted p-3 h-100 d-flex flex-column justify-content-center align-items-center"
+                            id="notes-detail-placeholder">
+                            <i class="bi bi-arrow-left-circle notes-back-icon"></i>
+                            <h6 class="mt-2">Chọn một ghi chú để xem</h6>
+                        </div>
+                        <div id="notes-detail-content" class="d-none">
+                            {# Nội dung chi tiết sẽ được render ở đây #}
+                        </div>
                     </div>
                 </div>
             </div>

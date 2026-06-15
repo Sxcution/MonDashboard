@@ -502,9 +502,13 @@ function deleteCurrentTextLayer() {
     currentEditingLayer = null;
 }
 function closeAllMenus() {
-    document.getElementById('textContextMenu').style.display = 'none';
-    document.getElementById('colorSubmenu').style.display = 'none';
-    document.getElementById('fontSubmenu').style.display = 'none';
+    ['textContextMenu', 'colorSubmenu', 'fontSubmenu'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.querySelectorAll('input, textarea').forEach(input => input.blur());
+            el.style.display = 'none';
+        }
+    });
     document.removeEventListener('click', closeAllMenus);
 }
 function makeDraggableText(element, layer) {

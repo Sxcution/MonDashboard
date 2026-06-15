@@ -62,6 +62,16 @@ function undoCanvas() {
         singleImageCanvas.width = img.width;
         singleImageCanvas.height = img.height;
         singleImageCtx.drawImage(img, 0, 0);
+        // Update blemish/heal tool base image and mask if active
+        if (typeof blemishToolActive !== 'undefined' && blemishToolActive) {
+            originalImageForBlemish = singleImageCtx.getImageData(0, 0, singleImageCanvas.width, singleImageCanvas.height);
+            if (typeof ensureObjectRemoveMask === 'function') {
+                ensureObjectRemoveMask();
+            }
+            if (typeof resetObjectRemoveMask === 'function') {
+                resetObjectRemoveMask();
+            }
+        }
         showToast('Đã hoàn tác', 'success');
     };
     img.src = previousState;
@@ -99,8 +109,8 @@ function showSingleImageViewer(image) {
         singleImageCanvas.removeEventListener('wheel', zoomListener);
     }
     // Keep the canvas at full image resolution. CSS handles visual fitting.
-    singleImageCanvas.width = image.naturalWidth || image.width;
-    singleImageCanvas.height = image.naturalHeight || image.height;
+    singleImageCanvas.width = image.naturalWidth || image.videoWidth || image.width || 0;
+    singleImageCanvas.height = image.naturalHeight || image.videoHeight || image.height || 0;
     // Draw image
     singleImageCtx.clearRect(0, 0, singleImageCanvas.width, singleImageCanvas.height);
     singleImageCtx.drawImage(image, 0, 0, singleImageCanvas.width, singleImageCanvas.height);
