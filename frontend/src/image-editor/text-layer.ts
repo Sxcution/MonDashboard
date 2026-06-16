@@ -468,8 +468,24 @@ function populatePresetColors() {
     });
 
     const updatePreview = () => {
-        const stops = Array.from(container.querySelectorAll<HTMLInputElement>('[data-text-gradient-stop]')).map(input => input.value);
-        const gradient = `linear-gradient(90deg, ${stops.join(', ')})`;
+        const handles = Array.from(container.querySelectorAll<HTMLElement>('.gradient-checkpoint-handle'));
+        if (handles.length === 0) {
+            const stops = Array.from(container.querySelectorAll<HTMLInputElement>('[data-text-gradient-stop]')).map(input => input.value);
+            const gradient = `linear-gradient(90deg, ${stops.join(', ')})`;
+            const preview = document.getElementById('textGradientPreview') as HTMLElement | null;
+            if (preview) preview.style.background = gradient;
+            return gradient;
+        }
+        const stops = handles.map(handle => {
+            const input = handle.querySelector('input') as HTMLInputElement;
+            const percent = parseFloat(handle.style.left) || 0;
+            return {
+                color: input?.value || '#ffffff',
+                percent: percent
+            };
+        });
+        stops.sort((a, b) => a.percent - b.percent);
+        const gradient = `linear-gradient(90deg, ${stops.map(s => `${s.color} ${Math.round(s.percent)}%`).join(', ')})`;
         const preview = document.getElementById('textGradientPreview') as HTMLElement | null;
         if (preview) preview.style.background = gradient;
         return gradient;
@@ -478,6 +494,11 @@ function populatePresetColors() {
     container.querySelectorAll<HTMLInputElement>('[data-text-gradient-stop]').forEach(input => {
         input.addEventListener('input', updatePreview);
     });
+
+    const textGradientEditor = container.querySelector<HTMLElement>('[data-gradient-editor="text"]');
+    if (textGradientEditor && (window as any).initializeGradientEditor) {
+        (window as any).initializeGradientEditor(textGradientEditor, updatePreview);
+    }
 
     const gradientButton = container.querySelector<HTMLElement>('[data-text-gradient-apply]');
     gradientButton?.addEventListener('click', () => applyColor(updatePreview()));

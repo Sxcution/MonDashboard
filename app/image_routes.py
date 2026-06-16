@@ -545,7 +545,7 @@ root.destroy()
                 
             dir_name = os.path.dirname(input_path)
             base_name_with_ext = os.path.basename(input_path)
-            _, ext = os.path.splitext(base_name_with_ext)
+            base_name, ext = os.path.splitext(base_name_with_ext)
             
             output_filename = f"RemovedW{date_str}{ext}"
             output_path = os.path.join(dir_name, output_filename)
@@ -573,10 +573,21 @@ root.destroy()
             elif not os.path.exists(output_path):
                 errors.append(f"File kết quả không được tạo ra cho {base_name}")
             else:
+                # Tự động xoá file ảnh cũ sau khi xử lý thành công
+                deleted_original = False
+                try:
+                    if os.path.exists(input_path):
+                        os.remove(input_path)
+                        deleted_original = True
+                        logger.info(f"Deleted original image file after watermark removal: {input_path}")
+                except Exception as del_err:
+                    logger.warning(f"Failed to delete original file {input_path}: {str(del_err)}")
+                    
                 processed_files.append({
                     'input_path': input_path,
                     'output_path': output_path,
-                    'output_filename': output_filename
+                    'output_filename': output_filename,
+                    'deleted_original': deleted_original
                 })
                 
         if not processed_files and errors:

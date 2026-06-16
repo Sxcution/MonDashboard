@@ -401,9 +401,22 @@ function collageApplyPanelFill(fill: string): void {
 }
 
 function collageBuildCheckpointGradient(): string {
-    const stops = Array.from(document.querySelectorAll<HTMLInputElement>('[data-collage-gradient-stop]'))
-        .map(input => input.value || '#ffffff');
-    return `linear-gradient(90deg, ${stops.join(', ')})`;
+    const handles = Array.from(document.querySelectorAll<HTMLElement>('#collageQuickPanel .gradient-checkpoint-handle'));
+    if (handles.length === 0) {
+        const stops = Array.from(document.querySelectorAll<HTMLInputElement>('[data-collage-gradient-stop]'))
+            .map(input => input.value || '#ffffff');
+        return `linear-gradient(90deg, ${stops.join(', ')})`;
+    }
+    const stops = handles.map(handle => {
+        const input = handle.querySelector('input') as HTMLInputElement;
+        const percent = parseFloat(handle.style.left) || 0;
+        return {
+            color: input?.value || '#ffffff',
+            percent: percent
+        };
+    });
+    stops.sort((a, b) => a.percent - b.percent);
+    return `linear-gradient(90deg, ${stops.map(s => `${s.color} ${Math.round(s.percent)}%`).join(', ')})`;
 }
 
 function collageUpdateGradientPreview(): string {
@@ -421,10 +434,29 @@ function collageSyncGradientStops(fill: string): void {
         ? [colors[0], colors[Math.floor(colors.length / 2)], colors[colors.length - 1]]
         : [colors[0], colors[1], colors[1]];
 
-    document.querySelectorAll<HTMLInputElement>('[data-collage-gradient-stop]').forEach((input, index) => {
-        input.value = chosen[index] || chosen[chosen.length - 1];
-    });
-    collageUpdateGradientPreview();
+    const handles = Array.from(document.querySelectorAll<HTMLElement>('#collageQuickPanel .gradient-checkpoint-handle'));
+    const defaultPositions = [0, 50, 100];
+
+    if (handles.length > 0) {
+        handles.forEach((handle, index) => {
+            const input = handle.querySelector('input') as HTMLInputElement;
+            const color = chosen[index] || chosen[chosen.length - 1];
+            if (input) {
+                input.value = color;
+            }
+            const pin = handle.querySelector('.teardrop-pin') as HTMLElement;
+            if (pin) {
+                pin.style.backgroundColor = color;
+            }
+            handle.style.left = `${defaultPositions[index]}%`;
+        });
+        collageUpdateGradientPreview();
+    } else {
+        document.querySelectorAll<HTMLInputElement>('[data-collage-gradient-stop]').forEach((input, index) => {
+            input.value = chosen[index] || chosen[chosen.length - 1];
+        });
+        collageUpdateGradientPreview();
+    }
 }
 
 function collageSetInputValue(id: string, value: string, eventType = 'input'): void {
@@ -562,6 +594,11 @@ function bindCollageQuickControls(): void {
     document.querySelectorAll<HTMLInputElement>('[data-collage-gradient-stop]').forEach(input => {
         input.addEventListener('input', collageUpdateGradientPreview);
     });
+
+    const collageGradientEditor = document.querySelector<HTMLElement>('[data-gradient-editor="collage"]');
+    if (collageGradientEditor) {
+        (window as any).initializeGradientEditor(collageGradientEditor, collageUpdateGradientPreview);
+    }
 
     document.querySelector<HTMLElement>('[data-collage-gradient-apply]')?.addEventListener('click', () => {
         collageApplyPanelFill(collageUpdateGradientPreview());
@@ -1068,3 +1105,91 @@ function enableCanvasDrag(cells: ImageCanvasCell[]): void {
     collageCanvas.onpointerup = end;
     collageCanvas.onpointercancel = end;
 }
+
+// Global helper function to convert standard color picker stops into slideable teardrops
+(window as any).initializeGradientEditor = function(editorContainer: HTMLElement, onUpdate: () => void): void {
+    const checkpointsContainer = editorContainer.querySelector('.image-gradient-checkpoints') as HTMLElement | null;
+    if (!checkpointsContainer) return;
+
+    checkpointsContainer.style.display = 'block';
+    checkpointsContainer.style.position = 'relative';
+    checkpointsContainer.style.height = '24px';
+    checkpointsContainer.style.margin = '4px 12px 12px';
+
+    const inputs = Array.from(checkpointsContainer.querySelectorAll<HTMLInputElement>('input[type="color"]'));
+    const defaultPositions = [0, 50, 100];
+
+    inputs.forEach((input, index) => {
+        let handle = input.parentElement;
+        if (!handle || !handle.classList.contains('gradient-checkpoint-handle')) {
+            handle = document.createElement('div');
+            handle.className = 'gradient-checkpoint-handle';
+            handle.style.left = `${defaultPositions[index]}%`;
+
+            const pin = document.createElement('div');
+            pin.className = 'teardrop-pin';
+            pin.style.backgroundColor = input.value;
+
+            input.classList.add('hidden-color-input');
+
+            input.parentNode?.insertBefore(handle, input);
+            handle.appendChild(pin);
+            handle.appendChild(input);
+
+            let isDragging = false;
+            let startX = 0;
+            let startLeft = 0;
+
+            const onPointerMove = (e: PointerEvent) => {
+                const rect = checkpointsContainer.getBoundingClientRect();
+                if (rect.width <= 0) return;
+                const dx = e.clientX - startX;
+                const pctDx = (dx / rect.width) * 100;
+                let newLeft = startLeft + pctDx;
+                newLeft = Math.max(0, Math.min(100, newLeft));
+                handle!.style.left = `${newLeft}%`;
+                
+                if (Math.abs(dx) > 3) {
+                    isDragging = true;
+                }
+                
+                onUpdate();
+            };
+
+            const onPointerUp = () => {
+                document.removeEventListener('pointermove', onPointerMove);
+                document.removeEventListener('pointerup', onPointerUp);
+                
+                if (!isDragging) {
+                    input.click();
+                }
+                isDragging = false;
+                handle!.style.cursor = 'grab';
+            };
+
+            handle.addEventListener('pointerdown', (e) => {
+                if (e.button !== 0) return;
+                isDragging = false;
+                startX = e.clientX;
+                startLeft = parseFloat(handle!.style.left) || 0;
+                handle!.style.cursor = 'grabbing';
+                
+                document.addEventListener('pointermove', onPointerMove);
+                document.addEventListener('pointerup', onPointerUp);
+                
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            const syncColor = () => {
+                pin.style.backgroundColor = input.value;
+                onUpdate();
+            };
+            input.addEventListener('input', syncColor);
+            input.addEventListener('change', syncColor);
+        } else {
+            const pin = handle.querySelector('.teardrop-pin') as HTMLElement | null;
+            if (pin) pin.style.backgroundColor = input.value;
+        }
+    });
+};

@@ -1,6 +1,6 @@
 # Mon Dashboard Project Structure
 
-Updated: 2026-06-14 (Added Thư Mục Ảnh Explorer context menu, sorting files by newest, fixed Canvas caret leak, user selection CSS, canvas copy to clipboard, save directly to PC folder, controls color sync, and removed toasts on canvas load)
+Updated: 2026-06-16 (Made collage control buttons/panel layout more compact, and implemented slideable teardrop-shaped gradient stop controllers in Image tab)
 
 ## Overview
 

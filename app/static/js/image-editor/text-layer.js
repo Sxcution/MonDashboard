@@ -399,8 +399,25 @@ function populatePresetColors() {
         gradientGrid.appendChild(button);
     });
     const updatePreview = () => {
-        const stops = Array.from(container.querySelectorAll('[data-text-gradient-stop]')).map(input => input.value);
-        const gradient = `linear-gradient(90deg, ${stops.join(', ')})`;
+        const handles = Array.from(container.querySelectorAll('.gradient-checkpoint-handle'));
+        if (handles.length === 0) {
+            const stops = Array.from(container.querySelectorAll('[data-text-gradient-stop]')).map(input => input.value);
+            const gradient = `linear-gradient(90deg, ${stops.join(', ')})`;
+            const preview = document.getElementById('textGradientPreview');
+            if (preview)
+                preview.style.background = gradient;
+            return gradient;
+        }
+        const stops = handles.map(handle => {
+            const input = handle.querySelector('input');
+            const percent = parseFloat(handle.style.left) || 0;
+            return {
+                color: input?.value || '#ffffff',
+                percent: percent
+            };
+        });
+        stops.sort((a, b) => a.percent - b.percent);
+        const gradient = `linear-gradient(90deg, ${stops.map(s => `${s.color} ${Math.round(s.percent)}%`).join(', ')})`;
         const preview = document.getElementById('textGradientPreview');
         if (preview)
             preview.style.background = gradient;
@@ -409,6 +426,10 @@ function populatePresetColors() {
     container.querySelectorAll('[data-text-gradient-stop]').forEach(input => {
         input.addEventListener('input', updatePreview);
     });
+    const textGradientEditor = container.querySelector('[data-gradient-editor="text"]');
+    if (textGradientEditor && window.initializeGradientEditor) {
+        window.initializeGradientEditor(textGradientEditor, updatePreview);
+    }
     const gradientButton = container.querySelector('[data-text-gradient-apply]');
     gradientButton?.addEventListener('click', () => applyColor(updatePreview()));
     const customRow = document.querySelector('#colorSubmenu .image-inline-47');
