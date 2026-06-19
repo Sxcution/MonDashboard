@@ -328,7 +328,12 @@
         "btn_open_folder_modal": "btnOpenFolderModal",
         "modal_folder_input": "imageFolderInputModal",
         "input_folder_path": "imageFolderPathInput",
-        "btn_confirm_folder_path": "btnConfirmFolderPath"
+        "btn_confirm_folder_path": "btnConfirmFolderPath",
+        "btn_warp_tool": "warpToolBtn",
+        "menu_warp_settings": "warpSettingsMenu",
+        "input_warp_brush": "warpBrushSlider",
+        "input_warp_strength": "warpStrengthSlider",
+        "input_warp_grid": "warpGridSlider"
     },
     "PROJECT_DOCS": {
         "rules": "Rule.md",

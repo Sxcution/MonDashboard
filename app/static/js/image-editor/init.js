@@ -9,7 +9,7 @@ function hasImageEditorDom() {
 }
 function closeImageFloatingUi() {
     document.querySelectorAll('.context-menu').forEach(menu => menu.remove());
-    ['textContextMenu', 'colorSubmenu', 'fontSubmenu', 'upscaleMenu', 'upscaleModelDialog', 'blemishSettingsMenu'].forEach(id => {
+    ['textContextMenu', 'colorSubmenu', 'fontSubmenu', 'upscaleMenu', 'upscaleModelDialog', 'blemishSettingsMenu', 'warpSettingsMenu'].forEach(id => {
         const el = document.getElementById(id);
         if (!el)
             return;
@@ -383,7 +383,7 @@ async function generateActiveCanvas() {
             ctx.drawImage(img, drawX, drawY, drawW, drawH);
             ctx.restore();
             if (borderWidth > 0) {
-                ctx.strokeStyle = collageCreateCanvasFill(ctx, borderColor, x, y, w, h);
+                ctx.strokeStyle = collageCreateCanvasFill(ctx, borderColor, 0, 0, canvas.width, canvas.height);
                 ctx.lineWidth = borderWidth * 1.5;
                 if (radius > 0) {
                     const r = radius * 1.5;
@@ -814,12 +814,19 @@ function bindImageTemplateActions() {
         clearAllHistory,
         deleteCurrentTextLayer,
         removeWatermark,
-        copyCanvasToClipboard
+        copyCanvasToClipboard,
+        toggleWarpTool,
+        applyWarpTool,
+        cancelWarpTool,
+        resetWarpPreview
     };
     const inputActions = {
         updateBlemishBrushSize,
         updateBlemishRadius,
-        updateBlemishOpacity
+        updateBlemishOpacity,
+        updateWarpBrushSize,
+        updateWarpStrength,
+        updateWarpGridSize
     };
     document.addEventListener('click', (event) => {
         const target = getEventElement(event);
@@ -916,6 +923,8 @@ function bindImageTemplateActions() {
             return;
         if (hoverEl.dataset.imageHoverIn === 'showBlemishSettings')
             showBlemishSettings();
+        if (hoverEl.dataset.imageHoverIn === 'showWarpSettings')
+            showWarpSettings();
     });
     document.addEventListener('mouseout', (event) => {
         const target = getEventElement(event);
@@ -926,6 +935,8 @@ function bindImageTemplateActions() {
             return;
         if (hoverEl.dataset.imageHoverOut === 'hideBlemishSettings')
             hideBlemishSettings();
+        if (hoverEl.dataset.imageHoverOut === 'hideWarpSettings')
+            hideWarpSettings();
     });
 }
 // Initialize layout templates on page load

@@ -11,7 +11,7 @@ function hasImageEditorDom() {
 
 function closeImageFloatingUi() {
     document.querySelectorAll<HTMLElement>('.context-menu').forEach(menu => menu.remove());
-    ['textContextMenu', 'colorSubmenu', 'fontSubmenu', 'upscaleMenu', 'upscaleModelDialog', 'blemishSettingsMenu'].forEach(id => {
+    ['textContextMenu', 'colorSubmenu', 'fontSubmenu', 'upscaleMenu', 'upscaleModelDialog', 'blemishSettingsMenu', 'warpSettingsMenu'].forEach(id => {
         const el = document.getElementById(id) as HTMLElement | null;
         if (!el) return;
         if (id === 'upscaleModelDialog') {
@@ -443,7 +443,7 @@ async function generateActiveCanvas(): Promise<HTMLCanvasElement | null> {
             ctx.restore();
             
             if (borderWidth > 0) {
-                ctx.strokeStyle = collageCreateCanvasFill(ctx, borderColor, x, y, w, h);
+                ctx.strokeStyle = collageCreateCanvasFill(ctx, borderColor, 0, 0, canvas.width, canvas.height);
                 ctx.lineWidth = borderWidth * 1.5;
                 
                 if (radius > 0) {
@@ -893,12 +893,19 @@ function bindImageTemplateActions() {
         clearAllHistory,
         deleteCurrentTextLayer,
         removeWatermark,
-        copyCanvasToClipboard
+        copyCanvasToClipboard,
+        toggleWarpTool,
+        applyWarpTool,
+        cancelWarpTool,
+        resetWarpPreview
     };
     const inputActions = {
         updateBlemishBrushSize,
         updateBlemishRadius,
-        updateBlemishOpacity
+        updateBlemishOpacity,
+        updateWarpBrushSize,
+        updateWarpStrength,
+        updateWarpGridSize
     };
 
     document.addEventListener('click', (event) => {
@@ -998,6 +1005,7 @@ function bindImageTemplateActions() {
         const hoverEl = target.closest<HTMLElement>('[data-image-hover-in]');
         if (!hoverEl || hoverEl.contains(event.relatedTarget as Node | null)) return;
         if (hoverEl.dataset.imageHoverIn === 'showBlemishSettings') showBlemishSettings();
+        if (hoverEl.dataset.imageHoverIn === 'showWarpSettings') showWarpSettings();
     });
 
     document.addEventListener('mouseout', (event) => {
@@ -1006,6 +1014,7 @@ function bindImageTemplateActions() {
         const hoverEl = target.closest<HTMLElement>('[data-image-hover-out]');
         if (!hoverEl || hoverEl.contains(event.relatedTarget as Node | null)) return;
         if (hoverEl.dataset.imageHoverOut === 'hideBlemishSettings') hideBlemishSettings();
+        if (hoverEl.dataset.imageHoverOut === 'hideWarpSettings') hideWarpSettings();
     });
 }
 

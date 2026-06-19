@@ -544,7 +544,7 @@ function bindCollageQuickControls() {
         input.addEventListener('input', collageUpdateGradientPreview);
     });
     const collageGradientEditor = document.querySelector('[data-gradient-editor="collage"]');
-    if (collageGradientEditor) {
+    if (collageGradientEditor && window.initializeGradientEditor) {
         window.initializeGradientEditor(collageGradientEditor, collageUpdateGradientPreview);
     }
     document.querySelector('[data-collage-gradient-apply]')?.addEventListener('click', () => {
@@ -578,7 +578,6 @@ function bindCollageQuickControls() {
     collageUpdateGradientPreview();
     updateCollageQuickPanelValues();
 }
-bindCollageQuickControls();
 // Update slider values display and trigger collage update
 document.getElementById('collageGutter').addEventListener('input', function (e) {
     document.getElementById('gutterValue2').textContent = e.target.value;
@@ -808,6 +807,15 @@ function createHTMLCollage() {
         if (borderWidth > 0 && collageIsGradientFill(borderColor)) {
             tileDiv.style.border = `${borderWidth}px solid transparent`;
             tileDiv.style.background = borderColor;
+            // Seamless gradient border alignment
+            const colW = (innerW - (layout.cols - 1) * gutter) / layout.cols;
+            const rowH = (innerH - (layout.rows - 1) * gutter) / layout.rows;
+            const cellX = gutter + col * (colW + gutter);
+            const cellY = gutter + row * (rowH + gutter);
+            tileDiv.style.backgroundSize = `${innerW}px ${innerH}px`;
+            tileDiv.style.backgroundPosition = `-${cellX}px -${cellY}px`;
+            tileDiv.style.backgroundOrigin = 'border-box';
+            tileDiv.style.backgroundClip = 'border-box';
         }
         else {
             tileDiv.style.border = borderWidth > 0 ? `${borderWidth}px solid ${borderColor}` : 'none';
@@ -921,11 +929,10 @@ async function createCanvasCollage(images, layoutKey) {
         }
         collageCtx.drawImage(im, drawX, drawY, drawW, drawH);
         collageCtx.restore();
-        // 3d) Border cell (váº½ Ä‘Ãºng nÃ©t, khÃ´ng *2)
         if (border > 0) {
             collageCtx.save();
             collageCtx.lineWidth = border;
-            collageCtx.strokeStyle = collageCreateCanvasFill(collageCtx, borderColor, x, y, w, h);
+            collageCtx.strokeStyle = collageCreateCanvasFill(collageCtx, borderColor, 0, 0, CW, CH);
             const inset = border / 2;
             collageCtx.beginPath();
             if (radius > 0) {
@@ -1063,3 +1070,4 @@ window.initializeGradientEditor = function (editorContainer, onUpdate) {
         }
     });
 };
+bindCollageQuickControls();

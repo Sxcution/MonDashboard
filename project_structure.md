@@ -1,6 +1,6 @@
 # Mon Dashboard Project Structure
 
-Updated: 2026-06-16 (Made collage control buttons/panel layout more compact, and implemented slideable teardrop-shaped gradient stop controllers in Image tab)
+Updated: 2026-06-17 (Implemented client-side Mesh Warp / Liquify Push Tool in Image tab, made collage control buttons/panel layout more compact, implemented slideable teardrop gradient stops, and fixed border gradient intersections to be seamless across cells)
 
 ## Overview
 
@@ -93,7 +93,7 @@ The current main areas are:
 | `frontend/src/mxh.ts` | MXH bootstrap/coordination. |
 | `frontend/src/mxh/*.ts` | MXH modules: API, state, render, filters, context actions, account actions, badges, rules, notices, scan/phone history. |
 | `frontend/src/image.ts` | Image editor bootstrap. |
-| `frontend/src/image-editor/*.ts` | Image upload, canvas, collage, crop, heal, history, text layers, storage, navigation. |
+| `frontend/src/image-editor/*.ts` | Image upload, canvas, collage, crop, heal, history, text layers, storage, navigation, warp tool. |
 | `frontend/src/telegram.ts` | Telegram page behavior and task polling. |
 | `frontend/src/settings.ts` | Settings page behavior. |
 | `frontend/src/api/*.ts` | Shared and feature API facades. |

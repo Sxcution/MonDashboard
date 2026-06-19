@@ -1805,3 +1805,59 @@
     border: none !important;
 }
 
+/* Warp / Liquify Settings Dropdown */
+.warp-settings-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: rgba(44, 48, 58, 0.94);
+    border: 1px solid var(--image-panel-border, rgba(218, 225, 235, 0.18));
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: none;
+    z-index: 2000;
+    min-width: 280px;
+}
+
+/* Make sure hover displays work similar to blemish settings popover */
+.image-inline-1 .warp-settings-menu {
+    background: rgba(44, 48, 58, 0.94);
+    border: 1px solid var(--image-panel-border, rgba(218, 225, 235, 0.18));
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+.image-inline-1 .warp-settings-menu .text-muted {
+    color: #8a90a0 !important;
+}
+
+.image-inline-1 .warp-settings-menu .image-inline-11 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #e9eef5;
+}
+
+.image-inline-1 .warp-settings-menu input[type="range"] {
+    background: rgba(255, 255, 255, 0.1);
+    height: 6px;
+    border-radius: 3px;
+    border: none;
+    outline: none;
+}
+
+/* Warp brush cursor showing size of warp brush */
+.warp-brush-cursor {
+    position: fixed;
+    z-index: 27000; /* Must display above everything except critical modals */
+    display: none;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: transparent;
+}
+
+

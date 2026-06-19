@@ -142,6 +142,63 @@
                             </div>
                         </div>
 
+                        <!-- Liquify / Mesh Warp Tool -->
+                        <div class="col-auto position-relative">
+                            <button class="btn btn-outline-info btn-sm" data-image-action="toggleWarpTool" id="warpToolBtn"
+                                    data-image-hover-in="showWarpSettings" data-image-hover-out="hideWarpSettings"
+                                    title="Kéo vùng ảnh để chỉnh dáng/nắn nhẹ bằng Liquify">
+                                <i class="bi bi-bezier me-1"></i>Liquify
+                            </button>
+
+                            <!-- Warp Settings Dropdown -->
+                            <div id="warpSettingsMenu" class="warp-settings-menu"
+                                 data-image-hover-in="showWarpSettings" data-image-hover-out="hideWarpSettings" style="display: none;">
+                                
+                                <!-- Brush Size Slider -->
+                                <div class="image-inline-10 mb-2">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <label class="form-label mb-0 image-inline-11" for="warpBrushSlider">Cỡ cọ</label>
+                                        <small class="text-muted"><span id="warpBrushValue">100</span>px</small>
+                                    </div>
+                                    <input type="range" class="form-range image-inline-12" id="warpBrushSlider" min="20" max="260" value="100"
+                                           data-image-input-action="updateWarpBrushSize">
+                                </div>
+
+                                <!-- Strength Slider -->
+                                <div class="image-inline-10 mb-2">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <label class="form-label mb-0 image-inline-11" for="warpStrengthSlider">Độ mạnh</label>
+                                        <small class="text-muted"><span id="warpStrengthValue">25</span>%</small>
+                                    </div>
+                                    <input type="range" class="form-range image-inline-12" id="warpStrengthSlider" min="1" max="60" value="25"
+                                           data-image-input-action="updateWarpStrength">
+                                </div>
+
+                                <!-- Grid Size Slider -->
+                                <div class="image-inline-10 mb-3">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <label class="form-label mb-0 image-inline-11" for="warpGridSlider">Độ mịn lưới</label>
+                                        <small class="text-muted"><span id="warpGridValue">16</span>px</small>
+                                    </div>
+                                    <input type="range" class="form-range image-inline-12" id="warpGridSlider" min="8" max="32" value="16" step="4"
+                                           data-image-input-action="updateWarpGridSize">
+                                </div>
+
+                                <div class="mb-3">
+                                    <small class="text-muted" style="display: block; font-size: 11px; line-height: 1.4;">
+                                        Kéo trực tiếp trên ảnh. Kéo ngắn để tự nhiên, kéo mạnh dễ méo nền.
+                                    </small>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="d-flex gap-2 justify-content-between">
+                                    <button class="btn btn-primary btn-sm flex-fill" data-image-action="applyWarpTool" style="height: 30px; font-size: 12px; border-radius: 6px;">Áp dụng</button>
+                                    <button class="btn btn-secondary btn-sm flex-fill" data-image-action="resetWarpPreview" style="height: 30px; font-size: 12px; border-radius: 6px;">Reset</button>
+                                    <button class="btn btn-outline-danger btn-sm flex-fill" data-image-action="cancelWarpTool" style="height: 30px; font-size: 12px; border-radius: 6px;">Huỷ</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="col-auto"><div class="vr image-inline-4"></div></div>
 
                         <div class="col-auto position-relative">
@@ -592,6 +649,7 @@
 <script src="{{ url_for('static', filename='js/image-editor/crop-tool.js') }}?v={{ image_asset_v }}"></script>
 <script src="{{ url_for('static', filename='js/image-editor/collage.js') }}?v={{ image_asset_v }}"></script>
 <script src="{{ url_for('static', filename='js/image-editor/text-layer.js') }}?v={{ image_asset_v }}"></script>
+<script src="{{ url_for('static', filename='js/image-editor/warp-tool.js') }}?v={{ image_asset_v }}"></script>
 <script src="{{ url_for('static', filename='js/image-editor/init.js') }}?v={{ image_asset_v }}"></script>
 <script src="{{ url_for('static', filename='js/image.js') }}?v={{ image_asset_v }}"></script>
 {% endblock %}

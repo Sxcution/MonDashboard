@@ -9,5 +9,6 @@ import "../src/image-editor/heal-tool";
 import "../src/image-editor/crop-tool";
 import "../src/image-editor/collage";
 import "../src/image-editor/text-layer";
+import "../src/image-editor/warp-tool";
 import "../src/image-editor/init";
 import "../src/image";
