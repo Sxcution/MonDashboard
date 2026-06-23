@@ -85,6 +85,8 @@ Thumbs.db
 tools/upscayl/
 tools/realesrgan-ncnn-vulkan/
 tools/opencv-superres/
+tools/Gemini-watermark-remover/
+Deplao-App-main/Deplao-App-main/dist/
 
 # Cache
 .cache/
