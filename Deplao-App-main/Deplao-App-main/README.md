@@ -16,7 +16,7 @@
 
 ---
 
-**DepLao** là ứng dụng quản lý Zalo đa tài khoản (Multi-Account) chuyên nghiệp — được xây dựng trên nhân Chromium siêu tốc và bảo mật.
+**DepLao** là ứng dụng quản lý tài khoản đa nền tảng (Multi-Account) chuyên nghiệp — hỗ trợ sẵn Zalo, WhatsApp và **bất kỳ nền tảng nào khác qua tính năng nhập URL Tùy chọn**. Ứng dụng được xây dựng trên nhân Chromium siêu tốc và bảo mật.
 
 <p align="center">
   <img src="preview.png" alt="DepLao Preview" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"/>

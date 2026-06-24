@@ -52,6 +52,12 @@
     body.light-mode .profile-btn.active {
       box-shadow: 0 4px 16px rgba(0, 136, 255, 0.4);
     }
+    .profile-btn.dragging {
+      opacity: 0.4;
+      border: 2px dashed #0088ff;
+      transform: scale(0.9);
+      box-shadow: none;
+    }
     
     .badge { 
       position: absolute; top: -3px; right: -3px; 
@@ -192,10 +198,14 @@
         <input type="file" id="avatar-input" accept="image/*" style="display:none;" />
       </div>
       <input type="text" id="profile-name-input" class="modal-input" placeholder="Nhập tên hiển thị (VD: Nick Clone)" />
+      <!-- profile-platform-input : Lựa chọn nền tảng tài khoản -->
       <select id="profile-platform-input" class="modal-input" style="margin-top:0;">
         <option value="zalo">Nền tảng: Zalo</option>
         <option value="whatsapp">Nền tảng: WhatsApp</option>
+        <option value="custom">Nền tảng: Tuỳ chọn</option>
       </select>
+      <!-- profile-url-input : Ô nhập URL cho tùy chọn nền tảng khác -->
+      <input type="text" id="profile-url-input" class="modal-input" placeholder="Nhập URL (VD: https://web.telegram.org)" style="display:none; margin-top:8px;" />
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <button class="modal-btn cancel" id="modal-delete" style="background:#e74c3c; color:white; display:none;">Xóa</button>
         <div style="margin-left:auto;">

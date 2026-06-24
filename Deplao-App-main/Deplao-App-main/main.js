@@ -15,6 +15,7 @@ const {
   Tray,
   globalShortcut,
   ipcMain,
+  Notification,
   nativeImage,
   nativeTheme,
   dialog,
@@ -88,9 +89,447 @@ let unreadCount = 0;
 let browserViews = {}; // { profileId: BrowserView }
 let activeProfileId = null;
 
+const badgeStateByProfile = new Map(); // profileId -> { titleCount, domCount, mergedCount }
+const profileMetaById = new Map(); // profileId -> { name, platform }
+
+function ensureBadgeState(profileId) {
+  if (!badgeStateByProfile.has(profileId)) {
+    badgeStateByProfile.set(profileId, {
+      titleCount: 0,
+      domCount: 0,
+      mergedCount: 0,
+      hasPublished: false,
+      lastDomUpdateAt: 0,
+    });
+  }
+  return badgeStateByProfile.get(profileId);
+}
+
+function parseTitleBadgeCount(title = '') {
+  const match = String(title).match(/\((\d+)\+?\)/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+function findProfileIdBySender(sender) {
+  for (const [profileId, view] of Object.entries(browserViews)) {
+    if (view && !view.webContents.isDestroyed() && view.webContents.id === sender.id) {
+      return profileId;
+    }
+  }
+  return null;
+}
+
+function rememberProfile(profile) {
+  if (!profile || !profile.id) return;
+  profileMetaById.set(profile.id, {
+    name: profile.name || 'ZepLao',
+    platform: profile.platform || 'zalo',
+    url: profile.url,
+  });
+}
+
+function sumMergedBadgeCounts() {
+  let total = 0;
+  for (const state of badgeStateByProfile.values()) {
+    total += state.mergedCount || 0;
+  }
+  return total;
+}
+
+function refreshGlobalUnreadBadge() {
+  const previousTotal = unreadCount;
+  unreadCount = sumMergedBadgeCounts();
+
+  if (unreadCount !== previousTotal) {
+    updateBadge(unreadCount);
+
+    if (unreadCount > previousTotal && mainWindow && !mainWindow.isDestroyed() && !mainWindow.isFocused()) {
+      mainWindow.flashFrame(true);
+    }
+  }
+}
+
+function publishProfileBadge(profileId) {
+  const state = ensureBadgeState(profileId);
+  const previousMerged = state.mergedCount || 0;
+  const hadPublished = state.hasPublished;
+  const nextMerged = Math.max(state.titleCount || 0, state.domCount || 0);
+  const profileChanged = state.mergedCount !== nextMerged;
+
+  state.mergedCount = nextMerged;
+  state.hasPublished = true;
+
+  if (profileChanged && mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-profile-badge', {
+      id: profileId,
+      count: nextMerged,
+    });
+  }
+
+  if (hadPublished && nextMerged > previousMerged) {
+    showUnreadNotification(profileId, nextMerged);
+  }
+
+  refreshGlobalUnreadBadge();
+}
+
+function updateProfileDomBadge(profileId, count) {
+  const state = ensureBadgeState(profileId);
+  state.domCount = Math.max(0, Number(count) || 0);
+  state.lastDomUpdateAt = Date.now();
+  publishProfileBadge(profileId);
+}
+
+const ZALO_UNREAD_SCAN_SCRIPT = String.raw`
+(() => {
+  const cleanText = (value) => String(value || '').replace(/\u00a0/g, ' ').trim();
+  const getBadgeNumber = (text) => {
+    const match = cleanText(text).match(/^(\d{1,3})\+?$/);
+    if (!match) return 0;
+    const number = parseInt(match[1], 10);
+    return Number.isFinite(number) && number > 0 ? number : 0;
+  };
+  const parseRgb = (color) => {
+    const match = String(color || '').match(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)/i);
+    if (!match) return null;
+    return { r: parseInt(match[1], 10), g: parseInt(match[2], 10), b: parseInt(match[3], 10) };
+  };
+  const isRedLike = (color) => {
+    const rgb = parseRgb(color);
+    if (!rgb) return false;
+    return rgb.r >= 170 && rgb.g <= 135 && rgb.b <= 135 && rgb.r > rgb.g * 1.35 && rgb.r > rgb.b * 1.35;
+  };
+  const hasRedCssValue = (value) => {
+    const matches = String(value || '').matchAll(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)/ig);
+    for (const match of matches) {
+      if (isRedLike('rgb(' + match[1] + ', ' + match[2] + ', ' + match[3] + ')')) return true;
+    }
+    return false;
+  };
+  const px = (value) => {
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  const maxBorderRadius = (style) => Math.max(
+    px(style.borderTopLeftRadius),
+    px(style.borderTopRightRadius),
+    px(style.borderBottomRightRadius),
+    px(style.borderBottomLeftRadius)
+  );
+  const isVisibleElement = (element, rect) => {
+    const box = rect || element.getBoundingClientRect();
+    if (!box || box.width <= 0 || box.height <= 0) return false;
+    const style = window.getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+    if (px(style.opacity) <= 0.05) return false;
+    return true;
+  };
+  const hasRedBadgePaint = (style, element) => {
+    if (isRedLike(style.backgroundColor) || isRedLike(style.borderColor)) return true;
+    if (isRedLike(style.borderTopColor) || isRedLike(style.borderRightColor)) return true;
+    if (isRedLike(style.borderBottomColor) || isRedLike(style.borderLeftColor)) return true;
+    if (hasRedCssValue(style.backgroundImage) || hasRedCssValue(style.boxShadow)) return true;
+    try {
+      const before = window.getComputedStyle(element, '::before');
+      const after = window.getComputedStyle(element, '::after');
+      return isRedLike(before.backgroundColor) ||
+        isRedLike(before.borderColor) ||
+        hasRedCssValue(before.backgroundImage) ||
+        hasRedCssValue(before.boxShadow) ||
+        isRedLike(after.backgroundColor) ||
+        isRedLike(after.borderColor) ||
+        hasRedCssValue(after.backgroundImage) ||
+        hasRedCssValue(after.boxShadow);
+    } catch (_) {
+      return false;
+    }
+  };
+  const looksLikeBadgeBox = (element, hasNumber) => {
+    const rect = element.getBoundingClientRect();
+    if (!isVisibleElement(element, rect)) return false;
+    const style = window.getComputedStyle(element);
+    if (!hasRedBadgePaint(style, element)) return false;
+    const ratio = rect.width / Math.max(rect.height, 1);
+    const radius = maxBorderRadius(style);
+    const isRounded = radius >= 4 || radius >= Math.min(rect.width, rect.height) * 0.3;
+    if (hasNumber) {
+      return rect.width >= 10 && rect.width <= 48 && rect.height >= 10 && rect.height <= 32 &&
+        ratio >= 0.65 && ratio <= 3.8 && isRounded;
+    }
+    return rect.width >= 4 && rect.width <= 22 && rect.height >= 4 && rect.height <= 22 &&
+      ratio >= 0.55 && ratio <= 1.8 && isRounded;
+  };
+  const closestBadgeBox = (element, hasNumber) => {
+    let current = element;
+    for (let depth = 0; current && depth < 5; depth += 1, current = current.parentElement) {
+      if (hasNumber && !getBadgeNumber(current.textContent)) continue;
+      if (!hasNumber && cleanText(current.textContent) !== '') continue;
+      if (looksLikeBadgeBox(current, hasNumber)) return current;
+    }
+    return null;
+  };
+  const rectOverlapRatio = (a, b) => {
+    const left = Math.max(a.left, b.left);
+    const top = Math.max(a.top, b.top);
+    const right = Math.min(a.right, b.right);
+    const bottom = Math.min(a.bottom, b.bottom);
+    const width = Math.max(0, right - left);
+    const height = Math.max(0, bottom - top);
+    const overlap = width * height;
+    if (overlap <= 0) return 0;
+    return overlap / Math.min(Math.max(a.width * a.height, 1), Math.max(b.width * b.height, 1));
+  };
+  const addBadgeOnce = (badges, element, value) => {
+    const rect = element.getBoundingClientRect();
+    if (badges.some((badge) => badge.element === element || rectOverlapRatio(badge.rect, rect) > 0.65)) return;
+    badges.push({ element, rect, value });
+  };
+  const badges = [];
+  const elements = Array.from(document.querySelectorAll('div,span,b,strong,em,i,p,label'));
+  for (const element of elements) {
+    const value = getBadgeNumber(element.textContent);
+    if (!value) continue;
+    const badgeBox = closestBadgeBox(element, true);
+    if (badgeBox) addBadgeOnce(badges, badgeBox, value);
+  }
+  for (const element of elements) {
+    if (cleanText(element.textContent) !== '') continue;
+    const badgeBox = closestBadgeBox(element, false);
+    if (badgeBox) addBadgeOnce(badges, badgeBox, 1);
+  }
+  return badges.reduce((total, badge) => total + badge.value, 0);
+})()
+`;
+
+const ZALO_OPEN_FIRST_UNREAD_SCRIPT = String.raw`
+(() => {
+  const cleanText = (value) => String(value || '').replace(/\u00a0/g, ' ').trim();
+  const getBadgeNumber = (text) => {
+    const match = cleanText(text).match(/^(\d{1,3})\+?$/);
+    if (!match) return 0;
+    const number = parseInt(match[1], 10);
+    return Number.isFinite(number) && number > 0 ? number : 0;
+  };
+  const parseRgb = (color) => {
+    const match = String(color || '').match(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)/i);
+    if (!match) return null;
+    return { r: parseInt(match[1], 10), g: parseInt(match[2], 10), b: parseInt(match[3], 10) };
+  };
+  const isRedLike = (color) => {
+    const rgb = parseRgb(color);
+    if (!rgb) return false;
+    return rgb.r >= 170 && rgb.g <= 135 && rgb.b <= 135 && rgb.r > rgb.g * 1.35 && rgb.r > rgb.b * 1.35;
+  };
+  const hasRedCssValue = (value) => {
+    const matches = String(value || '').matchAll(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)/ig);
+    for (const match of matches) {
+      if (isRedLike('rgb(' + match[1] + ', ' + match[2] + ', ' + match[3] + ')')) return true;
+    }
+    return false;
+  };
+  const px = (value) => {
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  const maxBorderRadius = (style) => Math.max(
+    px(style.borderTopLeftRadius),
+    px(style.borderTopRightRadius),
+    px(style.borderBottomRightRadius),
+    px(style.borderBottomLeftRadius)
+  );
+  const isVisibleElement = (element, rect) => {
+    const box = rect || element.getBoundingClientRect();
+    if (!box || box.width <= 0 || box.height <= 0) return false;
+    const style = window.getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+    if (px(style.opacity) <= 0.05) return false;
+    return true;
+  };
+  const hasRedBadgePaint = (style, element) => {
+    if (isRedLike(style.backgroundColor) || isRedLike(style.borderColor)) return true;
+    if (isRedLike(style.borderTopColor) || isRedLike(style.borderRightColor)) return true;
+    if (isRedLike(style.borderBottomColor) || isRedLike(style.borderLeftColor)) return true;
+    if (hasRedCssValue(style.backgroundImage) || hasRedCssValue(style.boxShadow)) return true;
+    try {
+      const before = window.getComputedStyle(element, '::before');
+      const after = window.getComputedStyle(element, '::after');
+      return isRedLike(before.backgroundColor) ||
+        isRedLike(before.borderColor) ||
+        hasRedCssValue(before.backgroundImage) ||
+        hasRedCssValue(before.boxShadow) ||
+        isRedLike(after.backgroundColor) ||
+        isRedLike(after.borderColor) ||
+        hasRedCssValue(after.backgroundImage) ||
+        hasRedCssValue(after.boxShadow);
+    } catch (_) {
+      return false;
+    }
+  };
+  const looksLikeBadgeBox = (element, hasNumber) => {
+    const rect = element.getBoundingClientRect();
+    if (!isVisibleElement(element, rect)) return false;
+    const style = window.getComputedStyle(element);
+    if (!hasRedBadgePaint(style, element)) return false;
+    const ratio = rect.width / Math.max(rect.height, 1);
+    const radius = maxBorderRadius(style);
+    const isRounded = radius >= 4 || radius >= Math.min(rect.width, rect.height) * 0.3;
+    if (hasNumber) {
+      return rect.width >= 10 && rect.width <= 48 && rect.height >= 10 && rect.height <= 32 &&
+        ratio >= 0.65 && ratio <= 3.8 && isRounded;
+    }
+    return rect.width >= 4 && rect.width <= 22 && rect.height >= 4 && rect.height <= 22 &&
+      ratio >= 0.55 && ratio <= 1.8 && isRounded;
+  };
+  const closestBadgeBox = (element, hasNumber) => {
+    let current = element;
+    for (let depth = 0; current && depth < 5; depth += 1, current = current.parentElement) {
+      if (hasNumber && !getBadgeNumber(current.textContent)) continue;
+      if (!hasNumber && cleanText(current.textContent) !== '') continue;
+      if (looksLikeBadgeBox(current, hasNumber)) return current;
+    }
+    return null;
+  };
+  const findChatRow = (element) => {
+    let best = null;
+    for (let current = element, depth = 0; current && depth < 10; depth += 1, current = current.parentElement) {
+      const rect = current.getBoundingClientRect();
+      if (!isVisibleElement(current, rect)) continue;
+      const role = current.getAttribute && current.getAttribute('role');
+      const tag = String(current.tagName || '').toLowerCase();
+      const style = window.getComputedStyle(current);
+      const clickable = role === 'button' || tag === 'button' || tag === 'a' ||
+        current.hasAttribute('tabindex') || style.cursor === 'pointer';
+      const rowShaped = rect.width >= 160 && rect.height >= 36 && rect.height <= 130;
+      if (rowShaped) best = current;
+      if (rowShaped && clickable) return current;
+    }
+    return best;
+  };
+  const clickElement = (element) => {
+    if (!element) return false;
+    element.scrollIntoView({ block: 'center', inline: 'nearest' });
+    const rect = element.getBoundingClientRect();
+    const x = rect.left + Math.min(Math.max(rect.width * 0.35, 20), rect.width - 8);
+    const y = rect.top + rect.height / 2;
+    for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click']) {
+      element.dispatchEvent(new MouseEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: x,
+        clientY: y,
+        button: 0,
+      }));
+    }
+    return true;
+  };
+  const badges = [];
+  const elements = Array.from(document.querySelectorAll('div,span,b,strong,em,i,p,label'));
+  for (const element of elements) {
+    const value = getBadgeNumber(element.textContent);
+    if (!value) continue;
+    const badgeBox = closestBadgeBox(element, true);
+    const row = badgeBox && findChatRow(badgeBox);
+    if (row) badges.push({ badgeBox, row, rect: row.getBoundingClientRect(), value });
+  }
+  for (const element of elements) {
+    if (cleanText(element.textContent) !== '') continue;
+    const badgeBox = closestBadgeBox(element, false);
+    const row = badgeBox && findChatRow(badgeBox);
+    if (row) badges.push({ badgeBox, row, rect: row.getBoundingClientRect(), value: 1 });
+  }
+  badges.sort((a, b) => (a.rect.top - b.rect.top) || (a.rect.left - b.rect.left));
+  return clickElement(badges[0] && badges[0].row);
+})()
+`;
+
+function startMainZaloBadgePolling(contents, profileId) {
+  const poll = async () => {
+    if (contents.isDestroyed()) return;
+    if (!contents.getURL().includes('zalo.me')) return;
+    if (Date.now() - (ensureBadgeState(profileId).lastDomUpdateAt || 0) < 10000) return;
+
+    try {
+      const count = await contents.executeJavaScript(ZALO_UNREAD_SCAN_SCRIPT, true);
+      updateProfileDomBadge(profileId, count);
+    } catch (_) { }
+  };
+
+  const interval = setInterval(poll, 15000);
+  contents.once('destroyed', () => clearInterval(interval));
+  contents.on('did-finish-load', () => setTimeout(poll, 2500));
+  setTimeout(poll, 6000);
+}
+
+function focusProfile(profileId, openUnread = false) {
+  if (!profileId || !mainWindow || mainWindow.isDestroyed()) return;
+
+  activeProfileId = profileId;
+
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+
+  mainWindow.show();
+  mainWindow.focus();
+  mainWindow.flashFrame(false);
+
+  if (mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
+    mainWindow.webContents.send('activate-profile', { id: profileId });
+  }
+
+  updateBrowserViewBounds();
+
+  const view = browserViews[profileId];
+  if (!openUnread || !view || view.webContents.isDestroyed()) return;
+  if (!view.webContents.getURL().includes('zalo.me')) return;
+
+  setTimeout(() => {
+    if (view.webContents.isDestroyed()) return;
+    view.webContents.executeJavaScript(ZALO_OPEN_FIRST_UNREAD_SCRIPT, true).catch(() => { });
+  }, 500);
+}
+
+function showUnreadNotification(profileId, count) {
+  if (!Notification.isSupported()) return;
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isFocused() && activeProfileId === profileId) return;
+
+  const meta = profileMetaById.get(profileId) || {};
+  const name = meta.name || 'ZepLao';
+  const notification = new Notification({
+    title: name,
+    body: count > 1 ? `${count} tin nhắn chưa đọc` : 'Có tin nhắn mới',
+    icon: path.join(__dirname, 'icon.ico'),
+    silent: false,
+    timeoutType: 'default',
+  });
+
+  notification.on('click', () => {
+    focusProfile(profileId, true);
+  });
+
+  notification.show();
+}
+
 // ============================================================
 //  TẠO ICON BADGE
 // ============================================================
+function getAppIconPath() {
+  const candidates = [
+    path.join(__dirname, 'icon.ico'),
+    path.join(__dirname, 'icon.png'),
+    '/Users/tiodev/Downloads/Zalo/icon.png',
+  ];
+
+  return candidates.find((candidate) => {
+    try {
+      return fs.existsSync(candidate);
+    } catch {
+      return false;
+    }
+  }) || '';
+}
+
 function createBadgeIcon(count) {
   const size = 18;
   const text = count > 9 ? '9+' : String(count);
@@ -110,18 +549,41 @@ function createBadgeIcon(count) {
   );
 }
 
+function createTrayIcon(count = 0) {
+  const size = 32;
+  const iconPath = getAppIconPath();
+  const baseIcon = iconPath
+    ? nativeImage.createFromPath(iconPath).resize({ width: size, height: size })
+    : nativeImage.createEmpty();
+
+  if (!count || count <= 0) {
+    return baseIcon.resize({ width: 16, height: 16 });
+  }
+
+  const badgeText = count > 9 ? '9+' : String(count);
+  const badgeRadius = count > 9 ? 9 : 8;
+  const fontSize = count > 9 ? 8 : 10;
+  const baseDataUrl = baseIcon.toDataURL();
+  const svg = `
+    <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+      <image href="${baseDataUrl}" width="${size}" height="${size}"/>
+      <circle cx="${size - badgeRadius}" cy="${badgeRadius}" r="${badgeRadius}" fill="#e74c3c"/>
+      <text x="${size - badgeRadius}" y="${badgeRadius + fontSize / 3}"
+            text-anchor="middle" fill="white"
+            font-size="${fontSize}" font-weight="bold"
+            font-family="Arial, sans-serif">${badgeText}</text>
+    </svg>`;
+
+  return nativeImage
+    .createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`)
+    .resize({ width: 16, height: 16 });
+}
+
 // ============================================================
 //  TẠO SYSTEM TRAY
 // ============================================================
 function createTray() {
-  const iconPath = '/Users/tiodev/Downloads/Zalo/icon.png';
-  let trayIcon;
-  try {
-    trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
-  } catch {
-    trayIcon = nativeImage.createEmpty();
-  }
-  tray = new Tray(trayIcon);
+  tray = new Tray(createTrayIcon(unreadCount));
   updateTrayMenu();
   tray.setToolTip('Zalo');
 
@@ -284,7 +746,17 @@ function updateBrowserViewBounds() {
 
 function setupWebContents(contents, profileId) {
   contents.setWindowOpenHandler(({ url }) => {
-    if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me') || url.includes('whatsapp.com')) {
+    const meta = profileId ? profileMetaById.get(profileId) : null;
+    let isCustomUrl = false;
+    if (meta && meta.platform === 'custom' && meta.url) {
+      try {
+        const host = new URL(meta.url).hostname;
+        if (host && url.includes(host)) {
+          isCustomUrl = true;
+        }
+      } catch (e) {}
+    }
+    if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me') || url.includes('whatsapp.com') || isCustomUrl) {
       return { action: 'allow' };
     }
     shell.openExternal(url);
@@ -293,26 +765,26 @@ function setupWebContents(contents, profileId) {
   
 
 
-  // Restore title-based badge checking for immediate updates
-  const checkTitleForBadges = (title) => {
-    if (!title) return;
-    const match = title.match(/\((\d+)\)/);
-    let count = 0;
-    if (match && match[1]) {
-      count = parseInt(match[1], 10);
-    }
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('update-profile-badge', { id: profileId, count: count });
-    }
+  const syncTitleBadge = (title) => {
+    const state = ensureBadgeState(profileId);
+    state.titleCount = parseTitleBadgeCount(title);
+    publishProfileBadge(profileId);
   };
 
-  contents.on('page-title-updated', (event, title) => {
-    checkTitleForBadges(title);
+  contents.on('page-title-updated', (_event, title) => {
+    syncTitleBadge(title);
   });
-  
+
   contents.on('did-finish-load', () => {
-    checkTitleForBadges(contents.getTitle());
+    syncTitleBadge(contents.getTitle());
   });
+
+  contents.on('destroyed', () => {
+    badgeStateByProfile.delete(profileId);
+    refreshGlobalUnreadBadge();
+  });
+
+  startMainZaloBadgePolling(contents, profileId);
 
   contents.on('context-menu', (event, params) => {
     const menu = new Menu();
@@ -351,49 +823,7 @@ function setupWebContents(contents, profileId) {
     } catch (e) { }
   });
 
-  const avatarInterval = setInterval(async () => {
-    if (contents.isDestroyed()) {
-      clearInterval(avatarInterval);
-      return;
-    }
-    const avatarScript = `
-      (function() {
-        let nav = document.querySelector('div[role="navigation"]');
-        if (nav) {
-          let images = nav.querySelectorAll('svg image');
-          for (let img of images) {
-            let href = img.getAttribute('xlink:href') || img.getAttribute('href');
-            if (href && (href.includes('scontent') || href.includes('fbcdn'))) return href;
-          }
-        }
-        let images = document.querySelectorAll('svg image');
-        for (let img of images) {
-          let href = img.getAttribute('xlink:href') || img.getAttribute('href');
-          if (href && (href.includes('scontent') || href.includes('fbcdn'))) return href;
-        }
-        let imgs = document.querySelectorAll('img');
-        for (let img of imgs) {
-          if (img.src && (img.src.includes('scontent') || img.src.includes('fbcdn')) && img.width > 20 && img.width < 100) return img.src;
-        }
-        return null;
-      })();
-    `;
-    try {
-      const avatarUrl = await contents.executeJavaScript(avatarScript);
-      if (avatarUrl && mainWindow && profileId) {
-        mainWindow.webContents.send('update-profile-avatar', { id: profileId, avatarUrl });
-      } else {
-        const cookies = await contents.session.cookies.get({ name: 'c_user' });
-        if (cookies && cookies.length > 0) {
-          const uid = cookies[0].value;
-          const fbAvatar = `https://graph.facebook.com/${uid}/picture?width=150&height=150`;
-          if (mainWindow && profileId) {
-            mainWindow.webContents.send('update-profile-avatar', { id: profileId, avatarUrl: fbAvatar });
-          }
-        }
-      }
-    } catch (e) { }
-  }, 5000);
+
 
   if (app.isPackaged) {
     contents.on('before-input-event', (event, input) => {
@@ -468,7 +898,18 @@ function createWindow() {
 
     sess.setPermissionRequestHandler((webContents, permission, callback) => {
       const url = webContents.getURL();
-      const isAllowed = url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me') || url.includes('whatsapp.com');
+      const profileId = findProfileIdBySender(webContents);
+      const meta = profileId ? profileMetaById.get(profileId) : null;
+      let isCustomUrl = false;
+      if (meta && meta.platform === 'custom' && meta.url) {
+        try {
+          const host = new URL(meta.url).hostname;
+          if (host && url.includes(host)) {
+            isCustomUrl = true;
+          }
+        } catch (e) {}
+      }
+      const isAllowed = url.includes('facebook.com') || url.includes('messenger.com') || url.includes('fbcdn.net') || url.includes('zalo.me') || url.includes('whatsapp.com') || isCustomUrl;
       if (isAllowed) {
         const allowedPermissions = [
           'notifications', 'media', 'mediaKeySystem', 'microphone',
@@ -484,7 +925,18 @@ function createWindow() {
 
     sess.setPermissionCheckHandler((webContents, permission) => {
       const url = webContents?.getURL() || '';
-      if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('zalo.me') || url.includes('whatsapp.com')) {
+      const profileId = webContents ? findProfileIdBySender(webContents) : null;
+      const meta = profileId ? profileMetaById.get(profileId) : null;
+      let isCustomUrl = false;
+      if (meta && meta.platform === 'custom' && meta.url) {
+        try {
+          const host = new URL(meta.url).hostname;
+          if (host && url.includes(host)) {
+            isCustomUrl = true;
+          }
+        } catch (e) {}
+      }
+      if (url.includes('facebook.com') || url.includes('messenger.com') || url.includes('zalo.me') || url.includes('whatsapp.com') || isCustomUrl) {
         return true;
       }
       return false;
@@ -524,6 +976,7 @@ function createWindow() {
 
   // IPC
   function setupBrowserViewForProfile(profile) {
+    rememberProfile(profile);
     if (browserViews[profile.id]) return;
     const view = new BrowserView({
       webPreferences: {
@@ -531,7 +984,7 @@ function createWindow() {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true,
         nodeIntegration: false,
-        backgroundThrottling: false, // Prevent sleeping
+        backgroundThrottling: true,
       }
     });
     browserViews[profile.id] = view;
@@ -547,6 +1000,9 @@ function createWindow() {
     if (profile.platform === 'whatsapp') {
       url = 'https://web.whatsapp.com';
       userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    } else if (profile.platform === 'custom') {
+      url = profile.url || 'https://google.com';
+      userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
     }
     
     view.webContents.loadURL(url, { userAgent: userAgent });
@@ -555,6 +1011,7 @@ function createWindow() {
   ipcMain.on('init-profiles', (event, profiles) => {
     if (Array.isArray(profiles)) {
       profiles.forEach((profile, index) => {
+        rememberProfile(profile);
         setTimeout(() => {
           setupBrowserViewForProfile(profile);
         }, index * 5000); // 5-second stagger to prevent Zalo session conflicts
@@ -567,66 +1024,21 @@ function createWindow() {
   // ============================================================
   
   ipcMain.on('update-red-dot', (event, count) => {
-    let profileId = null;
-    for (const [id, view] of Object.entries(browserViews)) {
-      if (view.webContents.id === event.sender.id) {
-        profileId = id;
-        break;
-      }
-    }
-    if (profileId && mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('update-profile-badge', { id: profileId, count: count || 0 });
+    const profileId = findProfileIdBySender(event.sender);
+    if (!profileId) return;
+
+    updateProfileDomBadge(profileId, count);
+  });
+
+  ipcMain.on('notification-click', (event) => {
+    const profileId = findProfileIdBySender(event.sender) || activeProfileId;
+    if (profileId) {
+      focusProfile(profileId, true);
     }
   });
 
-  // ============================================================
-  //  DIAGNOSTIC v2: Dump aria-labels + red-bg elements
-  // ============================================================
-  setInterval(async () => {
-    for (const [profileId, view] of Object.entries(browserViews)) {
-      if (!view || view.webContents.isDestroyed()) continue;
-      if (!view.webContents.getURL().includes('zalo.me')) continue; // Only Zalo
-      try {
-        const info = await view.webContents.executeJavaScript(`
-          (function() {
-            var title = document.title;
-            // Scan aria-label for unread hints
-            var ariaHints = [];
-            document.querySelectorAll('[aria-label]').forEach(function(el) {
-              var lbl = el.getAttribute('aria-label') || '';
-              if (/\\d/.test(lbl) && lbl.length < 50) ariaHints.push(lbl.trim().substring(0,40));
-            });
-            // Scan data-* for badge counts
-            var dataHints = [];
-            document.querySelectorAll('[data-badge],[data-count],[data-unread],[data-num]').forEach(function(el) {
-              var vals = [];
-              for(var i=0;i<el.attributes.length;i++){
-                var a=el.attributes[i];
-                if(a.name.startsWith('data-')) vals.push(a.name+'='+a.value);
-              }
-              if(vals.length) dataHints.push(vals.join(' '));
-            });
-            // Scan leaf elements with red background
-            var redEls = [];
-            document.querySelectorAll('span,div,b,em,p,label,i').forEach(function(el) {
-              if(el.children.length>0) return;
-              var t=el.textContent.trim();
-              if(!/^\\d+/.test(t) || t.length>5) return;
-              var bg=window.getComputedStyle(el).backgroundColor;
-              var m=bg.match(/rgba?\\(\\s*(\\d+),\\s*(\\d+),\\s*(\\d+)/);
-              if(m && parseInt(m[1])>150 && parseInt(m[2])<80 && parseInt(m[3])<80){
-                redEls.push({text:t, cls:el.className.substring(0,50)});
-              }
-            });
-            return { title, ariaHints: ariaHints.slice(0,10), dataHints: dataHints.slice(0,5), redEls: redEls.slice(0,5) };
-          })()
-        `, true);
-        console.log('[DIAGv2] profileId=' + profileId.slice(-6), JSON.stringify(info));
-      } catch(e) { console.log('[DIAGv2] ERROR:', e.message); }
-    }
-  }, 10000);
-
   ipcMain.on('switch-profile', (event, profile) => {
+    rememberProfile(profile);
     activeProfileId = profile.id;
     setupBrowserViewForProfile(profile);
     updateBrowserViewBounds();
@@ -644,22 +1056,15 @@ function createWindow() {
     }
   });
 
-  ipcMain.on('delete-profile', (event, id) => {
+  ipcMain.on('delete-profile', (_event, id) => {
     if (browserViews[id]) {
       browserViews[id].webContents.destroy();
       delete browserViews[id];
     }
-  });
 
-  ipcMain.on('update-badge', (event, count) => {
-    if (count !== unreadCount) {
-      const hadNewMessages = count > unreadCount;
-      unreadCount = count;
-      updateBadge(unreadCount);
-      if (hadNewMessages && !mainWindow.isFocused()) {
-        mainWindow.flashFrame(true);
-      }
-    }
+    badgeStateByProfile.delete(id);
+    profileMetaById.delete(id);
+    refreshGlobalUnreadBadge();
   });
 
   ipcMain.on('set-theme', (event, isDark) => {
@@ -728,6 +1133,7 @@ function updateBadge(count) {
     }
   }
   if (tray) {
+    tray.setImage(createTrayIcon(count));
     tray.setToolTip(count > 0 ? `Zalo — ${count} tin nhắn chưa đọc` : 'Zalo');
   }
 }
@@ -792,4 +1198,3 @@ app.on('will-quit', () => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
-

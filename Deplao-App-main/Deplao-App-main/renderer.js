@@ -50,6 +50,29 @@ function saveProfiles() {
   }
 }
 
+function applyProfileBadge(id, rawCount) {
+  const count = Math.max(0, Number(rawCount) || 0);
+  const profile = profiles.find((p) => p.id === id);
+
+  if (profile) {
+    profile.badgeCount = count;
+  }
+
+  const badge = document.getElementById(`badge-${id}`);
+  if (!badge) {
+    renderSidebar();
+    return;
+  }
+
+  if (count > 0) {
+    badge.innerText = count > 9 ? '9+' : String(count);
+    badge.style.display = 'block';
+  } else {
+    badge.innerText = '';
+    badge.style.display = 'none';
+  }
+}
+
 function renderSidebar() {
   profilesList.innerHTML = '';
   profiles.forEach(p => {
@@ -85,6 +108,46 @@ function renderSidebar() {
     btn.oncontextmenu = () => {
       openModal(p);
     };
+
+    // Hỗ trợ kéo thả thay đổi vị trí tài khoản (Drag and Drop reordering)
+    btn.draggable = true;
+    btn.dataset.id = p.id;
+
+    btn.ondragstart = (e) => {
+      btn.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      // Tạm ẩn BrowserView khi kéo để tránh xung đột chuột
+      ipcRenderer.send('set-browserview-visibility', false);
+    };
+
+    btn.ondragend = () => {
+      btn.classList.remove('dragging');
+      // Hiện lại BrowserView khi dừng kéo
+      ipcRenderer.send('set-browserview-visibility', true);
+      
+      // Sắp xếp lại danh sách tài khoản dựa trên thứ tự DOM hiện tại
+      const newProfiles = [];
+      const childNodes = Array.from(profilesList.children);
+      childNodes.forEach(child => {
+        const profileId = child.dataset.id;
+        const found = profiles.find(x => x.id === profileId);
+        if (found) {
+          newProfiles.push(found);
+        }
+      });
+      profiles = newProfiles;
+      saveProfiles();
+    };
+
+    btn.ondragover = (e) => {
+      e.preventDefault();
+      const draggingBtn = document.querySelector('.dragging');
+      if (draggingBtn && draggingBtn !== btn) {
+        const rect = btn.getBoundingClientRect();
+        const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+        profilesList.insertBefore(draggingBtn, next ? btn.nextSibling : btn);
+      }
+    };
     
     profilesList.appendChild(btn);
   });
@@ -106,10 +169,20 @@ const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const nameInput = document.getElementById('profile-name-input');
 const platformInput = document.getElementById('profile-platform-input');
+const urlInput = document.getElementById('profile-url-input'); // urlInput : Ô nhập URL cho tùy chọn
 const avatarPreview = document.getElementById('avatar-preview');
 const avatarImg = document.getElementById('avatar-img');
 const avatarLetter = document.getElementById('avatar-letter');
 const avatarInput = document.getElementById('avatar-input');
+
+platformInput.addEventListener('change', () => {
+  if (platformInput.value === 'custom') {
+    urlInput.style.display = 'block';
+    urlInput.focus();
+  } else {
+    urlInput.style.display = 'none';
+  }
+});
 
 function openModal(profileToEdit = null) {
   ipcRenderer.send('set-browserview-visibility', false);
@@ -118,7 +191,18 @@ function openModal(profileToEdit = null) {
   
   modalTitle.innerText = profileToEdit ? 'Chỉnh sửa tài khoản' : 'Thêm tài khoản';
   nameInput.value = profileToEdit ? profileToEdit.name : '';
-  platformInput.value = profileToEdit && profileToEdit.platform ? profileToEdit.platform : 'zalo';
+  
+  const platformVal = profileToEdit && profileToEdit.platform ? profileToEdit.platform : 'zalo';
+  platformInput.value = platformVal;
+  
+  if (platformVal === 'custom') {
+    urlInput.value = profileToEdit && profileToEdit.url ? profileToEdit.url : '';
+    urlInput.style.display = 'block';
+  } else {
+    urlInput.value = '';
+    urlInput.style.display = 'none';
+  }
+  
   document.getElementById('modal-delete').style.display = profileToEdit ? 'block' : 'none';
   
   updateAvatarPreview();
@@ -178,13 +262,26 @@ document.getElementById('modal-save').onclick = () => {
     return;
   }
   
+  let url = '';
+  if (platformInput.value === 'custom') {
+    url = urlInput.value.trim();
+    if (!url) {
+      alert('Vui lòng nhập URL!');
+      return;
+    }
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+    }
+  }
+  
   if (editingProfile) {
     editingProfile.name = name;
     editingProfile.avatar = tempAvatarPath;
     editingProfile.platform = platformInput.value;
+    editingProfile.url = url;
   } else {
     const id = Date.now().toString();
-    const p = { id, name, avatar: tempAvatarPath, partition: `persist:nick_${id}`, platform: platformInput.value };
+    const p = { id, name, avatar: tempAvatarPath, partition: `persist:nick_${id}`, platform: platformInput.value, url: url };
     profiles.push(p);
     activeProfileId = id;
   }
@@ -220,15 +317,14 @@ document.getElementById('btn-pin').onclick = () => {
 document.getElementById('btn-reload').onclick = () => ipcRenderer.send('reload-page');
 
 // IPC Updates from Main
-ipcRenderer.on('update-profile-badge', (event, { id, count }) => {
-  const p = profiles.find(x => x.id === id);
-  if (p) p.badgeCount = count;
-  
-  const badge = document.getElementById(`badge-${id}`);
-  if (badge) {
-    badge.innerText = count > 9 ? '9+' : count;
-    badge.style.display = count > 0 ? 'block' : 'none';
-  }
+ipcRenderer.on('update-profile-badge', (_event, { id, count }) => {
+  applyProfileBadge(id, count);
+});
+
+ipcRenderer.on('activate-profile', (_event, { id }) => {
+  if (!id) return;
+  activeProfileId = id;
+  renderSidebar();
 });
 
 ipcRenderer.on('update-profile-avatar', (event, { id, avatarUrl }) => {

@@ -124,6 +124,18 @@ The current main areas are:
 Do not modify or delete `data/` unless the user explicitly asks.
 Do not commit local tool binaries/models; keep them installed locally and ignored by Git.
 
+## Deplao Desktop App
+
+The `Deplao-App-main/Deplao-App-main` directory contains the source code for the standalone Electron desktop multi-account browser app:
+
+| Path | Purpose |
+| --- | --- |
+| `Deplao-App-main/Deplao-App-main/main.js` | Electron main process, handles session creation, window boundaries, IPC communication, and profile configurations. |
+| `Deplao-App-main/Deplao-App-main/renderer.js` | Electron renderer process, controls user interaction, accounts sidebar, and profile modal setup. |
+| `Deplao-App-main/Deplao-App-main/preload.js` | Electron preload script, exposes secure APIs to the context. |
+| `Deplao-App-main/Deplao-App-main/index.html` | HTML layout for the desktop app sidebar, toolbar, and profile modals. |
+| `Deplao-App-main/Deplao-App-main/package.json` | Project scripts (`npm start`, `npm run build`) and dependencies. |
+
 ## Tests And Verification
 
 | Command | Purpose |

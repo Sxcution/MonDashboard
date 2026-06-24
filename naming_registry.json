@@ -1736,6 +1736,15 @@
             "tg-uploadAdminSession"
         ]
     },
+    "DEPLAO_DESKTOP": {
+        "select_platform": "profile-platform-input",
+        "input_profile_name": "profile-name-input",
+        "input_profile_url": "profile-url-input",
+        "btn_add_profile": "btn-add-profile",
+        "modal_save": "modal-save",
+        "modal_cancel": "modal-cancel",
+        "modal_delete": "modal-delete"
+    },
     "COLOR_AUDIT": {
         "inventory_file": "color_inventory.md",
         "scan_scope": [
